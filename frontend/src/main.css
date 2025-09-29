@@ -1,0 +1,13 @@
+/* @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap'); */
+/* Ctrl + / */
+:root {
+  --color-preset-gray: #33384f;
+  --color-preset-red: #e52626;
+  --fontWeight-preset-medium: 300;
+}
+body {
+  font-family: Montserrat;
+  line-height: 13.8px;
+  padding: 0px;
+  margin: 0px;
+}

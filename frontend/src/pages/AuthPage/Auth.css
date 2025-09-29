@@ -1,0 +1,9 @@
+.SignInUpPage {
+  height: 700px;
+}
+.SignInUpPage_Thumbnail {
+  width: 1600px;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}

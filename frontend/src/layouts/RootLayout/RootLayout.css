@@ -1,0 +1,40 @@
+.BotLayout {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background-color: var(--color-preset-gray);
+  color: white;
+  padding: 30px;
+  width: 100%;
+}
+.BotLayout_Title {
+  padding-top: 20px;
+  padding-bottom: 20px;
+  font-size: 24px;
+  font-weight: bold;
+  border-bottom: 1px solid #ebebeb;
+}
+.BotLayout_Content {
+  display: flex;
+  flex-direction: row;
+  gap: 40px;
+}
+.BotLayout_SmallText {
+  line-height: 20px;
+  font-size: 14px;
+  font-weight: var(--fontWeight-preset-medium);
+  display: flex;
+  flex-direction: column;
+  color: white;
+  text-decoration: none;
+}
+.BotLayout_HoverText:hover {
+  color: rgb(205, 205, 205);
+}
+.BotLayout_HoverText::selection {
+  color: rgb(155, 155, 155);
+}
+.BotLayout_SmallTitle {
+  margin-bottom: 4px;
+  font-weight: 350;
+}

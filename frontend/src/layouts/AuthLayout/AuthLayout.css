@@ -1,0 +1,14 @@
+.AuthLayout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+.Auth_Title {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 40px;
+  padding: 20px;
+  font-size: 28px;
+  font-weight: 500;
+}
