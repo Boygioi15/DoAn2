@@ -1,17 +1,16 @@
 .SignInUpPage {
   position: relative;
-  overflow-x: hidden;
 }
 .SignInUpPage_Thumbnail {
   width: 1600px;
-  height: auto;
+  height: 700px;
   object-fit: cover;
   object-position: center;
 }
 
-.SignInBox {
+.AuthBox {
   position: absolute;
-  top: 50px;
+  top: 100px;
   right: 50px;
 
   display: flex;
@@ -27,12 +26,12 @@
 
   gap: 16px;
 }
-.SignInBox > form {
+.AuthBox > form {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
-.SignInBox_Title {
+.AuthBox_Title {
   font-size: 20px;
   font-weight: 400;
   text-align: center;
@@ -49,10 +48,15 @@
   flex-direction: row;
   gap: 12px;
 }
-.SignInBox_ChangeStateText {
+.AuthBox_ChangeState {
   display: flex;
   flex-direction: row;
+  align-items: baseline;
 }
-.SignInBox_ChangeState:hover {
+.Stripped_Off_Button {
+  background-color: white;
+  border: none;
+}
+.Stripped_Off_Button:hover {
   cursor: pointer;
 }

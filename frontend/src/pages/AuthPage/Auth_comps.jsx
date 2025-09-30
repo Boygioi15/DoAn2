@@ -10,7 +10,7 @@ import facebook from '../../assets/facebook.png'
 import google from '../../assets/google.png'
 import phone from '../../assets/phone.jpg'
 
-export function SignInBox() {
+export function SignInBox({ onStateChange }) {
   // state for inputs
   const [account, setAccount] = useState('')
   const [password, setPassword] = useState('')
@@ -31,8 +31,8 @@ export function SignInBox() {
   }
 
   return (
-    <div className="SignInBox" onSubmit={handleSubmit}>
-      <div className="SignInBox_Title">Đăng nhập</div>
+    <div className="AuthBox" onSubmit={handleSubmit}>
+      <div className="AuthBox_Title">Đăng nhập</div>
       <form>
         <input
           type="text"
@@ -44,7 +44,7 @@ export function SignInBox() {
         />
         <PasswordField />
 
-        {error && <div className="SignInBox_Error">{error}</div>}
+        {error && <div className="AuthBox_Error">{error}</div>}
 
         <button type="submit" className="button-standard-1">
           Đăng nhập
@@ -61,11 +61,48 @@ export function SignInBox() {
         </div>
         <SocialLogin imgSrc={phone} text="SMS" />
       </div>
-      <div className="SignInBox_ChangeStateText">
+      <div className="AuthBox_ChangeState">
         <div>Bạn mới biết đến Q-Shop? </div>
-        <div className="SignInBox_ChangeState">
+        <button className="Stripped_Off_Button" onClick={onStateChange}>
           <b>Đăng ký</b>
+        </button>
+      </div>
+    </div>
+  )
+}
+export function SignUpBox({ onStateChange }) {
+  const [phone, setPhone] = useState('')
+  const [error, setError] = useState('')
+  return (
+    <div className="AuthBox">
+      <div className="AuthBox_Title">Đăng ký</div>
+      <form>
+        <input
+          type="text"
+          className="input-standard-1"
+          placeholder="Số điện thoại"
+          value={phone}
+          onChange={(e) => setAccount(e.target.value)}
+          required
+        />
+        {error && <div className="AuthBox_Error">{error}</div>}
+
+        <button type="submit" className="button-standard-1">
+          Tiếp theo
+        </button>
+      </form>
+      <OrBlock />
+      <div className="SocialLoginBlock">
+        <div>
+          <SocialLogin imgSrc={facebook} text="Facebook" />
+          <SocialLogin imgSrc={google} text="Google" />
         </div>
+      </div>
+      <div className="AuthBox_ChangeState">
+        <div>Bạn đã có tài khoản? </div>
+        <button className="Stripped_Off_Button" onClick={onStateChange}>
+          <b>Đăng nhập</b>
+        </button>
       </div>
     </div>
   )

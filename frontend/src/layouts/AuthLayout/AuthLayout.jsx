@@ -2,11 +2,17 @@ import { Link, Outlet } from 'react-router-dom'
 import './Authlayout.css'
 import { Title } from '../../reusable_components/comps'
 import { BotLayout } from '../RootLayout/RootLayout'
+import { createContext, useState } from 'react'
+
+export const AuthPageContext = createContext()
 export default function AuthLayout() {
+  const [authState, setAuthState] = useState(1)
   return (
     <div className="AuthLayout">
-      <Auth_Title state={1} />
-      <Outlet />
+      <Auth_Title state={authState} />
+      <AuthPageContext.Provider value={{ authState, setAuthState }}>
+        <Outlet />
+      </AuthPageContext.Provider>
       <BotLayout />
     </div>
   )
