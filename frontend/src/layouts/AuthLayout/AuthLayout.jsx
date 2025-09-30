@@ -4,7 +4,7 @@ import { Title } from '../../reusable_components/comps'
 import { BotLayout } from '../RootLayout/RootLayout'
 export default function AuthLayout() {
   return (
-    <div className="AuthPage">
+    <div className="AuthLayout">
       <Auth_Title state={1} />
       <Outlet />
       <BotLayout />

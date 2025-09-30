@@ -1,13 +1,78 @@
 /* @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap'); */
 /* Ctrl + / */
 :root {
-  --color-preset-gray: #33384f;
+  --color-preset-gray: #333f48;
+  --color-preset-gray-hover: #474c63;
+  --color-preset-gray-pressed: #5b6077;
   --color-preset-red: #e52626;
   --fontWeight-preset-medium: 300;
+  width: 100%;
+}
+* {
+  font-family: Montserrat;
+  box-sizing: border-box;
 }
 body {
-  font-family: Montserrat;
   line-height: 13.8px;
   padding: 0px;
   margin: 0px;
+
+  width: 100%;
+  overflow-x: hidden;
+}
+.input-standard-1 {
+  border: 1px solid #bdc7d4;
+  border-radius: 2px;
+  padding-left: 12px;
+  padding-bottom: 10px;
+  padding-top: 10px;
+
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+}
+.input-standard-1:focus {
+  outline: none;
+  border-color: #9fa9e8;
+  box-shadow: 0 0 0 1px rgba(159, 169, 232, 0.2);
+}
+.icon-16x16 {
+  width: 16px;
+  height: 16px;
+  font-size: large;
+  color: var(--color-preset-gray);
+}
+
+.button-standard-1 {
+  box-shadow: none;
+  background-color: var(--color-preset-gray);
+  padding: 14px;
+  color: white;
+
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 20px;
+
+  border: none;
+  border-radius: 2px;
+}
+.button-standard-1:hover {
+  cursor: pointer;
+  background-color: var(--color-preset-gray-hover);
+}
+.button-standard-1:focus {
+  background-color: var(--color-preset-gray-pressed);
+}
+.link-standard-1 {
+  font-size: 14px;
+  font-weight: var(--fontWeight-preset-medium);
+  color: blue;
+}
+.link-standard-1:hover {
+  cursor: pointer;
+  color: rgb(0, 0, 139);
+}
+.link-standard-1:focus {
+  cursor: pointer;
+  color: rgb(0, 0, 159);
 }

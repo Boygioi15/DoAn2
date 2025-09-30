@@ -1,0 +1,100 @@
+.title {
+  padding-left: 12px;
+  padding-right: 12px;
+  padding-bottom: 14px;
+  padding-top: 14px;
+
+  background-color: var(--color-preset-red);
+  color: white;
+
+  font-weight: bold;
+  font-size: 28px;
+  text-decoration: none;
+}
+.PasswordField {
+  border: 1px solid #bdc7d4;
+  border-radius: 2px;
+  padding-left: 14px;
+  padding-right: 14px;
+  padding-bottom: 10px;
+  padding-top: 10px;
+
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+.PasswordField:focus-within {
+  outline: none;
+  border-color: #9fa9e8;
+  box-shadow: 0 0 0 1px rgba(159, 169, 232, 0.2);
+}
+
+.PasswordField > input {
+  border: none;
+  outline: none;
+  flex-grow: 1;
+}
+.PasswordField > button {
+  padding: 0px;
+  margin: 0px;
+  border: none;
+  background-color: white;
+  display: flex;
+  align-items: center;
+}
+.PasswordField > button:hover {
+  cursor: pointer;
+}
+
+.OrBlock {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-around;
+  color: var(--color-preset-gray);
+  padding: 4px;
+}
+.OrBlock_Line {
+  flex-grow: 1;
+  border-bottom: 1px solid var(--color-preset-gray);
+}
+.OrBlock_Text {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.SocialLogin {
+  width: 165px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+
+  border: 1px solid #bdc7d4;
+  border-radius: 2px;
+
+  padding-left: 20px;
+  padding-right: 10px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+
+  background-color: white;
+}
+.SocialLogin:hover {
+  background-color: rgb(205, 205, 205);
+  cursor: pointer;
+}
+.SocialLogin > img {
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+}
+.SocialLogin > div {
+  font-size: 16px;
+  font-weight: 600;
+  color: black;
+}
