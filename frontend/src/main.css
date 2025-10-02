@@ -5,6 +5,7 @@
   --color-preset-gray-hover: #474c63;
   --color-preset-gray-pressed: #5b6077;
   --color-preset-red: #e52626;
+  --color-preset-green: #66cc00;
   --fontWeight-preset-medium: 300;
   width: 100%;
 }
@@ -18,7 +19,25 @@ body {
   margin: 0px;
 
   width: 100%;
-  overflow-x: hidden;
+  height: 100%;
+  position: relative;
+}
+.modal-backdrop {
+  width: 100%;
+  height: 100%;
+  background-color: rgb(0, 0, 0, 0.2);
+
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal-base {
+  min-height: 100px;
+  background-color: white;
+  border-radius: 4px;
 }
 .input-standard-1 {
   border: 1px solid #bdc7d4;
@@ -31,10 +50,12 @@ body {
   font-weight: 400;
   line-height: 20px;
 }
+.input-error {
+  border: 1px solid red;
+}
 .input-standard-1:focus {
   outline: none;
-  border-color: #9fa9e8;
-  box-shadow: 0 0 0 1px rgba(159, 169, 232, 0.2);
+  box-shadow: 0 0 0 1px rgba(159, 169, 232, 0.4);
 }
 .icon-16x16 {
   width: 16px;
@@ -63,6 +84,9 @@ body {
 .button-standard-1:focus {
   background-color: var(--color-preset-gray-pressed);
 }
+.button-standard-1:disabled {
+  opacity: 0.5;
+}
 .link-standard-1 {
   font-size: 14px;
   font-weight: var(--fontWeight-preset-medium);
@@ -75,4 +99,33 @@ body {
 .link-standard-1:focus {
   cursor: pointer;
   color: rgb(0, 0, 159);
+}
+.Escape_Button {
+  background-color: white;
+  border: none;
+  color: var(--color-preset-gray);
+  font-size: 14px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.Escape_Button:hover {
+  cursor: pointer;
+  color: red;
+  background-color: rgb(245, 245, 245);
+  border-radius: 4px;
+}
+.otp-block {
+  border: 2px solid #bdc7d4;
+  border-radius: 2px;
+
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 20px;
+}
+.div-standard-1 {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
 }

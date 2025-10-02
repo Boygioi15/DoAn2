@@ -1,13 +1,14 @@
-import { Outlet, Link } from 'react-router-dom'
-import './RootLayout.css'
-export default function RootLayout() {
+import { Outlet, Link } from 'react-router-dom';
+import './RootLayout.css';
+export default function RootLayout({ children }) {
   return (
     <div>
       <TopLayout />
+      {children}
       <Outlet />
       <BotLayout />
     </div>
-  )
+  );
 }
 export function TopLayout() {
   return (
@@ -20,7 +21,7 @@ export function TopLayout() {
         <Link to="/auth">Sign in/ Sign up</Link>
       </div>
     </div>
-  )
+  );
 }
 export function BotLayout() {
   return (
@@ -62,5 +63,5 @@ export function BotLayout() {
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -27,10 +27,12 @@
   flex-direction: row;
   justify-content: space-between;
 }
+.PasswordField-error {
+  border-color: red;
+}
 .PasswordField:focus-within {
   outline: none;
-  border-color: #9fa9e8;
-  box-shadow: 0 0 0 1px rgba(159, 169, 232, 0.2);
+  box-shadow: 0 0 0 1px rgba(50, 50, 50, 0.4);
 }
 
 .PasswordField > input {

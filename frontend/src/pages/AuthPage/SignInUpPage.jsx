@@ -1,7 +1,7 @@
 import { useContext, useState } from 'react'
 import './Auth.css'
 import silksong from '../../assets/silksong_1.png'
-import { SignInBox, SignUpBox } from './Auth_comps'
+import { SignInBox, SignUpBox } from './AuthBox'
 import { AuthPageContext } from '../../layouts/AuthLayout/AuthLayout'
 
 //state 1: login, state 2: sign up

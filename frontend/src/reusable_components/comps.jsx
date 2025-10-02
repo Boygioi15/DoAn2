@@ -1,23 +1,33 @@
-import { Link } from 'react-router-dom'
-import './comps.css'
-import { useState } from 'react'
+import { Link } from 'react-router-dom';
+import './comps.css';
+import { useState } from 'react';
 export function Title() {
   return (
     <Link to="/" className="title">
       Q-Shop
     </Link>
-  )
+  );
 }
 
-import { RiEyeFill, RiEyeCloseFill } from 'react-icons/ri'
+import { RiEyeFill, RiEyeCloseFill } from 'react-icons/ri';
 
-export function PasswordField({ passwordText, handleOnChange }) {
-  const [showPassword, setShowPassword] = useState(false)
+export function PasswordField({
+  passwordText,
+  handleOnChange,
+  placeholder = 'Mật khẩu',
+  className,
+  isError = false,
+}) {
+  const [showPassword, setShowPassword] = useState(false);
   return (
-    <div className="PasswordField">
+    <div
+      className={`PasswordField ${className} ${
+        isError && 'PasswordField-error'
+      }`}
+    >
       <input
         type={showPassword ? 'password' : 'text'}
-        placeholder="Mật khẩu"
+        placeholder={placeholder}
         value={passwordText}
         onChange={handleOnChange}
         required
@@ -25,7 +35,7 @@ export function PasswordField({ passwordText, handleOnChange }) {
       <button
         type="button"
         onClick={() => {
-          setShowPassword(!showPassword)
+          setShowPassword(!showPassword);
         }}
       >
         {showPassword ? (
@@ -35,7 +45,7 @@ export function PasswordField({ passwordText, handleOnChange }) {
         )}
       </button>
     </div>
-  )
+  );
 }
 
 export function OrBlock() {
@@ -45,13 +55,15 @@ export function OrBlock() {
       <div className="OrBlock_Text">Hoặc</div>
       <div className="OrBlock_Line"></div>
     </div>
-  )
+  );
 }
-export function SocialLogin({ imgSrc, text, onClick }) {
+export function SocialLogin({ imgSrc, text, handleOnClick }) {
   return (
-    <button className="SocialLogin">
+    <button onClick={handleOnClick} className="SocialLogin">
       <img src={imgSrc} />
       <div>{text}</div>
     </button>
-  )
+  );
 }
+
+export function OTP_BlockOf4({ handleOnChange }) {}

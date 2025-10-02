@@ -1,38 +1,49 @@
-import { Link } from 'react-router-dom'
-import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom';
+import { useContext, useState } from 'react';
 import {
   OrBlock,
   PasswordField,
   SocialLogin,
-} from '../../reusable_components/comps'
+} from '../../reusable_components/comps';
 
-import facebook from '../../assets/facebook.png'
-import google from '../../assets/google.png'
-import phone from '../../assets/phone.jpg'
+import facebook from '../../assets/facebook.png';
+import google from '../../assets/google.png';
+import phone from '../../assets/phone.jpg';
+import { ModalContext } from '../../contexts/ModalContext';
+import { SMS_LoginModal } from './AuthModal';
 
 export function SignInBox({ onStateChange }) {
+  const { openModal } = useContext(ModalContext);
   // state for inputs
-  const [account, setAccount] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
+  const [account, setAccount] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
   // submit handler (defined outside JSX)
   const handleSubmit = (e) => {
-    e.preventDefault()
+    e.preventDefault();
 
     // example login check
     if (account === 'test' && password === '123') {
-      setError('')
-      console.log('Đăng nhập thành công')
+      setError('');
+      console.log('Đăng nhập thành công');
       // redirect or do login here
     } else {
-      setError('Đăng nhập thất bại')
+      setError('Đăng nhập thất bại');
     }
-  }
+  };
 
   return (
     <div className="AuthBox" onSubmit={handleSubmit}>
       <div className="AuthBox_Title">Đăng nhập</div>
+      <button
+        onClick={() => {
+          hi = 3;
+        }}
+      >
+        BUG BUG
+      </button>
       <form>
         <input
           type="text"
@@ -59,7 +70,11 @@ export function SignInBox({ onStateChange }) {
           <SocialLogin imgSrc={facebook} text="Facebook" />
           <SocialLogin imgSrc={google} text="Google" />
         </div>
-        <SocialLogin imgSrc={phone} text="SMS" />
+        <SocialLogin
+          handleOnClick={() => openModal(<SMS_LoginModal />)}
+          imgSrc={phone}
+          text="SMS"
+        />
       </div>
       <div className="AuthBox_ChangeState">
         <div>Bạn mới biết đến Q-Shop? </div>
@@ -68,21 +83,30 @@ export function SignInBox({ onStateChange }) {
         </button>
       </div>
     </div>
-  )
+  );
 }
 export function SignUpBox({ onStateChange }) {
-  const [phone, setPhone] = useState('')
-  const [error, setError] = useState('')
+  const navigate = useNavigate();
+  const [phone, setPhone] = useState('');
+  const [error, setError] = useState('');
+
+  const { openModal } = useContext(ModalContext);
+  function handleSubmit(e) {
+    e.preventDefault(); // stop the page from refreshing
+    console.log('Form submitted!');
+    navigate('/auth/sign-up-detail');
+  }
+
   return (
     <div className="AuthBox">
       <div className="AuthBox_Title">Đăng ký</div>
-      <form>
+      <form onSubmit={handleSubmit}>
         <input
           type="text"
           className="input-standard-1"
           placeholder="Số điện thoại"
           value={phone}
-          onChange={(e) => setAccount(e.target.value)}
+          onChange={(e) => setPhone(e.target.value)}
           required
         />
         {error && <div className="AuthBox_Error">{error}</div>}
@@ -105,5 +129,5 @@ export function SignUpBox({ onStateChange }) {
         </button>
       </div>
     </div>
-  )
+  );
 }
