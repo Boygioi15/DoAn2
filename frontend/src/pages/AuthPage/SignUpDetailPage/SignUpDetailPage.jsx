@@ -6,7 +6,7 @@ import { FaArrowLeft } from 'react-icons/fa6';
 import { PasswordField } from '../../../reusable_components/comps';
 
 export default function SignUpDetailPage() {
-  const [signUpState, setSignUpState] = useState(1);
+  const [signUpState, setSignUpState] = useState(3);
   let box = {
     1: <EnterOTPBox handleOnVerification={() => setSignUpState(2)} />,
     2: <SetPasswordBox />,

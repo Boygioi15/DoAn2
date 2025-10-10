@@ -1,11 +1,11 @@
-import { useContext, useEffect, useState } from 'react'
-import { ModalContext } from '../../contexts/ModalContext'
-import OtpInput from 'react-otp-input'
-import { Time_NumToText } from '../../utils/util'
+import { useContext, useEffect, useState } from 'react';
+import { ModalContext } from '../../contexts/ModalContext';
+import OtpInput from 'react-otp-input';
+import { Time_NumToText } from '../../utils/util';
 
 export function SMS_LoginModal() {
-  const { openModal, closeModal } = useContext(ModalContext)
-  const [phone, setPhone] = useState('')
+  const { openModal, closeModal } = useContext(ModalContext);
+  const [phone, setPhone] = useState('');
   return (
     <div className="SMS_LoginModal">
       <div className="SMS_LoginModal_Title">
@@ -37,23 +37,23 @@ export function SMS_LoginModal() {
         X
       </button>
     </div>
-  )
+  );
 }
 export function SMS_VerificationModal({ phoneNumber }) {
-  const { openModal, closeModal } = useContext(ModalContext)
-  const [otp, setOtp] = useState('')
+  const { openModal, closeModal } = useContext(ModalContext);
+  const [otp, setOtp] = useState('');
 
   //countdown
-  const [countdown, setCountdown] = useState(30)
+  const [countdown, setCountdown] = useState(5);
   useEffect(() => {
-    if (countdown === 0) return
+    if (countdown === 0) return;
     const timer = setInterval(() => {
-      setCountdown((countdown) => countdown - 1)
-    }, 1000)
+      setCountdown((countdown) => countdown - 1);
+    }, 1000);
     return () => {
-      clearInterval(timer)
-    }
-  }, [countdown])
+      clearInterval(timer);
+    };
+  }, [countdown]);
   //resend option
   return (
     <div className="SMS_LoginModal">
@@ -91,7 +91,7 @@ export function SMS_VerificationModal({ phoneNumber }) {
         <button
           className="Stripped_Off_Button"
           onClick={() => {
-            setCountdown(30)
+            setCountdown(30);
           }}
           style={{
             color: 'blue',
@@ -113,5 +113,5 @@ export function SMS_VerificationModal({ phoneNumber }) {
         X
       </button>
     </div>
-  )
+  );
 }
