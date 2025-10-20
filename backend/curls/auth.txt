@@ -1,0 +1,2 @@
+#Test db with auth
+curl http://localhost:3000/auth/test-1

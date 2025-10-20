@@ -1,0 +1,5 @@
+#Test db
+curl http://localhost:3000/database
+curl -X POST http://localhost:3000/database/test-db-1
+curl http://localhost:3000/database/test-db-2
+curl http://localhost:3000/database/test-db-3/68f611fa972ea2deffd64b12

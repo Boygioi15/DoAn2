@@ -1,4 +1,10 @@
-import { Controller, Get, Req } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  HttpException,
+  HttpStatus,
+  Req,
+} from '@nestjs/common';
 import { AppService } from './app.service';
 import type { Request } from 'express';
 @Controller()
@@ -7,8 +13,6 @@ export class AppController {
 
   @Get('/abcd/*test')
   getHello(@Req() req: Request): string {
-    const param = req.params.test;
-    console.log(req.params);
-    return param;
+    return this.appService.getHello();
   }
 }
