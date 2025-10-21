@@ -1,2 +1,16 @@
 #Test db with auth
 curl http://localhost:3000/auth/test-1
+#Test phone exist in registered
+curl http://localhost:3000/auth/check-phone-sign-up-condition?phone=0123456789  - exist
+curl http://localhost:3000/auth/check-phone-sign-up-condition?phone=0234567890  - not exist
+
+#Test phone exist in otp cache & create new one
+
+curl -X POST http://localhost:3000/auth/send-otp-phone?phone=0373865627
+
+#test verify otp
+curl -X POST http://localhost:3000/auth/verify-otp-phone \
+-H "Content-Type: application/json" \
+-d '{"phone":"0373865627","otp":377745}'
+
+
