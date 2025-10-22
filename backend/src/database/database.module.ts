@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { User, UserSchema } from './schemas/user.schema';
 import {
   UserLoginProfile,
   UserLoginProfileSchema,
@@ -11,11 +10,18 @@ import {
 } from './schemas/user_otp_cache.schema';
 import { DatabaseController } from './database.controller';
 import { TestUser, TestUserSchema } from './schemas/test_user.schema';
+import { User, UserSchema } from './schemas/user.schema';
+import { UserAddress, UserAddressSchema } from './schemas/user_address.schema';
+import {
+  UserRefreshToken,
+  UserRefreshTokenSchema,
+} from './schemas/user_refresh_token.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
+      { name: UserAddress.name, schema: UserAddressSchema },
       {
         name: UserLoginProfile.name,
         schema: UserLoginProfileSchema,
@@ -23,6 +29,10 @@ import { TestUser, TestUserSchema } from './schemas/test_user.schema';
       {
         name: UserOtpCache.name,
         schema: UserOtpCacheSchema,
+      },
+      {
+        name: UserRefreshToken.name,
+        schema: UserRefreshTokenSchema,
       },
       {
         name: TestUser.name,

@@ -1,5 +1,7 @@
 #Test db with auth
 curl http://localhost:3000/auth/test-1
+
+#####REGISTER BLOCK
 #Test phone exist in registered
 curl http://localhost:3000/auth/check-phone-sign-up-condition?phone=0123456789  - exist
 curl http://localhost:3000/auth/check-phone-sign-up-condition?phone=0234567890  - not exist
@@ -8,9 +10,18 @@ curl http://localhost:3000/auth/check-phone-sign-up-condition?phone=0234567890  
 
 curl -X POST http://localhost:3000/auth/send-otp-phone?phone=0373865627
 
-#test verify otp
+#test verify otp 
 curl -X POST http://localhost:3000/auth/verify-otp-phone \
 -H "Content-Type: application/json" \
--d '{"phone":"0373865627","otp":377745}'
+-d '{"phone":"0373865627","otp":405997}'
 
+######SIGN IN BLOCK - SMS
+#check sign in condition
+curl http://localhost:3000/auth/check-phone-sign-in-condition?phone=0373865627
+#send otp
+curl -X POST http://localhost:3000/auth/send-otp-phone?phone=0373865627
 
+#test verify otp 
+curl -X POST http://localhost:3000/auth/authenticate-user \
+-H "Content-Type: application/json" \
+-d '{"method":"SMS","phone":"0373865627","otp":757628}'

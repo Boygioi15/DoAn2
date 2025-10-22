@@ -10,27 +10,24 @@ import {
   ConflictException,
   HttpException,
   HttpStatus,
+  BadRequestException,
+  UnauthorizedException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { CreateAuthDto } from './dto/create-auth.dto';
+import { AuthenticateUserDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
-
+import * as bcrypt from 'bcrypt';
+import { UserService } from 'src/user/user.service';
+import { JwtService } from '@nestjs/jwt';
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly userService: UserService,
+    private readonly jwtService: JwtService,
+  ) {}
 
-  @Get('check-phone-sign-up-condition')
-  check_phone_sign_up_condition(@Query('phone') phone: string) {
-    const phoneExist = this.authService.checkPhoneRegistered(phone);
-    if (!phoneExist) {
-      return { stt: 200 };
-    } else {
-      throw new ConflictException({
-        stt: 409,
-        msg: 'Số điện thoại đã tồn tại!',
-      });
-    }
-  }
   @Post('send-otp-phone')
   async sendOtp(@Query('phone') phone: string) {
     const cache = await this.authService.findPhoneInOtp(phone);
@@ -74,10 +71,28 @@ export class AuthController {
       throw SMSGateWayException;
     }
   }
-  @Post('verify-otp-phone')
-  async verifyOtp(@Body() { phone, otp }: { phone: string; otp: string }) {
+
+  ////SIGN UP BLOCK
+  @Get('check-phone-sign-up-condition')
+  check_phone_sign_up_condition(@Query('phone') phone: string) {
+    const phoneExist = this.authService.checkPhoneRegistered(phone);
+    if (!phoneExist) {
+      return { stt: 200 };
+    } else {
+      throw new ConflictException({
+        stt: 409,
+        msg: 'Số điện thoại đã tồn tại!',
+      });
+    }
+  }
+  @Post('register-verify-otp-phone')
+  async register_verifyOtp(
+    @Body() { phone, otp }: { phone: string; otp: string },
+  ) {
     const found = await this.authService.verifyOtp(phone, otp);
     if (found) {
+      console.log('OTP verified successfully, create new user');
+      this.registerNewUser(phone);
       return { stt: 200 };
     }
     throw new ConflictException({
@@ -85,6 +100,80 @@ export class AuthController {
       msg: 'OTP không đúng!',
     });
   }
+  async registerNewUser(phone: string) {
+    //create new user with user service
+    const newUser = await this.userService.createNewUser(phone);
+    //create new login profile with userId
+    const newLoginProfile = await this.authService.createNewLoginProfile(
+      newUser.userId,
+      'phone',
+      phone,
+    );
+    //JWT system
+    //return a JWT
+  }
+  @Get('check-phone-sign-in-condition')
+  async check_phone_sign_in_condition(@Query('phone') phone: string) {
+    console.log('HI');
+    const phoneExistInLoginProfile =
+      await this.authService.checkPhoneRegistered(phone);
+    if (phoneExistInLoginProfile) {
+      return { stt: 200 };
+    }
+    throw new ConflictException({
+      stt: HttpStatus.CONFLICT,
+      msg: 'Không tồn tại số điện thoại trong CSDL!',
+    });
+  }
+  @Post('authenticate-user')
+  async authenticateUser(@Body() authenticateUser: AuthenticateUserDto) {
+    const method = authenticateUser.method;
+    switch (method) {
+      case 'SMS':
+        console.log('authenticate-user - SMS method');
+        const phone = authenticateUser.phone;
+        const otp = authenticateUser.otp;
+        if (!phone || !otp) {
+          throw new BadRequestException('Request không hợp lệ!');
+        }
+        const validOtp = await this.authService.verifyOtp(phone, otp);
+        if (!validOtp) {
+          console.log('authenticate-user - SMS method - invalid OTP');
+          throw new UnauthorizedException('Otp không đúng!');
+        }
+        console.log('authenticate-user - SMS method - valid OTP');
+        //find associated user with phone
+        const user = await this.authService.findUserWithPhone(phone);
+        console.log('authenticate-user - user: ', user);
+        if (!user) {
+          throw new InternalServerErrorException();
+        }
+        const accessToken = await this.authService.signAccessToken(user);
+        console.log('authenticate-user - access token signed: ', accessToken);
+        const refreshToken = await this.authService.signRefreshToken(user);
+        console.log('authenticate-user - refresh token signed: ', refreshToken);
+
+        const cache = await this.authService.createRefreshTokenCache(
+          user.userId,
+          refreshToken,
+        );
+        console.log('authenticate-user - refresh token cached: ', cache);
+        //register rt in db.
+        //send AT, RT back
+        return { accessToken, refreshToken, stt: 200 };
+        break;
+      //verify otp here
+      case 'account':
+        const account = authenticateUser.account;
+        const password = authenticateUser.password;
+        if (!account || !password) {
+          throw new BadRequestException('Request không hợp lệ!');
+        }
+    }
+  }
+  @Post('refresh-access-token')
+  async refreshAccessToken(@Body('refreshToken') refreshToken: string) {}
+  ////HELPER BLOCK
   async HELPER_sendOtp(phone: string, otp: string) {
     console.log('Send-otp-phone - ptp:', otp);
     //await this.authService.sendOtp(phone, otp);
@@ -103,18 +192,20 @@ export class AuthController {
     console.log(newCache);
     return newCache;
   }
-
+  HELPER_hashPassword(password: string) {
+    const salt = bcrypt.genSaltSync(Number(process.env.BCRYPT_SALT_ROUN));
+    const hashed = bcrypt.hashSync(password, salt);
+    return hashed;
+  }
+  HELPER_compareHashedPassword(plainPassword: string, hashedPassword: string) {
+    return bcrypt.compareSync(plainPassword, hashedPassword);
+  }
   @Get('test-1')
   async test1() {
     const newObj = await this.authService.test1();
     console.log(newObj);
     return { msg: 'Auth test 1', newObj: newObj };
   }
-  @Post()
-  create(@Body() createAuthDto: CreateAuthDto) {
-    return this.authService.create(createAuthDto);
-  }
-
   @Get()
   findAll() {
     return this.authService.findAll();

@@ -8,6 +8,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { DatabaseModule } from './database/database.module';
 import { SmsServiceModule } from './sms_service/sms_service.module';
 import { HttpModule } from '@nestjs/axios';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { HttpModule } from '@nestjs/axios';
       maxRedirects: Number(process.env.HTTP_MaxRedirect ?? 5),
     }),
     SmsServiceModule,
+    UserModule,
   ],
   controllers: [AppController],
   providers: [
