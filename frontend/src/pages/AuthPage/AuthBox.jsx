@@ -11,39 +11,34 @@ import google from '../../assets/google.png';
 import phone from '../../assets/phone.jpg';
 import { ModalContext } from '../../contexts/ModalContext';
 import { SMS_LoginModal } from './AuthModal';
+import authApi from '../../api/authApi';
+import useAuthStore from '../../contexts/zustands/AuthStore';
 
-export function SignInBox({ onStateChange }) {
+export function SignInBox() {
   const { openModal } = useContext(ModalContext);
   // state for inputs
   const [account, setAccount] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-
+  const navigate = useNavigate();
   // submit handler (defined outside JSX)
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // example login check
-    if (account === 'test' && password === '123') {
-      setError('');
-      console.log('Đăng nhập thành công');
-      // redirect or do login here
-    } else {
-      setError('Đăng nhập thất bại');
+    try {
+      const response = await authApi.authenticateUser_AccountPassword(
+        account,
+        password
+      );
+    } catch (error) {
+      setError(error.response.data.msg);
     }
   };
 
   return (
     <div className="AuthBox" onSubmit={handleSubmit}>
       <div className="AuthBox_Title">Đăng nhập</div>
-      <button
-        onClick={() => {
-          hi = 3;
-        }}
-      >
-        BUG BUG
-      </button>
       <form>
         <input
           type="text"
@@ -53,15 +48,22 @@ export function SignInBox({ onStateChange }) {
           onChange={(e) => setAccount(e.target.value)}
           required
         />
-        <PasswordField />
+        <PasswordField
+          passwordText={password}
+          handleOnChange={(e) => setPassword(e.target.value)}
+        />
 
-        {error && <div className="AuthBox_Error">{error}</div>}
+        {error && <div className="error-text">{error}</div>}
 
-        <button type="submit" className="button-standard-1">
+        <button
+          disabled={account.length === 0 || password.length === 0}
+          type="submit"
+          className="button-standard-1"
+        >
           Đăng nhập
         </button>
       </form>
-      <Link className="link-standard-1" to="/auth/forgot-password">
+      <Link className="link-standard-1" to="/auth/sign-up">
         Quên mật khẩu
       </Link>
       <OrBlock />
@@ -71,30 +73,50 @@ export function SignInBox({ onStateChange }) {
           <SocialLogin imgSrc={google} text="Google" />
         </div>
         <SocialLogin
-          handleOnClick={() => openModal(<SMS_LoginModal />)}
+          handleOnClick={() =>
+            openModal({
+              modalContent: <SMS_LoginModal />,
+              disableBackdropClose: true,
+            })
+          }
           imgSrc={phone}
           text="SMS"
         />
       </div>
       <div className="AuthBox_ChangeState">
         <div>Bạn mới biết đến Q-Shop? </div>
-        <button className="Stripped_Off_Button" onClick={onStateChange}>
+        <button
+          className="Stripped_Off_Button"
+          onClick={() => {
+            navigate('/auth/sign-up');
+          }}
+        >
           <b>Đăng ký</b>
         </button>
       </div>
     </div>
   );
 }
-export function SignUpBox({ onStateChange }) {
+export function SignUpBox() {
   const navigate = useNavigate();
   const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
 
   const { openModal } = useContext(ModalContext);
-  function handleSubmit(e) {
+
+  const setAuthPhone = useAuthStore((state) => state.setPhone);
+  async function handleSubmit(e) {
     e.preventDefault(); // stop the page from refreshing
-    console.log('Form submitted!');
-    navigate('/auth/sign-up-detail');
+    setError('');
+    try {
+      const response = await authApi.checkPhoneSignUpCondition(phone);
+      console.log(response);
+      setAuthPhone(phone);
+      navigate('/auth/sign-up-detail/1');
+    } catch (error) {
+      console.log(error);
+      setError(error.response.data.msg);
+    }
   }
 
   return (
@@ -109,9 +131,12 @@ export function SignUpBox({ onStateChange }) {
           onChange={(e) => setPhone(e.target.value)}
           required
         />
-        {error && <div className="AuthBox_Error">{error}</div>}
-
-        <button type="submit" className="button-standard-1">
+        {error && <div className="error-text">{error}</div>}
+        <button
+          type="submit"
+          className="button-standard-1"
+          disabled={phone.length === 0}
+        >
           Tiếp theo
         </button>
       </form>
@@ -124,7 +149,12 @@ export function SignUpBox({ onStateChange }) {
       </div>
       <div className="AuthBox_ChangeState">
         <div>Bạn đã có tài khoản? </div>
-        <button className="Stripped_Off_Button" onClick={onStateChange}>
+        <button
+          className="Stripped_Off_Button"
+          onClick={() => {
+            navigate('/auth/sign-in');
+          }}
+        >
           <b>Đăng nhập</b>
         </button>
       </div>

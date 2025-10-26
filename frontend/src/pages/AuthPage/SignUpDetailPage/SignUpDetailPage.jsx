@@ -5,26 +5,38 @@ import { Time_NumToText } from '../../../utils/util';
 import { FaArrowLeft } from 'react-icons/fa6';
 import { PasswordField } from '../../../reusable_components/comps';
 
-export default function SignUpDetailPage() {
-  const [signUpState, setSignUpState] = useState(3);
-  let box = {
-    1: <EnterOTPBox handleOnVerification={() => setSignUpState(2)} />,
-    2: <SetPasswordBox />,
-    3: <FinishBox />,
-  };
-
+export function SignUpDetailPage1() {
   return (
     <div className="SignUpDetailPage">
-      <SignUpProgress state={signUpState} />
-      {box[signUpState]}
+      <SignUpProgress state={1} />
+      <EnterOTPBox />
     </div>
   );
 }
-function EnterOTPBox({ handleOnVerification }) {
+export function SignUpDetailPage2() {
+  return (
+    <div className="SignUpDetailPage">
+      <SignUpProgress state={2} />
+      <SetPasswordBox />
+    </div>
+  );
+}
+export function SignUpDetailPage3() {
+  return (
+    <div className="SignUpDetailPage">
+      <SignUpProgress state={3} />
+      <FinishBox />
+    </div>
+  );
+}
+function EnterOTPBox() {
   const [otp, setOtp] = useState('');
-
+  const phone = useAuthStore((obj) => obj.phone);
+  const [error, setError] = useState('');
+  const { openModal } = useContext(ModalContext);
+  const navigate = useNavigate();
   //countdown
-  const [countdown, setCountdown] = useState(30);
+  const [countdown, setCountdown] = useState();
   useEffect(() => {
     if (countdown === 0) return;
     const timer = setInterval(() => {
@@ -35,6 +47,45 @@ function EnterOTPBox({ handleOnVerification }) {
     };
   }, [countdown]);
 
+  //send-otp on refresh
+  const sendOtp = async () => {
+    let bouncebackDate;
+    console.log(phone);
+    try {
+      const response = await authApi.sendOtpPhone(phone);
+      bouncebackDate = new Date(response.data.bounceback);
+    } catch (error) {
+      bouncebackDate = new Date(error.response.data.bounceback);
+      setError(error.response.data.msg);
+    } finally {
+      const countdown = bouncebackDate - Date.now();
+      console.log('countdown: ', countdown);
+      setCountdown(Math.floor(countdown / 1000));
+    }
+  };
+  const setAccessToken = useAuthStore((obj) => obj.setAccessToken);
+  const setRefreshToken = useAuthStore((obj) => obj.setRefreshToken);
+  const verifyOtp = async () => {
+    console.log('Verify otp');
+    try {
+      const response = await authApi.register_VerifyOtpPhone(phone, otp);
+      const data = response.data;
+      const at = data.accessToken;
+      const rt = data.refreshToken;
+      await setAccessToken(at);
+      await setRefreshToken(rt);
+      navigate('/auth/sign-up-detail/2');
+    } catch (error) {
+      setError(error.response.data.msg);
+    }
+  };
+
+  useEffect(() => {
+    sendOtp();
+  }, []);
+
+  //handle resend
+
   return (
     <div className="SignUpDetail_Box">
       <div className="SignUpDetail_Box_Title">
@@ -43,7 +94,7 @@ function EnterOTPBox({ handleOnVerification }) {
         </div>
         <div style={{ fontSize: '14px', fontWeight: '400' }}>
           Nhập mã xác nhận đã được gửi đến số điện thoại
-          <br /> <b>{'0123456789'}</b>
+          <br /> <b>{phone}</b>
         </div>
       </div>
       <OTPInput
@@ -70,7 +121,7 @@ function EnterOTPBox({ handleOnVerification }) {
         <button
           className="Stripped_Off_Button"
           onClick={() => {
-            setCountdown(30);
+            sendOtp();
           }}
           style={{
             color: 'blue',
@@ -82,18 +133,19 @@ function EnterOTPBox({ handleOnVerification }) {
           Gửi lại mã xác thực
         </button>
       )}
+      {error && <div className="error-text">{error}</div>}
 
       <button
         style={{ width: '100%' }}
-        onClick={handleOnVerification}
         className="button-standard-1"
+        onClick={() => {
+          verifyOtp();
+        }}
       >
         Xác nhận
       </button>
-      <button
-        onClick={() => closeModal()}
-        className="Escape_Button SignUpDetailPage_Escape_Button"
-      >
+
+      <button className="Escape_Button SignUpDetailPage_Escape_Button">
         <FaArrowLeft />
       </button>
     </div>
@@ -119,6 +171,7 @@ function SetPasswordBox() {
   const [confirmPassword, setConfirmPassword] = useState('');
 
   const [passwordErrors, setPasswordErrors] = useState([]);
+  const [error, setError] = useState('');
   const checkPasswordErrors = (passwordToCheck) => {
     const pStr = passwordToCheck.toString().trim();
     let newPasswordErrors = [];
@@ -128,9 +181,41 @@ function SetPasswordBox() {
       }
     });
     setPasswordErrors(newPasswordErrors);
-    console.log(passwordToCheck);
+    //console.log(passwordToCheck);
     //console.log(newPasswordErrors);
-    console.log(newPasswordErrors.length);
+    //console.log(newPasswordErrors.length);
+  };
+  const navigate = useNavigate();
+  const skipPassword = () => {
+    navigate('/auth/sign-up-detail/3');
+  };
+  const { openModal } = useContext(ModalContext);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await authApi.updateUserPassword({
+        newPassword: password,
+        confirmNewPassword: confirmPassword,
+      });
+      navigate('/auth/sign-up-detail/3');
+      console.log('Final response:', response);
+    } catch (error) {
+      if (error.authError) {
+        openModal({
+          modalContent: (
+            <PromptModal
+              line1={'\nBạn không có quyền thực hiện thao tác này!'}
+              line2={'Vui lòng đăng nhập lại!'}
+              onClose={() => navigate('/auth')}
+            />
+          ),
+          disableBackdropClose: true,
+        });
+      }
+      console.log('Final error:', error);
+      //setError(error.response.data.msg);
+    }
   };
   return (
     <div className="SignUpDetail_Box">
@@ -143,7 +228,7 @@ function SetPasswordBox() {
           <br /> tăng tính bảo mật
         </div>
       </div>
-      <form className="SignUpDetail_Form">
+      <form className="SignUpDetail_Form" onSubmit={handleSubmit}>
         <PasswordField
           className={`SignUpDetailPage_PasswordField`}
           passwordText={password}
@@ -174,20 +259,30 @@ function SetPasswordBox() {
             <li>Xác nhận mật khẩu và mật khẩu phải trùng nhau!</li>
           </ul>
         )}
-        <button
-          style={{ width: '100%' }}
-          disabled={
-            passwordErrors.length > 0 ||
-            password !== confirmPassword ||
-            password.length === 0
-          }
-          className="button-standard-1"
-          onClick={() => {
-            console.log('HELLO');
-          }}
-        >
-          Xác nhận
-        </button>
+        {error && <div className="error-text">{error}</div>}
+        <div style={{ display: 'flex', flexDirection: 'row', gap: '12px' }}>
+          <button
+            type="button"
+            style={{ width: '100%' }}
+            className="button-standard-2"
+            onClick={() => {
+              skipPassword();
+            }}
+          >
+            Bỏ qua
+          </button>
+          <button
+            style={{ width: '100%' }}
+            disabled={
+              passwordErrors.length > 0 ||
+              password !== confirmPassword ||
+              password.length === 0
+            }
+            className="button-standard-1"
+          >
+            Xác nhận
+          </button>
+        </div>
       </form>
     </div>
   );
@@ -195,6 +290,10 @@ function SetPasswordBox() {
 
 import finish from '../../../assets/finish.png';
 function FinishBox() {
+  const navigate = useNavigate();
+  const handleFinish = () => {
+    navigate('/');
+  };
   return (
     <div>
       <div className="SignUpDetail_Box">
@@ -206,7 +305,11 @@ function FinishBox() {
           </div>
         </div>
         <img src={finish} />
-        <button style={{ width: '100%' }} className="button-standard-1">
+        <button
+          onClick={handleFinish}
+          style={{ width: '100%' }}
+          className="button-standard-1"
+        >
           Hoàn tất
         </button>
       </div>
@@ -215,6 +318,12 @@ function FinishBox() {
 }
 
 import { HiArrowLongRight } from 'react-icons/hi2';
+import useAuthStore from '../../../contexts/zustands/AuthStore';
+import { otp_bounceback } from '../../../constants';
+import authApi from '../../../api/authApi';
+import { ModalContext } from '../../../contexts/ModalContext';
+import { useNavigate } from 'react-router-dom';
+import { PromptModal } from '../../../reusable_components/PromptModal';
 
 function SignUpProgress({ state }) {
   return (

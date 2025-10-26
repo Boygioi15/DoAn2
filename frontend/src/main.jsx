@@ -10,9 +10,13 @@ import ProfileLayout from './layouts/ProfileLayout.jsx';
 import './others/local_copy_of_google_font.css';
 
 import AuthLayout from './layouts/AuthLayout/AuthLayout.jsx';
-import SignInUpPage from './pages/AuthPage/SignInUpPage.jsx';
+import { SignInPage, SignUpPage } from './pages/AuthPage/SignInUpPage.jsx';
 import ModalContextProvider from './contexts/ModalContext.jsx';
-import SignUpDetailPage from './pages/AuthPage/SignUpDetailPage/SignUpDetailPage.jsx';
+import {
+  SignUpDetailPage1,
+  SignUpDetailPage2,
+  SignUpDetailPage3,
+} from './pages/AuthPage/SignUpDetailPage/SignUpDetailPage.jsx';
 import NotFoundPage from './pages/ErrorPages/NotFoundPage.jsx';
 import ErrorPage from './pages/ErrorPages/ErrorPage.jsx';
 const router = createBrowserRouter([
@@ -42,12 +46,24 @@ const router = createBrowserRouter([
     errorElement: <ErrorPage />,
     children: [
       {
-        index: true,
-        element: <SignInUpPage />,
+        path: '/auth/sign-in',
+        element: <SignInPage />,
       },
       {
-        path: '/auth/sign-up-detail',
-        element: <SignUpDetailPage />,
+        path: '/auth/sign-up',
+        element: <SignUpPage />,
+      },
+      {
+        path: '/auth/sign-up-detail/1',
+        element: <SignUpDetailPage1 />,
+      },
+      {
+        path: '/auth/sign-up-detail/2',
+        element: <SignUpDetailPage2 />,
+      },
+      {
+        path: '/auth/sign-up-detail/3',
+        element: <SignUpDetailPage3 />,
       },
     ],
   },
@@ -58,9 +74,7 @@ const router = createBrowserRouter([
   },
 ]);
 createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <ModalContextProvider>
-      <RouterProvider router={router} />
-    </ModalContextProvider>
-  </StrictMode>
+  <ModalContextProvider>
+    <RouterProvider router={router} />
+  </ModalContextProvider>
 );

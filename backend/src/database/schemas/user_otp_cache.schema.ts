@@ -6,7 +6,7 @@ export type UserOtpCacheDocument = HydratedDocument<UserOtpCache>;
 @Schema({ timestamps: true, collection: 'user_otp_cache' }) // optional: adds createdAt / updatedAt
 export class UserOtpCache extends Document {
   @Prop({ index: true, unique: true, required: true })
-  phone: string;
+  identifier: string;
 
   @Prop()
   otp: string;

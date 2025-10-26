@@ -4,6 +4,7 @@
   --color-preset-gray: #333f48;
   --color-preset-gray-hover: #474c63;
   --color-preset-gray-pressed: #5b6077;
+
   --color-preset-red: #e52626;
   --color-preset-green: #66cc00;
   --fontWeight-preset-medium: 300;
@@ -77,6 +78,12 @@ body {
   border: none;
   border-radius: 2px;
 }
+.error-text {
+  color: red;
+  line-height: 20px;
+  margin-bottom: -12px;
+  margin-top: -12px;
+}
 .button-standard-1:hover {
   cursor: pointer;
   background-color: var(--color-preset-gray-hover);
@@ -86,6 +93,23 @@ body {
 }
 .button-standard-1:disabled {
   opacity: 0.5;
+}
+.button-standard-2 {
+  box-shadow: none;
+  background-color: white;
+  padding: 14px;
+  color: var(--color-preset-gray);
+
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 20px;
+
+  border: 1px solid var(--color-preset-gray);
+  border-radius: 2px;
+}
+.button-standard-2:hover {
+  cursor: pointer;
+  background-color: rgba(51, 63, 72, 0.1);
 }
 .link-standard-1 {
   font-size: 14px;

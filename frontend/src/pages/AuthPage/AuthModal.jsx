@@ -2,10 +2,36 @@ import { useContext, useEffect, useState } from 'react';
 import { ModalContext } from '../../contexts/ModalContext';
 import OtpInput from 'react-otp-input';
 import { Time_NumToText } from '../../utils/util';
+import authApi from '../../api/authApi';
+import { Link, useNavigate } from 'react-router-dom';
+import useAuthStore from '../../contexts/zustands/AuthStore';
 
 export function SMS_LoginModal() {
   const { openModal, closeModal } = useContext(ModalContext);
   const [phone, setPhone] = useState('');
+  const [notFoundPhoneShow, setNotFoundPhoneShow] = useState(false);
+  const handleSubmit = async () => {
+    const result = await checkSignInCondition();
+    if (result) {
+      console.log('HERE!');
+      openModal({
+        modalContent: <SMS_VerificationModal phone={phone} />,
+        disableBackdropClose: true,
+      });
+    }
+  };
+  const checkSignInCondition = async () => {
+    try {
+      const response = await authApi.checkPhoneSignInCondition(phone);
+      return true;
+    } catch (error) {
+      console.log(error);
+      setNotFoundPhoneShow(true);
+      return false;
+    }
+    return false;
+  };
+
   return (
     <div className="SMS_LoginModal">
       <div className="SMS_LoginModal_Title">
@@ -24,8 +50,19 @@ export function SMS_LoginModal() {
         value={phone}
         onChange={(e) => setPhone(e.target.value)}
       />
+      {notFoundPhoneShow && (
+        <div>
+          <div style={{ fontSize: '14px' }} className="error-text">
+            Không tìm thấy số điện thoại trong CSDL !
+            <a className="link-standard-1" href="/auth/sign-up">
+              {'  Đăng ký?'}
+            </a>
+          </div>
+        </div>
+      )}
       <button
-        onClick={() => openModal(<SMS_VerificationModal phoneNumber={phone} />)}
+        onClick={handleSubmit}
+        disabled={phone.length === 0}
         className="button-standard-1"
       >
         Gửi OTP
@@ -39,12 +76,50 @@ export function SMS_LoginModal() {
     </div>
   );
 }
-export function SMS_VerificationModal({ phoneNumber }) {
+export function SMS_VerificationModal({ phone }) {
   const { openModal, closeModal } = useContext(ModalContext);
+  const [error, setError] = useState('');
   const [otp, setOtp] = useState('');
+  //send-otp on refresh
+  const sendOtp = async () => {
+    setError('');
+    let bouncebackDate;
+    console.log(phone);
+    try {
+      const response = await authApi.sendOtpPhone(phone);
+      bouncebackDate = new Date(response.data.bounceback);
+    } catch (error) {
+      bouncebackDate = new Date(error.response.data.bounceback);
+      setError(error.response.data.msg);
+    } finally {
+      const countdown = bouncebackDate - Date.now();
+      console.log('countdown: ', countdown);
+      setCountdown(Math.floor(countdown / 1000) + 1);
+    }
+  };
+  useEffect(() => {
+    sendOtp();
+  }, []);
+  const setAccessToken = useAuthStore((obj) => obj.setAccessToken);
+  const setRefreshToken = useAuthStore((obj) => obj.setRefreshToken);
+  const verifyOtp = async () => {
+    console.log('Verify otp');
+    try {
+      const response = await authApi.register_VerifyOtpPhone(phone, otp);
+      const data = response.data;
+      const at = data.accessToken;
+      const rt = data.refreshToken;
+      await setAccessToken(at);
+      await setRefreshToken(rt);
+      window.location.href = '/';
+    } catch (error) {
+      console.log(error);
+      setError(error.response.data.msg);
+    }
+  };
 
   //countdown
-  const [countdown, setCountdown] = useState(5);
+  const [countdown, setCountdown] = useState(0);
   useEffect(() => {
     if (countdown === 0) return;
     const timer = setInterval(() => {
@@ -63,7 +138,7 @@ export function SMS_VerificationModal({ phoneNumber }) {
         </div>
         <div style={{ fontSize: '13px', fontWeight: '400' }}>
           Nhập mã xác thực đã được gửi qua số điện thoại
-          <br /> <b>{phoneNumber}</b>
+          <br /> <b>{phone}</b>
         </div>
       </div>
       <OtpInput
@@ -91,7 +166,7 @@ export function SMS_VerificationModal({ phoneNumber }) {
         <button
           className="Stripped_Off_Button"
           onClick={() => {
-            setCountdown(30);
+            sendOtp();
           }}
           style={{
             color: 'blue',
@@ -103,7 +178,19 @@ export function SMS_VerificationModal({ phoneNumber }) {
           Gửi lại mã xác thực
         </button>
       )}
-      <button onClick={() => openModal(11212)} className="button-standard-1">
+      {error && (
+        <div
+          style={{ display: 'flex', alignSelf: 'center' }}
+          className="error-text"
+        >
+          {error}
+        </div>
+      )}
+      <button
+        onClick={() => verifyOtp()}
+        disabled={otp.length === 0}
+        className="button-standard-1"
+      >
         Xác nhận
       </button>
       <button

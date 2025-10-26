@@ -18,7 +18,7 @@ export function TopLayout() {
         <Link to="/profile">Profile</Link>
       </div>
       <div>
-        <Link to="/auth">Sign in/ Sign up</Link>
+        <Link to="/auth/sign-in">Sign in/ Sign up</Link>
       </div>
     </div>
   );

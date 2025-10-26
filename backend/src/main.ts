@@ -3,10 +3,20 @@ import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { ValidationPipe } from './validation.pipe';
 import dotenv from 'dotenv';
+
+import { HttpService } from '@nestjs/axios';
+import { Logger } from '@nestjs/common';
+
 async function bootstrap() {
+  dotenv.config();
+
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.useGlobalPipes(new ValidationPipe());
-  dotenv.config();
+  app.enableCors({
+    origin: 'http://localhost:5173',
+    credentials: true,
+  });
+
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();
