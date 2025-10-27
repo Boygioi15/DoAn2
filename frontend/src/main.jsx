@@ -74,7 +74,5 @@ const router = createBrowserRouter([
   },
 ]);
 createRoot(document.getElementById('root')).render(
-  <ModalContextProvider>
-    <RouterProvider router={router} />
-  </ModalContextProvider>
+  <RouterProvider router={router} />
 );

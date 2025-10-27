@@ -51,6 +51,15 @@ axiosClient.interceptors.response.use(
     const authStore = useAuthStore.getState();
     console.log('Invalid JWT - attempting to refresh access token');
     if (error.response?.status === 401 && !originalRequest._retry) {
+      const refreshToken = authStore.refreshToken;
+      if (!refreshToken) {
+        console.log(
+          'Retry refresh failed - refresh token not found! Logging out!'
+        );
+        error.authError = true;
+        await authStore.signOut(); // clear cookie + redirect to auth page
+        return Promise.reject(error);
+      }
       console.log('Sending request to backend!');
       originalRequest._retry = true;
 

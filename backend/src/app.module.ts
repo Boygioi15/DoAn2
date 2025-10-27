@@ -9,6 +9,7 @@ import { DatabaseModule } from './database/database.module';
 import { SmsServiceModule } from './sms_service/sms_service.module';
 import { HttpModule } from '@nestjs/axios';
 import { UserModule } from './user/user.module';
+import { ProductModule } from './product/product.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { UserModule } from './user/user.module';
     }),
     SmsServiceModule,
     UserModule,
+    ProductModule,
   ],
   controllers: [AppController],
   providers: [

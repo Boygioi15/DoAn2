@@ -1,11 +1,13 @@
 import { createContext, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 export const ModalContext = createContext();
 
 export default function ModalContextProvider({ children }) {
   const [modalContent, setModalContent] = useState(null);
   const [disableBackdropClose, setDisableBackdropClose] = useState(false);
+  const navigate = useNavigate();
   const openModal = ({ modalContent, disableBackdropClose = false }) => {
     setDisableBackdropClose(disableBackdropClose);
     setModalContent(modalContent);

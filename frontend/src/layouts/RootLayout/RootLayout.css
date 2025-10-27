@@ -37,3 +37,47 @@
   margin-bottom: 4px;
   font-weight: 350;
 }
+
+.TopLayout_TopBanner {
+  display: flex;
+  width: 100%;
+  height: 40px;
+}
+.TopLayout_TopBanner > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+.TopLayout_Toolbar {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding: 100px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+.TopLayout_Toolbar_Right {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+}
+.icon-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: black;
+
+  box-shadow: none;
+  background-color: white;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 5px;
+}
+.icon-block:hover {
+  cursor: pointer;
+  background-color: rgb(220, 220, 220);
+}
