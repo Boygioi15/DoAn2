@@ -4,7 +4,7 @@ import './main.css';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import RootLayout from './layouts/RootLayout/RootLayout.jsx';
 import HomePage from './pages/HomePage.jsx';
-import ProfileLayout from './layouts/ProfileLayout.jsx';
+import ProfileLayout from './layouts/ProfileLayout/ProfileLayout.jsx';
 
 //font stuff
 import './others/local_copy_of_google_font.css';

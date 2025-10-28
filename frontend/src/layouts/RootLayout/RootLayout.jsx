@@ -3,7 +3,7 @@ import './RootLayout.css';
 import ModalContextProvider, {
   ModalContext,
 } from '../../contexts/ModalContext';
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import UltilityContextProvider_1 from '../../contexts/UltilityContext_1';
 import { UltilityContext_1 } from '../../contexts/UltilityContext_1';
 export default function RootLayout({ children }) {
@@ -29,10 +29,12 @@ import { FaRegUserCircle, FaUserCircle } from 'react-icons/fa';
 import { FiShoppingBag } from 'react-icons/fi';
 
 import useAuthStore from '../../contexts/zustands/AuthStore';
+import { MdArrowBackIos, MdArrowForwardIos } from 'react-icons/md';
 
 export function TopLayout() {
   const { openModal } = useContext(ModalContext);
   const { handleUnauthorizedAction } = useContext(UltilityContext_1);
+
   const navigate = useNavigate();
   //get img and link of top banner from be
 
@@ -42,9 +44,8 @@ export function TopLayout() {
   loggedIn = !!authStore.refreshToken;
   return (
     <div className="TopLayout">
-      <Link className="TopLayout_TopBanner">
-        <img src={topBannerSample} />
-      </Link>
+      <TopLayout_TopBanner />
+      <TopLayout_MessageRotator />
       <div className="TopLayout_Toolbar">
         <div style={{}} className="title">
           Q-Shop
@@ -77,11 +78,70 @@ export function TopLayout() {
           />
         </div>
       </div>
-      <h1>This is the root layout!</h1>
+    </div>
+  );
+}
+function TopLayout_TopBanner() {
+  return (
+    <Link className="TopLayout_TopBanner">
+      <img src={topBannerSample} />
+    </Link>
+  );
+}
+function TopLayout_MessageRotator() {
+  const [message, setMessage] = useState([
+    'Ưu đãi ngập tràn',
+    'Quà hấp dẫn',
+    'Ôi trời ơi',
+  ]);
+  const [messageIndex, setMessageIndex] = useState(1);
+  const [slideClass, setSlideClass] = useState('');
+  const [slideDirection, setSlideDirection] = useState('next');
+  const handleMessageIndex = (state) => {
+    setSlideDirection(state ? 'next' : 'prev');
+    setSlideClass('slide-out');
 
-      <div>
-        <Link to="/auth/sign-in">Sign in/ Sign up</Link>
+    setTimeout(() => {
+      setMessageIndex((prev) =>
+        state
+          ? (prev + 1) % message.length
+          : (prev - 1 + message.length) % message.length
+      );
+      setSlideClass('slide-in');
+    }, 300);
+  };
+  //auto move forward for message
+  useEffect(() => {
+    const interval = setInterval(() => {
+      handleMessageIndex(true);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [message, messageIndex]);
+
+  // Reset class after animation
+  useEffect(() => {
+    const timer = setTimeout(() => setSlideClass(''), 300);
+    return () => clearTimeout(timer);
+  }, [messageIndex]);
+  return (
+    <div className="TopLayout_Message">
+      <MdArrowBackIos
+        className="hover-icon"
+        onClick={() => {
+          handleMessageIndex(false);
+        }}
+      />
+      <div style={{ width: '500px' }}></div>
+      <div className={`message-text ${slideClass} ${slideDirection}`}>
+        {message[messageIndex]}
       </div>
+
+      <MdArrowForwardIos
+        className="hover-icon"
+        onClick={() => {
+          handleMessageIndex(true);
+        }}
+      />
     </div>
   );
 }

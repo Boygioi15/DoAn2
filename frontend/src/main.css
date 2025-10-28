@@ -179,3 +179,14 @@ body {
 .input-with-icon-before > input:focus {
   border: none;
 }
+
+.hover-icon {
+  border-radius: 4px;
+  padding: 2px;
+  width: fit-content;
+  height: fit-content;
+}
+.hover-icon:hover {
+  cursor: pointer;
+  background-color: rgb(220, 220, 220);
+}
