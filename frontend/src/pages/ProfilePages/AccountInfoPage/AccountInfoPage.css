@@ -1,1 +1,35 @@
+.account-info-table {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 600px;
+  font-size: 16px;
 
+  gap: 20px;
+
+  font-size: 14px;
+  line-height: 20px;
+  color: black;
+}
+
+.account-info-table .row {
+  display: flex;
+  align-items: center;
+}
+
+.account-info-table .label {
+  width: 120px; /* your fixed width */
+}
+
+.account-info-table .value {
+  font-weight: 500;
+}
+
+.account-info-button-block {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  margin-top: 24px;
+
+  max-width: 600px;
+}

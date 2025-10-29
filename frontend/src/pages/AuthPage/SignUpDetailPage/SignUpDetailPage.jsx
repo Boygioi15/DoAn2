@@ -151,20 +151,6 @@ function EnterOTPBox() {
     </div>
   );
 }
-const passwordRules = [
-  {
-    condition: (pStr) => pStr.length < 8,
-    error: 'Mật khẩu không được dưới 8 kí tự',
-  },
-  {
-    condition: (pStr) => !/[A-Z]/.test(pStr), // no uppercase
-    error: 'Mật khẩu phải chứa ít nhất một kí tự viết hoa',
-  },
-  {
-    condition: (pStr) => !/[0-9]/.test(pStr), // no number
-    error: 'Mật khẩu phải chứa ít nhất một chữ số',
-  },
-];
 
 function SetPasswordBox() {
   const [password, setPassword] = useState('');
@@ -319,7 +305,7 @@ function FinishBox() {
 
 import { HiArrowLongRight } from 'react-icons/hi2';
 import useAuthStore from '../../../contexts/zustands/AuthStore';
-import { otp_bounceback } from '../../../constants';
+import { otp_bounceback, passwordRules } from '../../../constants';
 import authApi from '../../../api/authApi';
 import { ModalContext } from '../../../contexts/ModalContext';
 import { useNavigate } from 'react-router-dom';

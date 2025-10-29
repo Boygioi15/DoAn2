@@ -19,6 +19,11 @@ import {
 } from './pages/AuthPage/SignUpDetailPage/SignUpDetailPage.jsx';
 import NotFoundPage from './pages/ErrorPages/NotFoundPage.jsx';
 import ErrorPage from './pages/ErrorPages/ErrorPage.jsx';
+import AccountInfoPage, {
+  AccountInfoPageLoader,
+} from './pages/ProfilePages/AccountInfoPage/AccountInfoPage.jsx';
+import PasswordPage from './pages/ProfilePages/PasswordPage/PasswordPage.jsx';
+import AddressPage from './pages/ProfilePages/AddressPage/AddressPage.jsx';
 const router = createBrowserRouter([
   {
     path: '/',
@@ -32,7 +37,22 @@ const router = createBrowserRouter([
       {
         path: 'profile',
         element: <ProfileLayout />,
-        children: [],
+        children: [
+          {
+            path: '/profile/account-info',
+            element: <AccountInfoPage />,
+            loader: AccountInfoPageLoader,
+            index: true,
+          },
+          {
+            path: '/profile/change-password',
+            element: <PasswordPage />,
+          },
+          {
+            path: '/profile/address',
+            element: <AddressPage />,
+          },
+        ],
       },
       {
         path: 'error',

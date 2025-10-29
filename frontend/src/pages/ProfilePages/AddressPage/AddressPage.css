@@ -1,0 +1,77 @@
+.address-list {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.address-block {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  gap: 16px;
+
+  border-radius: 4px;
+  border: 1px solid var(--color-preset-border-color);
+  color: black;
+
+  font-size: 14px;
+
+  position: relative;
+
+  max-width: 48%;
+  flex-grow: 1;
+}
+.address-block-contact {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+}
+.address-block-default-flag {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  background-color: #f3f5f6;
+  border-radius: 4px;
+
+  padding: 8px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  width: fit-content;
+  line-height: 20px;
+}
+.address-block-default-flag:hover {
+  cursor: pointer;
+}
+.address-block-default-flag.active {
+  background-color: #ffe7e3;
+  color: var(--color-preset-red);
+  cursor: default;
+}
+
+.address-select-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.address-icon {
+  font-size: 20px;
+  cursor: pointer;
+}
+
+/* make the select cover the icon invisibly */
+.address-select {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  opacity: 0; /* invisible but clickable */
+  cursor: pointer;
+}
+.address-form {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding: 32px;
+  width: 550px;
+}

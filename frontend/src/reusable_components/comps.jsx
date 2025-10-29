@@ -65,5 +65,70 @@ export function SocialLogin({ imgSrc, text, handleOnClick }) {
     </button>
   );
 }
+export function InputBlock_Input({ label, inputValue, onInputValueChange }) {
+  return (
+    <div className="input-block">
+      <div style={{ fontSize: '14px', fontWeight: '500' }}>{label}</div>
+      <input
+        className="input-standard-1"
+        value={inputValue}
+        onChange={(e) => onInputValueChange(e.target.value)}
+      />
+    </div>
+  );
+}
+export function InputBlock_TextArea({ label, inputValue, onInputValueChange }) {
+  return (
+    <div className="input-block">
+      <div style={{ fontSize: '14px', fontWeight: '500' }}>{label}</div>
+      <textarea
+        className="input-standard-1"
+        value={inputValue}
+        onChange={(e) => onInputValueChange(e.target.value)}
+      />
+    </div>
+  );
+}
+export function InputBlock_Select({
+  label,
+  selectValue,
+  selectValueList,
+  onInputValueChange,
+}) {
+  return (
+    <div className="input-block">
+      <div style={{ fontSize: '14px', fontWeight: '500' }}>{label}</div>
+      <select
+        className="input-standard-1"
+        value={selectValue} // controlled select
+        onChange={(e) => onInputValueChange(e.target.value)}
+      >
+        {selectValueList.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
 
-export function OTP_BlockOf4({ handleOnChange }) {}
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+
+export function InputBlock_Date({ label, value, onInputValueChange }) {
+  return (
+    <div className="input-block">
+      <div style={{ fontSize: '14px', fontWeight: '500' }}>{label}</div>
+      <DatePicker
+        className="input-standard-1 width100"
+        selected={value ? new Date(value) : null}
+        onChange={(date) =>
+          onInputValueChange(date.toISOString().split('T')[0])
+        }
+        dateFormat="dd/MM/yyyy"
+        placeholderText="Chọn ngày sinh"
+      />
+    </div>
+  );
+}

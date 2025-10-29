@@ -67,12 +67,6 @@ export function SMS_LoginModal() {
       >
         Gửi OTP
       </button>
-      <button
-        onClick={() => closeModal()}
-        className="Escape_Button SMS_Modal_Escape_Button"
-      >
-        X
-      </button>
     </div>
   );
 }
