@@ -6,8 +6,11 @@ import {
   Patch,
   Param,
   Delete,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
 import { UserService } from './user.service';
+import { JwtGuard } from 'src/auth/strategies/jwt.strategy';
 // import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('user')
@@ -24,9 +27,11 @@ export class UserController {
     return this.userService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.userService.findOne(+id);
+  @UseGuards(JwtGuard)
+  @Get('/account-info')
+  getAccountInfo(@Request() req) {
+    const userId = req.user.sub;
+    return this.userService.getUserInfo(userId);
   }
 
   // @Patch(':id')

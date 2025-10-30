@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { ValidationPipe } from './validation.pipe';
+import { ValidationPipe } from './configs/validation.pipe';
 import dotenv from 'dotenv';
 
 import { HttpService } from '@nestjs/axios';

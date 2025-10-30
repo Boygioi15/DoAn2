@@ -13,3 +13,10 @@ export const passwordRules = [
     error: 'Mật khẩu phải chứa ít nhất một chữ số',
   },
 ];
+
+export const routeNameMap = {
+  profile: 'Hồ sơ',
+  'account-info': 'Thông tin tài khoản',
+  'change-password': 'Đổi mật khẩu',
+  address: 'Địa chỉ',
+};

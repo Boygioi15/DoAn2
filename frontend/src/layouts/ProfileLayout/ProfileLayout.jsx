@@ -5,7 +5,7 @@ export default function ProfileLayout() {
   const [selectedTab, setSelectedTab] = useState(1);
   const navigate = useNavigate();
   useEffect(() => {
-    //navigate('/profile/account-info');
+    navigate('/profile/account-info');
   }, []);
   return (
     <ProfileContext.Provider value={{ setSelectedTab }}>

@@ -6,15 +6,20 @@ import ModalContextProvider, {
 import { useContext, useEffect, useState } from 'react';
 import UltilityContextProvider_1 from '../../contexts/UltilityContext_1';
 import { UltilityContext_1 } from '../../contexts/UltilityContext_1';
+
+import { Toaster } from '@/components/ui/sonner';
+
 export default function RootLayout({ children }) {
   return (
     <ModalContextProvider>
       <UltilityContextProvider_1>
         <div>
           <TopLayout />
+          <Breadcrumbs />
           {children}
           <Outlet />
           <BotLayout />
+          <Toaster />
         </div>
       </UltilityContextProvider_1>
     </ModalContextProvider>
@@ -30,6 +35,7 @@ import { FiShoppingBag } from 'react-icons/fi';
 
 import useAuthStore from '../../contexts/zustands/AuthStore';
 import { MdArrowBackIos, MdArrowForwardIos } from 'react-icons/md';
+import Breadcrumbs from '@/reusable_components/Breadcrumb';
 
 export function TopLayout() {
   const { openModal } = useContext(ModalContext);
@@ -65,7 +71,7 @@ export function TopLayout() {
             />
           ) : (
             <IconBlock
-              icon={<Fa style={{ fontSize: '28px' }} />}
+              icon={<FaUserCircle style={{ fontSize: '28px' }} />}
               name={'Tài khoản'}
               handleOnClick={() => {
                 navigate('/profile');

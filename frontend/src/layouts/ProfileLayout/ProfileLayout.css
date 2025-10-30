@@ -1,7 +1,7 @@
 .ProfileLayout {
   padding: 100px;
-  padding-top: 40px;
-  padding-bottom: 40px;
+  padding-top: 20px;
+  padding-bottom: 20px;
   gap: 60px;
   display: flex;
   flex-direction: row;

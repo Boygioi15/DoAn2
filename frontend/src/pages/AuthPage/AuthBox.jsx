@@ -13,9 +13,12 @@ import { ModalContext } from '../../contexts/ModalContext';
 import { SMS_LoginModal } from './AuthModal';
 import authApi from '../../api/authApi';
 import useAuthStore from '../../contexts/zustands/AuthStore';
+import { toast } from 'sonner';
+import { SonnerDemo } from '../ProfilePages/AddressPage/AddressPage';
 
 export function SignInBox() {
   const { openModal } = useContext(ModalContext);
+  const authStore = useAuthStore();
   // state for inputs
   const [account, setAccount] = useState('');
   const [password, setPassword] = useState('');
@@ -31,6 +34,13 @@ export function SignInBox() {
         account,
         password
       );
+      const accessToken = response.data.accessToken;
+      const refreshToken = response.data.refreshToken;
+      await authStore.setAccessToken(accessToken);
+      await authStore.setRefreshToken(refreshToken);
+
+      navigate('/');
+      toast('Đăng nhập thành công');
     } catch (error) {
       setError(error.response.data.msg);
     }
@@ -38,6 +48,7 @@ export function SignInBox() {
 
   return (
     <div className="AuthBox" onSubmit={handleSubmit}>
+      <SonnerDemo />
       <div className="AuthBox_Title">Đăng nhập</div>
       <form>
         <input

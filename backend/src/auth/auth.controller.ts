@@ -110,7 +110,7 @@ export class AuthController {
   }
   async registerNewUser(phone: string) {
     //create new user with user service
-    const newUser = await this.userService.createNewUser(phone);
+    const newUser = await this.userService.createNewUser();
     //create new login profile with userId
     const newLoginProfile = await this.authService.createNewLoginProfile(
       newUser.userId,

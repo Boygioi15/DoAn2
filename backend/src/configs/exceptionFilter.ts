@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { timeStamp } from 'console';
 import { Request, Response } from 'express';
-import { AppService } from './app.service';
+import { AppService } from '../app.service';
 
 @Catch(HttpException)
 export class CustomExceptionFilter implements ExceptionFilter {

@@ -54,7 +54,6 @@ export default function AddressPage() {
         style={{ width: 'fit-content', marginTop: '16px' }}
         className="button-standard-2"
         onClick={() => {
-          console.log('Reached here');
           openModal({ modalContent: <AddressForm mode="creating" /> });
         }}
       >
@@ -63,6 +62,7 @@ export default function AddressPage() {
           Thêm địa chỉ mới
         </div>
       </button>
+      <SonnerDemo />
       <div className="address-list">
         <AddressBlock
           address={addresses[0]}
@@ -157,5 +157,26 @@ export function AddressBlockDropdownMenu({ handleOnEdit, handleOnDelete }) {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+import { toast } from 'sonner';
+import { BreadcrumbTest } from '@/reusable_components/test';
+export function SonnerDemo() {
+  return (
+    <Button
+      variant="outline"
+      onClick={() =>
+        toast('Event has been created', {
+          description: 'Sunday, December 03, 2023 at 9:00 AM',
+          action: {
+            label: 'Undo',
+            onClick: () => console.log('Undo'),
+          },
+        })
+      }
+    >
+      Show Toast
+    </Button>
   );
 }

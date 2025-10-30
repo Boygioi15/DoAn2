@@ -225,7 +225,7 @@ function SetPasswordBox() {
           isError={password.length > 0 && passwordErrors.length > 0}
         />
         {password.length > 0 && passwordErrors.length > 0 && (
-          <ul>
+          <ul className="ul-error">
             {passwordErrors.map((element, idx) => (
               <li key={idx}>{element}</li>
             ))}
@@ -241,7 +241,7 @@ function SetPasswordBox() {
           isError={confirmPassword.length > 0 && password !== confirmPassword}
         />
         {confirmPassword.length > 0 && password !== confirmPassword && (
-          <ul>
+          <ul className="ul-error">
             <li>Xác nhận mật khẩu và mật khẩu phải trùng nhau!</li>
           </ul>
         )}

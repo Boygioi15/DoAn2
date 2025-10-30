@@ -1,7 +1,9 @@
 import { axiosClient } from './apiClient';
 
 const userApi = {
-  getAccountInfo: () => {},
+  getAccountInfo: async () => {
+    return await axiosClient.get('/user/account-info');
+  },
   updateAccountInfo: () => {},
   updateUserPassword: () => {},
 };
