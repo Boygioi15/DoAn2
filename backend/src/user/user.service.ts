@@ -38,6 +38,34 @@ export class UserService {
     const newUser = await this.userModel.create({});
     return newUser;
   }
+  async getAllUser(): Promise<any> {
+    const allUserInfos = await this.userModel.find().lean();
+    const allUserLoginProfiles = await this.userLoginProfileModel.find().lean();
+    //console.log('All user: ', allUserInfos);
+    const allUsers = allUserInfos.map((userInfo) => {
+      const associatedLoginProfiles = allUserLoginProfiles.filter(
+        (loginProfile) => loginProfile.userId === userInfo.userId,
+      );
+      if (!associatedLoginProfiles) {
+        return;
+      }
+      const email = associatedLoginProfiles.find(
+        (loginProfile) => loginProfile.provider === auth_provider.email,
+      )?.identifier;
+      const phone = associatedLoginProfiles.find(
+        (loginProfile) => loginProfile.provider === auth_provider.phone,
+      )?.identifier;
+      const { password, ..._userInfo } = userInfo;
+      const finalUser = {
+        ..._userInfo,
+        email,
+        phone,
+      };
+      //console.log(finalUser);
+      return finalUser;
+    });
+    return allUsers;
+  }
   async getUserInfo(userId: string) {
     //get user basic info
     const user = await this.userModel.findOne({ userId: userId });

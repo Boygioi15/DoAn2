@@ -3,9 +3,11 @@ import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import UserManagementPage from "./pages/UserManagementPage";
 import RootLayout from "./layouts/RootLayout/RootLayout";
-import "./app.css";
 import "./main.css";
 import "./others/local_copy_of_google_font.css";
+import AddNewProductPage from "./pages/AddNewProductPage/AddNewProductPage";
+import ProductManagementPage from "./pages/ProductManagementPage";
+import TestUploadPage from "./pages/Test/TestUpload";
 
 const router = createBrowserRouter([
   {
@@ -15,6 +17,18 @@ const router = createBrowserRouter([
       {
         element: <UserManagementPage />,
         path: "user",
+      },
+      {
+        element: <AddNewProductPage />,
+        path: "add-product",
+      },
+      {
+        element: <ProductManagementPage />,
+        path: "product-management",
+      },
+      {
+        element: <TestUploadPage />,
+        path: "test-upload",
       },
     ],
   },

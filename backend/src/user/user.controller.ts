@@ -26,10 +26,10 @@ export class UserController {
   // }
 
   @Get()
-  findAll() {
-    return this.userService.findAll();
+  async getAllUser() {
+    const allUser = await this.userService.getAllUser();
+    return { stt: 200, allUser };
   }
-
   @UseGuards(JwtGuard)
   @Get('/account-info')
   async getAccountInfo(@Request() req) {

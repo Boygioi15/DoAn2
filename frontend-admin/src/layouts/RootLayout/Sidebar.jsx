@@ -1,11 +1,4 @@
-import {
-  Calendar,
-  ChevronDown,
-  Home,
-  Inbox,
-  Search,
-  Settings,
-} from "lucide-react";
+import { User, PackageSearch, ChevronDown } from "lucide-react";
 
 import {
   Sidebar,
@@ -25,25 +18,33 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 // Menu items, max depth: 2
 const sidebarItems = [
-  { title: "Quản lý thông tin người dùng", url: "user", icon: Home },
+  { title: "Quản lý tài khoản", url: "user", icon: User },
   {
     title: "Sản phẩm",
-    icon: Home,
+    icon: PackageSearch,
     children: [
-      { title: "Quản lý sản phẩm", url: "product-management", icon: Home },
-      { title: "Thêm mới sản phẩm", url: "add-product", icon: Home },
-      { title: "Cập nhật sản phẩm", url: "update-product", icon: Home },
+      { title: "Quản lý sản phẩm", url: "product-management" },
+      { title: "Thêm mới sản phẩm", url: "add-product" },
+      { title: "Cập nhật sản phẩm", url: "update-product" },
     ],
+  },
+  {
+    title: "Test",
+    icon: PackageSearch,
+    children: [{ title: "Test upload", url: "test-upload" }],
   },
 ];
 
 export function AppSidebar() {
   return (
-    <Sidebar>
-      <SidebarHeader>Trang admin</SidebarHeader>
+    <Sidebar className="p-[8px] border-[#e5e5e5]">
+      <SidebarHeader>
+        <h1 className="text-xl font-medium">Trang admin</h1>
+      </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
           {sidebarItems.map((item1) => {
@@ -53,7 +54,7 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item1.title}>
                   <SidebarMenuButton asChild>
                     <Link to={item1.url}>
-                      <item1.icon />
+                      <item1.icon style={{ width: "18px", height: "18px" }} />
                       <span>{item1.title}</span>
                     </Link>
                   </SidebarMenuButton>
@@ -69,8 +70,8 @@ export function AppSidebar() {
               >
                 <SidebarGroup>
                   <SidebarGroupLabel asChild>
-                    <CollapsibleTrigger>
-                      {item1.title}
+                    <CollapsibleTrigger className="!p-0 my-2">
+                      <h1 className="text-[16px] font-medium">{item1.title}</h1>
                       <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
                     </CollapsibleTrigger>
                   </SidebarGroupLabel>
@@ -81,7 +82,6 @@ export function AppSidebar() {
                         <SidebarMenuItem key={item2.title}>
                           <SidebarMenuButton asChild>
                             <Link to={item2.url}>
-                              <item2.icon />
                               <span>{item2.title}</span>
                             </Link>
                           </SidebarMenuButton>
