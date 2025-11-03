@@ -2,10 +2,11 @@ import { useContext } from 'react';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { ModalContext } from '../ModalContext';
+import authApi from '@/api/authApi';
 
 const useAuthStore = create(
   persist(
-    (set) => ({
+    (set, get) => ({
       phone: '',
       setPhone: (phone) => set({ phone }),
 
@@ -16,6 +17,7 @@ const useAuthStore = create(
       setRefreshToken: (token) => set({ refreshToken: token }),
 
       signOut: () => {
+        authApi.signOut(get().refreshToken);
         set({
           phone: '',
           accessToken: '',

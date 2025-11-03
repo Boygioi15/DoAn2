@@ -1,3 +1,4 @@
+import useAuthStore from '@/contexts/zustands/AuthStore';
 import { axiosClient_Backend } from './apiClient';
 
 const authApi = {
@@ -58,6 +59,11 @@ const authApi = {
         password,
       }
     );
+  },
+  signOut: async (refreshToken) => {
+    return await axiosClient_Backend.post('/auth/sign-out', {
+      refreshToken,
+    });
   },
 };
 export default authApi;

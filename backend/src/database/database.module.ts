@@ -21,10 +21,22 @@ import {
   UserRefreshToken,
   UserRefreshTokenSchema,
 } from './schemas/user_refresh_token.schema';
+import {
+  Product,
+  ProductSchema,
+  ProductVariant,
+  ProductVariantSchema,
+  VariantOption,
+  VariantOptionSchema,
+} from './schemas/product.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
+      { name: Product.name, schema: ProductSchema },
+      { name: ProductVariant.name, schema: ProductVariantSchema },
+      { name: VariantOption.name, schema: VariantOptionSchema },
+
       { name: User.name, schema: UserSchema },
       { name: UserAddress.name, schema: UserAddressSchema },
       { name: AddressDetailProvince.name, schema: AddressDetailProvinceSchema },

@@ -239,6 +239,7 @@ export class AuthService {
       userId: userId,
       refreshToken: refreshToken,
     });
+    console.log('Đã xóa refreshToken tương ứng: ', refreshToken);
     if (!refreshCache) {
       throw new BadRequestException(
         'Không tồn tại refresh token tương ứng trong db!',
