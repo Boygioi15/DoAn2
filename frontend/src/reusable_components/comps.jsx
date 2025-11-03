@@ -1,6 +1,15 @@
 import { Link } from 'react-router-dom';
 import './comps.css';
 import { useState } from 'react';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 export function Title() {
   return (
     <Link to="/" className="title">
@@ -65,19 +74,33 @@ export function SocialLogin({ imgSrc, text, handleOnClick }) {
     </button>
   );
 }
-export function InputBlock_Input({ label, inputValue, onInputValueChange }) {
+export function InputBlock_Input({
+  label,
+  placeholder,
+  inputValue,
+  onInputValueChange,
+  isFormRequired,
+}) {
   return (
     <div className="input-block">
       <div style={{ fontSize: '14px', fontWeight: '500' }}>{label}</div>
       <input
         className="input-standard-1"
         value={inputValue}
+        placeholder={placeholder}
+        required={isFormRequired}
         onChange={(e) => onInputValueChange(e.target.value)}
       />
     </div>
   );
 }
-export function InputBlock_TextArea({ label, inputValue, onInputValueChange }) {
+export function InputBlock_TextArea({
+  label,
+  placeholder,
+  inputValue,
+  onInputValueChange,
+  isFormRequired,
+}) {
   return (
     <div className="input-block">
       <div style={{ fontSize: '14px', fontWeight: '500' }}>{label}</div>
@@ -85,6 +108,8 @@ export function InputBlock_TextArea({ label, inputValue, onInputValueChange }) {
         className="input-standard-1"
         value={inputValue}
         onChange={(e) => onInputValueChange(e.target.value)}
+        placeholder={placeholder}
+        required={isFormRequired}
       />
     </div>
   );
@@ -113,16 +138,58 @@ export function InputBlock_Select({
   );
 }
 
+export function InputBlock_SelectWithSearch({
+  label,
+  placeholder,
+  selectValue,
+  defaultSelectValue,
+  selectValueList,
+  onInputValueChange,
+  isDisabled,
+}) {
+  if (defaultSelectValue) {
+    console.log(defaultSelectValue);
+  }
+  return (
+    <div className="input-block">
+      <div style={{ fontSize: '14px', fontWeight: '500' }}>{label}</div>
+      <Select
+        value={selectValue}
+        onValueChange={onInputValueChange}
+        disabled={isDisabled}
+      >
+        <SelectTrigger className="w-full text-[13px]">
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectContent>
+          {defaultSelectValue && (
+            <SelectItem
+              key={defaultSelectValue.id}
+              value={defaultSelectValue.id}
+            >
+              {defaultSelectValue.name}
+            </SelectItem>
+          )}
+          {selectValueList.map((element) => (
+            <SelectItem key={element.id} value={element.id}>
+              {element.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
-export function InputBlock_Date({ label, value, onInputValueChange }) {
+export function InputBlock_Date({ label, inputValue, onInputValueChange }) {
   return (
     <div className="input-block">
       <div style={{ fontSize: '14px', fontWeight: '500' }}>{label}</div>
       <DatePicker
         className="input-standard-1 width100"
-        selected={value ? new Date(value) : null}
+        selected={inputValue ? new Date(inputValue) : null}
         onChange={(date) =>
           onInputValueChange(date.toISOString().split('T')[0])
         }

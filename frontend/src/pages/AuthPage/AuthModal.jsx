@@ -99,7 +99,7 @@ export function SMS_VerificationModal({ phone }) {
   const verifyOtp = async () => {
     console.log('Verify otp');
     try {
-      const response = await authApi.register_VerifyOtpPhone(phone, otp);
+      const response = await authApi.authenticateUser_Otp(phone, otp);
       const data = response.data;
       const at = data.accessToken;
       const rt = data.refreshToken;

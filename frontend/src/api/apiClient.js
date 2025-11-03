@@ -1,14 +1,15 @@
 import axios from 'axios';
 import useAuthStore from '../contexts/zustands/AuthStore';
-export const axiosClient = axios.create({
+const baseConfig = {
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
   headers: {
     'Content-Type': 'application/json',
   },
   timeout: 5000,
-});
+};
+export const axiosClient_Backend = axios.create(baseConfig);
 //logger
-axiosClient.interceptors.response.use(
+axiosClient_Backend.interceptors.response.use(
   (response) => {
     console.log('📥 [Response]', {
       url: response.config.url,
@@ -33,7 +34,7 @@ axiosClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-axiosClient.interceptors.request.use((config) => {
+axiosClient_Backend.interceptors.request.use((config) => {
   console.log('Request', {
     url: config.url,
     method: config.method,
@@ -43,7 +44,7 @@ axiosClient.interceptors.request.use((config) => {
   return config;
 });
 
-axiosClient.interceptors.response.use(
+axiosClient_Backend.interceptors.response.use(
   (response) => response,
   async (error) => {
     ////Retry JWT block
@@ -64,7 +65,7 @@ axiosClient.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const refreshResponse = await axiosClient.post(
+        const refreshResponse = await axiosClient_Backend.post(
           '/auth/refresh-access-token',
           {
             refreshToken: authStore.refreshToken,
@@ -78,7 +79,7 @@ axiosClient.interceptors.response.use(
         // Retry original request
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         console.log('Retry original request');
-        return await axiosClient(originalRequest);
+        return await axiosClient_Backend(originalRequest);
       } catch (refreshError) {
         console.log('Retry refresh failed - logging out!');
         refreshError.authError = true;
@@ -90,10 +91,44 @@ axiosClient.interceptors.response.use(
   }
 );
 //auto-attach access token
-axiosClient.interceptors.request.use((config) => {
+axiosClient_Backend.interceptors.request.use((config) => {
   const token = useAuthStore.getState().accessToken;
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
-export default axiosClient;
+export const axiosClient_Public = axios.create(baseConfig);
+axiosClient_Public.interceptors.response.use(
+  (response) => {
+    console.log('📥 [Response]', {
+      url: response.config.url,
+      status: response.status,
+      data: response.data,
+    });
+    return response;
+  },
+  async (error) => {
+    /////LOGGER BLOCK!
+    if (error.code === 'ECONNABORTED') {
+      console.error('⏰ Request timed out');
+    } else if (error.response) {
+      console.error('❌ [Error Response]', {
+        status: error.response.status,
+        data: error.response.data,
+      });
+    } else {
+      console.error('🚨 [Error]', error);
+    }
+
+    return Promise.reject(error);
+  }
+);
+axiosClient_Public.interceptors.request.use((config) => {
+  console.log('Request', {
+    url: config.url,
+    method: config.method,
+    headers: config.headers,
+    data: config.data,
+  });
+  return config;
+});

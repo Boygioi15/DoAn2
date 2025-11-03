@@ -4,31 +4,59 @@ import '../ProfilePage.css';
 import { ProfileContext } from '../../../contexts/ProfileContext';
 import userApi from '../../../api/userApi';
 import { useLoaderData } from 'react-router-dom';
+import { toast } from 'sonner';
 
-export async function AccountInfoPageLoader() {
-  //const userInfo = await userApi.getAccountInfo();
-  const userInfo = {
-    name: 'Nguyễn Anh Quyền',
-    gender: 'Nam',
-    phone: '0373865627',
-    email: 'boygioi85@gmail.com',
-    birthday: '',
-  };
-  await new Promise((resolve) => setTimeout(resolve, 2000));
-  return { userInfo };
-}
+import { MdModeEdit } from 'react-icons/md';
+import {
+  InputBlock_Date,
+  InputBlock_Input,
+  InputBlock_Select,
+} from '../../../reusable_components/comps';
+import { UltilityContext_1 } from '@/contexts/UltilityContext_1';
+
 export default function AccountInfoPage() {
+  const {
+    convenience_1,
+    showToastMessageInLocalStorage,
+    storeToastMessageInLocalStorage,
+  } = useContext(UltilityContext_1);
   //true: view, false: edit
+  const [boxState, setBoxState] = useState(true);
   const { setSelectedTab } = useContext(ProfileContext);
-  const { userInfo } = useLoaderData();
+  const [accountInfo, setAccountInfo] = useState();
 
+  const getAccountInfo = async () => {
+    try {
+      const response = await userApi.getAccountInfo();
+      setAccountInfo(response.data.accountInfo);
+    } catch (error) {
+      if (error.authError) {
+        convenience_1();
+      }
+      toast.error('Lỗi khi lấy dữ liệu người dùng');
+    }
+  };
+  const updateUserInfo = async (formData) => {
+    try {
+      const response = await userApi.updateAccountInfo(formData);
+      setBoxState(true);
+      toast.success('Cập nhật thông tin người dùng thành công!');
+      getAccountInfo();
+    } catch (error) {
+      if (error.authError) {
+        convenience_1();
+      }
+    }
+  };
+  //get userInfo on loading
+  useEffect(() => {
+    getAccountInfo();
+  }, []);
   useEffect(() => {
     setSelectedTab(1);
-    console.log('User info: ', userInfo);
-  }, []);
+    console.log('User info: ', accountInfo);
+  }, [accountInfo]);
 
-  const updateUserInfo = (formData) => {};
-  const [boxState, setBoxState] = useState(true);
   return (
     <div className="ProfilePage">
       <div className="ProfilePage_Title_Block">
@@ -39,14 +67,14 @@ export default function AccountInfoPage() {
       </div>
       {boxState ? (
         <ViewBox
-          userInfo={userInfo}
+          accountInfo={accountInfo}
           handleOnEdit={() => {
             setBoxState(false);
           }}
         />
       ) : (
         <EditBox
-          userInfo={userInfo}
+          accountInfo={accountInfo}
           handleOnCancel={() => setBoxState(true)}
           handleOnSubmit={updateUserInfo}
           errors={['Gà quá', '???', 'Troll à']}
@@ -55,38 +83,42 @@ export default function AccountInfoPage() {
     </div>
   );
 }
-import { MdModeEdit } from 'react-icons/md';
-import {
-  InputBlock_Date,
-  InputBlock_Input,
-  InputBlock_Select,
-} from '../../../reusable_components/comps';
-function ViewBox({ userInfo, handleOnEdit }) {
+
+function ViewBox({ accountInfo, handleOnEdit }) {
+  if (!accountInfo) {
+    return null;
+  }
   return (
     <div>
       <div className="account-info-table">
         <div className="row">
           <div className="label">Họ và tên</div>
-          <div className="value">{userInfo.name || 'Chưa có thông tin'}</div>
+          <div className="value">{accountInfo.name || 'Chưa có thông tin'}</div>
         </div>
 
         <div className="row">
           <div className="label">Số điện thoại</div>
-          <div className="value">{userInfo.phone || 'Chưa có thông tin'}</div>
+          <div className="value">
+            {accountInfo.phone || 'Chưa có thông tin'}
+          </div>
         </div>
         <div className="row">
           <div className="label">Email</div>
-          <div className="value">{userInfo.email || 'Chưa có thông tin'}</div>
+          <div className="value">
+            {accountInfo.email || 'Chưa có thông tin'}
+          </div>
         </div>
         <div className="row">
           <div className="label">Giới tính</div>
-          <div className="value">{userInfo.gender || 'Chưa có thông tin'}</div>
+          <div className="value">{accountInfo.sex || 'Chưa có thông tin'}</div>
         </div>
 
         <div className="row">
           <div className="label">Ngày sinh</div>
           <div className="value">
-            {userInfo.birthday || 'Chưa có thông tin'}
+            {accountInfo.birthdate
+              ? new Date(accountInfo.birthdate).toLocaleDateString('vi-VN')
+              : 'Chưa có thông tin'}
           </div>
         </div>
       </div>
@@ -103,20 +135,25 @@ function ViewBox({ userInfo, handleOnEdit }) {
     </div>
   );
 }
-function EditBox({ userInfo, errors, handleOnSubmit, handleOnCancel }) {
-  const genderValueList = ['Nam', 'Nữ', 'Khác'];
-  const [formData, setFormdata] = useState(userInfo);
+function EditBox({ accountInfo, errors, handleOnSubmit, handleOnCancel }) {
+  const sexValueList = ['Nam', 'Nữ', 'Khác'];
+  const [formData, setFormdata] = useState(accountInfo);
 
   useEffect(() => {
     console.log(formData);
   }, [formData]);
   return (
-    <form onSubmit={() => handleOnSubmit(formData)}>
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        handleOnSubmit(formData);
+      }}
+    >
       <div className="account-info-table">
         <div style={{ display: 'flex', flexDirection: 'row', gap: '12px' }}>
           <InputBlock_Input
             label={'Họ và tên'}
-            value={formData.name || ''}
+            inputValue={formData.name || ''}
             onInputValueChange={(value) => {
               setFormdata((prev) => ({
                 ...prev,
@@ -126,18 +163,18 @@ function EditBox({ userInfo, errors, handleOnSubmit, handleOnCancel }) {
           />
           <InputBlock_Select
             label={'Giới tính'}
-            selectValue={formData.gender || 'Khác'}
-            selectValueList={genderValueList}
+            selectValue={formData.sex || 'Khác'}
+            selectValueList={sexValueList}
             onInputValueChange={(value) => {
               setFormdata((prev) => ({
                 ...prev,
-                gender: value,
+                sex: value,
               }));
             }}
           />
           <InputBlock_Date
             label={'Ngày sinh'}
-            value={formData.birthdate}
+            inputValue={formData.birthdate}
             onInputValueChange={(value) => {
               setFormdata((prev) => ({
                 ...prev,
@@ -148,7 +185,7 @@ function EditBox({ userInfo, errors, handleOnSubmit, handleOnCancel }) {
         </div>
         <InputBlock_Input
           label={'Số điện thoại'}
-          value={formData.phone || ''}
+          inputValue={formData.phone}
           onInputValueChange={(value) => {
             setFormdata((prev) => ({
               ...prev,
@@ -158,7 +195,7 @@ function EditBox({ userInfo, errors, handleOnSubmit, handleOnCancel }) {
         />
         <InputBlock_Input
           label={'Email'}
-          value={formData.email || ''}
+          inputValue={formData.email}
           onInputValueChange={(value) => {
             setFormdata((prev) => ({
               ...prev,

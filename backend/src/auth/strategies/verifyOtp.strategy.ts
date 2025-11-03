@@ -8,7 +8,10 @@ import {
 } from '@nestjs/common';
 
 @Injectable()
-export class VerifyOtpStrategy extends PassportStrategy(Strategy) {
+export class VerifyOtpStrategy extends PassportStrategy(
+  Strategy,
+  'verify-otp',
+) {
   constructor(private readonly authService: AuthService) {
     super({
       usernameField: 'identifier',
@@ -27,4 +30,4 @@ export class VerifyOtpStrategy extends PassportStrategy(Strategy) {
     return user;
   }
 }
-export class VerifyOtpGuard extends AuthGuard('local') {}
+export class VerifyOtpGuard extends AuthGuard('verify-otp') {}

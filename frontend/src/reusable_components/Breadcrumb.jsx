@@ -6,6 +6,7 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { routeNameMap } from '@/constants';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 export default function Breadcrumbs() {
@@ -28,16 +29,18 @@ export default function Breadcrumbs() {
     const isLast = index === pathParts.length - 1;
 
     return (
-      <BreadcrumbItem key={to}>
-        {!isLast ? (
-          <BreadcrumbLink asChild>
-            <Link to={to}>{label}</Link>
-          </BreadcrumbLink>
-        ) : (
-          <span className="text-muted-foreground">{label}</span>
-        )}
+      <React.Fragment key={to}>
+        <BreadcrumbItem key={to}>
+          {!isLast ? (
+            <BreadcrumbLink asChild>
+              <Link to={to}>{label}</Link>
+            </BreadcrumbLink>
+          ) : (
+            <span className="text-muted-foreground">{label}</span>
+          )}
+        </BreadcrumbItem>
         {!isLast && <BreadcrumbSeparator />}
-      </BreadcrumbItem>
+      </React.Fragment>
     );
   });
 

@@ -20,7 +20,7 @@ export class User extends Document {
   sex: string;
 
   @Prop({ type: Date })
-  birthDate: Date; // ✅ correct type is JS Date (mongoose Date maps to it)
+  birthdate: Date; // ✅ correct type is JS Date (mongoose Date maps to it)
 
   @Prop()
   password: string;

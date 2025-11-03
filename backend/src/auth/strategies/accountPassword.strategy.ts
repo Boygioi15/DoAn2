@@ -8,7 +8,10 @@ import {
 } from '@nestjs/common';
 
 @Injectable()
-export class AccountPasswordStrategy extends PassportStrategy(Strategy) {
+export class AccountPasswordStrategy extends PassportStrategy(
+  Strategy,
+  'account-password',
+) {
   constructor(private readonly authService: AuthService) {
     super();
   }
@@ -33,4 +36,4 @@ export class AccountPasswordStrategy extends PassportStrategy(Strategy) {
     return user;
   }
 }
-export class AccountPasswordGuard extends AuthGuard('local') {}
+export class AccountPasswordGuard extends AuthGuard('account-password') {}

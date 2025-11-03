@@ -138,7 +138,7 @@ export class AuthController {
   async authenticateUSer_otp(@Request() req) {
     //find associated user with phone
     const user = req.user;
-    const rt = await this.HELPER_JWT(user);
+    const rt = await this.HELPER_JWT(user.userId);
     return rt;
   }
   @Post('authenticate-user/account-password')
@@ -146,7 +146,7 @@ export class AuthController {
   async authenticateUSer_accountPassword(@Request() req) {
     //find associated user with phone
     const user = req.user;
-    const rt = await this.HELPER_JWT(user);
+    const rt = await this.HELPER_JWT(user.userId);
     return rt;
   }
 
@@ -158,6 +158,7 @@ export class AuthController {
   ) {
     const user = req.user;
     const userId = user.userId;
+    console.log(user);
     const { oldPassword, newPassword, confirmNewPassword } = updatePassword;
 
     if (!(confirmNewPassword === newPassword)) {

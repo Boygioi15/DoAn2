@@ -1,7 +1,11 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './main.css';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import {
+  createBrowserRouter,
+  redirect,
+  RouterProvider,
+} from 'react-router-dom';
 import RootLayout from './layouts/RootLayout/RootLayout.jsx';
 import HomePage from './pages/HomePage.jsx';
 import ProfileLayout from './layouts/ProfileLayout/ProfileLayout.jsx';
@@ -19,11 +23,10 @@ import {
 } from './pages/AuthPage/SignUpDetailPage/SignUpDetailPage.jsx';
 import NotFoundPage from './pages/ErrorPages/NotFoundPage.jsx';
 import ErrorPage from './pages/ErrorPages/ErrorPage.jsx';
-import AccountInfoPage, {
-  AccountInfoPageLoader,
-} from './pages/ProfilePages/AccountInfoPage/AccountInfoPage.jsx';
+import AccountInfoPage from './pages/ProfilePages/AccountInfoPage/AccountInfoPage.jsx';
 import PasswordPage from './pages/ProfilePages/PasswordPage/PasswordPage.jsx';
 import AddressPage from './pages/ProfilePages/AddressPage/AddressPage.jsx';
+import { Toaster } from 'sonner';
 const router = createBrowserRouter([
   {
     path: '/',
@@ -39,17 +42,15 @@ const router = createBrowserRouter([
         element: <ProfileLayout />,
         children: [
           {
-            path: '/profile/account-info',
+            path: 'account-info',
             element: <AccountInfoPage />,
-            loader: AccountInfoPageLoader,
-            index: true,
           },
           {
-            path: '/profile/change-password',
+            path: 'change-password',
             element: <PasswordPage />,
           },
           {
-            path: '/profile/address',
+            path: 'address',
             element: <AddressPage />,
           },
         ],
@@ -94,5 +95,8 @@ const router = createBrowserRouter([
   },
 ]);
 createRoot(document.getElementById('root')).render(
-  <RouterProvider router={router} />
+  <div>
+    <RouterProvider router={router} />
+    <Toaster richColors position="top-right" />
+  </div>
 );

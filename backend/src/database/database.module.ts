@@ -11,7 +11,12 @@ import {
 import { DatabaseController } from './database.controller';
 import { TestUser, TestUserSchema } from './schemas/test_user.schema';
 import { User, UserSchema } from './schemas/user.schema';
-import { UserAddress, UserAddressSchema } from './schemas/user_address.schema';
+import {
+  AddressDetailProvince,
+  AddressDetailProvinceSchema,
+  UserAddress,
+  UserAddressSchema,
+} from './schemas/user_address.schema';
 import {
   UserRefreshToken,
   UserRefreshTokenSchema,
@@ -22,6 +27,7 @@ import {
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
       { name: UserAddress.name, schema: UserAddressSchema },
+      { name: AddressDetailProvince.name, schema: AddressDetailProvinceSchema },
       {
         name: UserLoginProfile.name,
         schema: UserLoginProfileSchema,

@@ -14,7 +14,6 @@ import { SMS_LoginModal } from './AuthModal';
 import authApi from '../../api/authApi';
 import useAuthStore from '../../contexts/zustands/AuthStore';
 import { toast } from 'sonner';
-import { SonnerDemo } from '../ProfilePages/AddressPage/AddressPage';
 
 export function SignInBox() {
   const { openModal } = useContext(ModalContext);
@@ -28,7 +27,6 @@ export function SignInBox() {
   // submit handler (defined outside JSX)
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
       const response = await authApi.authenticateUser_AccountPassword(
         account,
@@ -39,18 +37,18 @@ export function SignInBox() {
       await authStore.setAccessToken(accessToken);
       await authStore.setRefreshToken(refreshToken);
 
+      toast.success('Đăng nhập thành công');
       navigate('/');
-      toast('Đăng nhập thành công');
     } catch (error) {
+      toast.error('Đăng nhập thất bại');
       setError(error.response.data.msg);
     }
   };
 
   return (
-    <div className="AuthBox" onSubmit={handleSubmit}>
-      <SonnerDemo />
+    <div className="AuthBox">
       <div className="AuthBox_Title">Đăng nhập</div>
-      <form>
+      <form onSubmit={handleSubmit}>
         <input
           type="text"
           className="input-standard-1"

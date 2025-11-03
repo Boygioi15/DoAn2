@@ -7,8 +7,6 @@ import { useContext, useEffect, useState } from 'react';
 import UltilityContextProvider_1 from '../../contexts/UltilityContext_1';
 import { UltilityContext_1 } from '../../contexts/UltilityContext_1';
 
-import { Toaster } from '@/components/ui/sonner';
-
 export default function RootLayout({ children }) {
   return (
     <ModalContextProvider>
@@ -19,7 +17,6 @@ export default function RootLayout({ children }) {
           {children}
           <Outlet />
           <BotLayout />
-          <Toaster />
         </div>
       </UltilityContextProvider_1>
     </ModalContextProvider>
@@ -39,7 +36,7 @@ import Breadcrumbs from '@/reusable_components/Breadcrumb';
 
 export function TopLayout() {
   const { openModal } = useContext(ModalContext);
-  const { handleUnauthorizedAction } = useContext(UltilityContext_1);
+  const { convenience_1 } = useContext(UltilityContext_1);
 
   const navigate = useNavigate();
   //get img and link of top banner from be
@@ -74,7 +71,7 @@ export function TopLayout() {
               icon={<FaUserCircle style={{ fontSize: '28px' }} />}
               name={'Tài khoản'}
               handleOnClick={() => {
-                navigate('/profile');
+                navigate('/profile/account-info');
               }}
             />
           )}

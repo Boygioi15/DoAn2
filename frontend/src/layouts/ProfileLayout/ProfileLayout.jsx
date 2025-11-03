@@ -1,12 +1,10 @@
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { ProfileContext } from '../../contexts/ProfileContext';
 import './ProfileLayout.css';
 export default function ProfileLayout() {
   const [selectedTab, setSelectedTab] = useState(1);
   const navigate = useNavigate();
-  useEffect(() => {
-    navigate('/profile/account-info');
-  }, []);
+  const location = useLocation();
   return (
     <ProfileContext.Provider value={{ setSelectedTab }}>
       <div className="ProfileLayout">
@@ -59,6 +57,7 @@ function Sidebar({ selectedTab }) {
         handleOnClick={async () => {
           await authStore.signOut();
           navigate('/');
+          toast.success('Đăng xuất thành công!');
         }}
       />
     </div>
@@ -67,6 +66,7 @@ function Sidebar({ selectedTab }) {
 import { IoMdArrowRoundForward } from 'react-icons/io';
 import { useEffect, useState } from 'react';
 import useAuthStore from '../../contexts/zustands/AuthStore';
+import { toast } from 'sonner';
 
 function SidebarTab({ icon, name, description, isSelected, handleOnClick }) {
   return (

@@ -72,7 +72,7 @@
 .address-form {
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 36px;
   padding: 32px;
-  width: 550px;
+  width: 600px;
 }

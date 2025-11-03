@@ -5,7 +5,6 @@ import { BotLayout } from '../RootLayout/RootLayout';
 import { createContext, useEffect, useState } from 'react';
 import ModalContextProvider from '../../contexts/ModalContext';
 import UltilityContextProvider_1 from '../../contexts/UltilityContext_1';
-import { Toaster } from '@/components/ui/sonner';
 
 export const AuthPageContext = createContext();
 export default function AuthLayout() {
@@ -24,7 +23,6 @@ export default function AuthLayout() {
             <Outlet />
           </AuthPageContext.Provider>
           <BotLayout />
-          <Toaster />
         </UltilityContextProvider_1>
       </ModalContextProvider>
     </div>

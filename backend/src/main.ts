@@ -11,7 +11,7 @@ async function bootstrap() {
   dotenv.config();
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
-  app.useGlobalPipes(new ValidationPipe());
+  //app.useGlobalPipes(new ValidationPipe());
   app.enableCors({
     origin: 'http://localhost:5173',
     credentials: true,

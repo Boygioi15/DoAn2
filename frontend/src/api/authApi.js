@@ -1,14 +1,17 @@
-import { axiosClient } from './apiClient';
+import { axiosClient_Backend } from './apiClient';
 
 const authApi = {
   checkPhoneSignUpCondition: async (phone) => {
-    return await axiosClient.get('/auth/check-phone-sign-up-condition', {
-      params: { phone },
-    });
+    return await axiosClient_Backend.get(
+      '/auth/check-phone-sign-up-condition',
+      {
+        params: { phone },
+      }
+    );
   },
   sendOtpPhone: async (identifier) => {
     console.log('Phone2', identifier);
-    return await axiosClient.post(
+    return await axiosClient_Backend.post(
       '/auth/send-otp',
       {},
       {
@@ -17,7 +20,7 @@ const authApi = {
     );
   },
   register_VerifyOtpPhone: async (phone, otp) => {
-    return await axiosClient.post('/auth/register-verify-otp-phone', {
+    return await axiosClient_Backend.post('/auth/register-verify-otp-phone', {
       phone,
       otp,
     });
@@ -27,28 +30,34 @@ const authApi = {
     newPassword,
     confirmNewPassword,
   }) => {
-    return await axiosClient.post('/auth/update-password', {
+    return await axiosClient_Backend.post('/auth/update-password', {
       oldPassword,
       newPassword,
       confirmNewPassword,
     });
   },
   checkPhoneSignInCondition: async (phone) => {
-    return await axiosClient.get('/auth/check-phone-sign-in-condition', {
-      params: { phone },
-    });
+    return await axiosClient_Backend.get(
+      '/auth/check-phone-sign-in-condition',
+      {
+        params: { phone },
+      }
+    );
   },
-  authenticateUser_Otp: async (phone, otp) => {
-    return await axiosClient.post('/auth/authenticate-user/otp', {
-      phone,
+  authenticateUser_Otp: async (identifier, otp) => {
+    return await axiosClient_Backend.post('/auth/authenticate-user/otp', {
+      identifier,
       otp,
     });
   },
   authenticateUser_AccountPassword: async (username, password) => {
-    return await axiosClient.post('/auth/authenticate-user/account-password', {
-      username,
-      password,
-    });
+    return await axiosClient_Backend.post(
+      '/auth/authenticate-user/account-password',
+      {
+        username,
+        password,
+      }
+    );
   },
 };
 export default authApi;

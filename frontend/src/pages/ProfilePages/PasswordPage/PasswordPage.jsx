@@ -3,6 +3,9 @@ import './PasswordPage.css';
 import { ProfileContext } from '../../../contexts/ProfileContext';
 import { PasswordField } from '../../../reusable_components/comps';
 import { passwordRules } from '../../../constants';
+import authApi from '@/api/authApi';
+import { UltilityContext_1 } from '@/contexts/UltilityContext_1';
+import { toast } from 'sonner';
 export default function PasswordPage() {
   const { setSelectedTab } = useContext(ProfileContext);
   const [oldPassword, setOldPassword] = useState('');
@@ -10,7 +13,6 @@ export default function PasswordPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
 
   const [passwordErrors, setPasswordErrors] = useState([]);
-  const [error, setError] = useState('');
   const checkPasswordErrors = (passwordToCheck) => {
     const pStr = passwordToCheck.toString().trim();
     let newPasswordErrors = [];
@@ -21,7 +23,28 @@ export default function PasswordPage() {
     });
     setPasswordErrors(newPasswordErrors);
   };
+  const { storeToastMessageInLocalStorage, showToastMessageInLocalStorage } =
+    useContext(UltilityContext_1);
+  useEffect(() => {
+    showToastMessageInLocalStorage();
+  }, []);
+  const handleOnSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await authApi.updateUserPassword({
+        oldPassword: oldPassword,
+        newPassword: password,
+        confirmNewPassword: confirmPassword,
+      });
+      toast.success('Cập nhật mật khẩu thành công');
 
+      setPassword('');
+      setOldPassword('');
+      setConfirmPassword('');
+    } catch (error) {
+      toast.error('Cập nhật mật khẩu thất bại');
+    }
+  };
   useEffect(() => {
     setSelectedTab(2);
   }, []);
@@ -33,7 +56,7 @@ export default function PasswordPage() {
         <div className="ProfilePage_Description">
           Cập nhật thông tin bảo mật cho tài khoản của bạn
         </div>
-        <form className="account-info-table">
+        <form className="account-info-table" onSubmit={handleOnSubmit}>
           <div className="input-block">
             <div style={{ fontSize: '14px', fontWeight: '500' }}>
               Mật khẩu cũ
@@ -91,7 +114,6 @@ export default function PasswordPage() {
               <li>Xác nhận mật khẩu và mật khẩu phải trùng nhau!</li>
             </ul>
           )}
-          {error && <div className="error-text">{error}</div>}
           <button
             style={{ width: '100%' }}
             disabled={

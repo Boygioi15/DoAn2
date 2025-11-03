@@ -17,6 +17,7 @@ import {
   UserOtpCacheDocument,
 } from 'src/database/schemas/user_otp_cache.schema';
 import {
+  accessToken_ttl,
   auth_provider,
   otp_bounceback,
   otp_ttl,
@@ -98,12 +99,13 @@ export class AuthService {
   async verifyAccountPassword(identifier: string, password: string) {
     const user = await this.findUserWithIdentifier(identifier);
     if (user) {
+      console.log('Found user');
       const passwordMatch = this.HELPER_compareHashedPassword(
         password,
         user.password,
       );
       if (!passwordMatch) {
-        throw new UnauthorizedException();
+        return null;
       }
       return user;
     }
@@ -112,7 +114,7 @@ export class AuthService {
   //works for email + phone provider
   async findUserWithIdentifier(identifier: string) {
     const loginProfile = await this.userLoginProfileModel.findOne({
-      provider: auth_provider.phone || auth_provider.email,
+      provider: { $in: [auth_provider.phone, auth_provider.email] },
       identifier: identifier,
     });
     const user = await this.userModel.findOne({ userId: loginProfile?.userId });
@@ -121,7 +123,7 @@ export class AuthService {
   async signAccessToken(userId: string) {
     const payload = { sub: userId };
     const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET;
-    const JWT_ACCESS_TTL = Number(process.env.JWT_ACCESS_TTL);
+    const JWT_ACCESS_TTL = accessToken_ttl;
 
     if (!JWT_ACCESS_SECRET || !JWT_ACCESS_TTL) {
       throw new InternalServerErrorException(
@@ -138,7 +140,7 @@ export class AuthService {
   async signRefreshToken(userId: string) {
     const payload = { sub: userId };
     const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
-    const JWT_REFRESH_TTL = Number(process.env.JWT_REFRESH_TTL) * 24 * 60 * 60;
+    const JWT_REFRESH_TTL = refreshToken_ttl;
 
     if (!JWT_REFRESH_SECRET || !JWT_REFRESH_TTL) {
       throw new Error('Missing JWT_REFRESH_SECRET or JWT_REFRESH_TTL in .env');
