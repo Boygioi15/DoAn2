@@ -239,7 +239,7 @@ export class AuthController {
   }
   async HELPER_sendOtpPhone(phone: string, otp: string) {
     console.log('Send-otp-phone - ptp:', otp);
-    //await this.authService.sendOtp(phone, otp);
+    await this.authService.sendOtp(phone, otp);
     console.log('Send-otp-phone - otp sent');
   }
   async HELPER_createCache(identifier: string, otp: string) {

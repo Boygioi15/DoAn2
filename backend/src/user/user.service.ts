@@ -97,6 +97,22 @@ export class UserService {
       { new: true },
     );
     //update login profile info
+    const _userId = userId;
+    const checkExistedPhone = await this.userLoginProfileModel.find({
+      identifier: phone,
+      userId: { $ne: _userId },
+    });
+    console.log('Check existed phone: ', checkExistedPhone);
+    if (checkExistedPhone.length > 0) {
+      throw new ConflictException('Số điện thoại đã tồn tại');
+    }
+    const checkExistedEmail = await this.userLoginProfileModel.find({
+      identifier: email,
+      userId: { $ne: _userId },
+    });
+    if (checkExistedEmail.length > 0) {
+      throw new ConflictException('Email đã tồn tại');
+    }
     const updatedPhone = await this.userLoginProfileModel.findOneAndUpdate(
       { userId: userId, provider: auth_provider.phone },
       { identifier: phone },

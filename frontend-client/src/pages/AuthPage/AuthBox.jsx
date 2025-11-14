@@ -14,6 +14,7 @@ import { SMS_LoginModal } from './AuthModal';
 import authApi from '../../api/authApi';
 import useAuthStore from '../../contexts/zustands/AuthStore';
 import { toast } from 'sonner';
+import { phoneRegex } from '@/utils/util';
 
 export function SignInBox() {
   const { openModal } = useContext(ModalContext);
@@ -116,6 +117,10 @@ export function SignUpBox() {
   const setAuthPhone = useAuthStore((state) => state.setPhone);
   async function handleSubmit(e) {
     e.preventDefault(); // stop the page from refreshing
+    if (!phoneRegex.test(phone)) {
+      setError('Định dạng SĐT không hợp lệ!');
+      return;
+    }
     setError('');
     try {
       const response = await authApi.checkPhoneSignUpCondition(phone);

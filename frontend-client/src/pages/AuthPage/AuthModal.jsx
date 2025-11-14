@@ -5,6 +5,7 @@ import { Time_NumToText } from '../../utils/util';
 import authApi from '../../api/authApi';
 import { Link, useNavigate } from 'react-router-dom';
 import useAuthStore from '../../contexts/zustands/AuthStore';
+import { toast } from 'sonner';
 
 export function SMS_LoginModal() {
   const { openModal, closeModal } = useContext(ModalContext);
@@ -96,6 +97,7 @@ export function SMS_VerificationModal({ phone }) {
   }, []);
   const setAccessToken = useAuthStore((obj) => obj.setAccessToken);
   const setRefreshToken = useAuthStore((obj) => obj.setRefreshToken);
+  const navigate = useNavigate();
   const verifyOtp = async () => {
     console.log('Verify otp');
     try {
@@ -105,8 +107,10 @@ export function SMS_VerificationModal({ phone }) {
       const rt = data.refreshToken;
       await setAccessToken(at);
       await setRefreshToken(rt);
-      window.location.href = '/';
+      navigate('/');
+      toast.success('Đăng nhập thành công');
     } catch (error) {
+      toast.error('Đăng nhập thất bại');
       console.log(error);
       setError(error.response.data.msg);
     }

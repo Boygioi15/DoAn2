@@ -19,7 +19,7 @@ export class UserLoginProfile extends Document {
   @Prop()
   provider: string;
 
-  @Prop()
+  @Prop({ unique: true })
   identifier: string;
 }
 

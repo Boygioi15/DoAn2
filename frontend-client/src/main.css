@@ -246,6 +246,7 @@ body {
   font-size: 14px;
   color: red;
   line-height: 20px;
+  list-style: circle;
 }
 
 @theme inline {

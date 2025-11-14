@@ -13,18 +13,15 @@ import {
   InputBlock_Select,
 } from '../../../reusable_components/comps';
 import { UltilityContext_1 } from '@/contexts/UltilityContext_1';
+import { emailRegex, nameRegex, phoneRegex } from '@/utils/util';
 
 export default function AccountInfoPage() {
-  const {
-    convenience_1,
-    showToastMessageInLocalStorage,
-    storeToastMessageInLocalStorage,
-  } = useContext(UltilityContext_1);
+  const { convenience_1 } = useContext(UltilityContext_1);
   //true: view, false: edit
   const [boxState, setBoxState] = useState(true);
   const { setSelectedTab } = useContext(ProfileContext);
   const [accountInfo, setAccountInfo] = useState();
-
+  const [formErrors, setFormErrors] = useState([]);
   const getAccountInfo = async () => {
     try {
       const response = await userApi.getAccountInfo();
@@ -37,12 +34,29 @@ export default function AccountInfoPage() {
     }
   };
   const updateUserInfo = async (formData) => {
+    const _formErrors = [];
+    if (formData.name && !nameRegex.test(formData.name)) {
+      _formErrors.push('Định dạng tên không hợp lệ!');
+    }
+    if (formData.phone && !phoneRegex.test(formData.phone)) {
+      _formErrors.push('Định dạng tên không hợp lệ!');
+    }
+    if (formData.email && !emailRegex.test(formData.email)) {
+      _formErrors.push('Định dạng email không hợp lệ!');
+    }
+    if (_formErrors.length > 0) {
+      setFormErrors(_formErrors);
+      return;
+    }
+    setFormErrors(_formErrors);
     try {
       const response = await userApi.updateAccountInfo(formData);
       setBoxState(true);
       toast.success('Cập nhật thông tin người dùng thành công!');
       getAccountInfo();
     } catch (error) {
+      toast.error('Cập nhật thông tin người dùng thất bại');
+      setFormErrors([error.response.data.message]);
       if (error.authError) {
         convenience_1();
       }
@@ -75,9 +89,12 @@ export default function AccountInfoPage() {
       ) : (
         <EditBox
           accountInfo={accountInfo}
-          handleOnCancel={() => setBoxState(true)}
+          handleOnCancel={() => {
+            setBoxState(true);
+            setFormErrors([]);
+          }}
           handleOnSubmit={updateUserInfo}
-          errors={['Gà quá', '???', 'Troll à']}
+          errors={formErrors}
         />
       )}
     </div>

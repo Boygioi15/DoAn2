@@ -55,6 +55,7 @@ function EnterOTPBox() {
       const response = await authApi.sendOtpPhone(phone);
       bouncebackDate = new Date(response.data.bounceback);
     } catch (error) {
+      toast.error('Gửi OTP thất bại');
       bouncebackDate = new Date(error.response.data.bounceback);
       setError(error.response.data.msg);
     } finally {
@@ -310,6 +311,7 @@ import authApi from '../../../api/authApi';
 import { ModalContext } from '../../../contexts/ModalContext';
 import { useNavigate } from 'react-router-dom';
 import { PromptModal } from '../../../reusable_components/PromptModal';
+import { toast } from 'sonner';
 
 function SignUpProgress({ state }) {
   return (

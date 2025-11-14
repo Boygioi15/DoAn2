@@ -17,7 +17,7 @@ export default function UltilityContextProvider_1({ children }) {
         <PromptModal
           line1={'\nBạn không có quyền thực hiện thao tác này!'}
           line2={'Vui lòng đăng nhập lại!'}
-          onClose={() => navigate('/auth')}
+          onClose={() => navigate('/auth/sign-in')}
         />
       ),
       disableBackdropClose: true,

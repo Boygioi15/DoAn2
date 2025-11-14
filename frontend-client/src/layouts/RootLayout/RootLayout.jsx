@@ -63,7 +63,7 @@ export function TopLayout() {
               icon={<FaRegUserCircle style={{ fontSize: '28px' }} />}
               name={'Đăng nhập'}
               handleOnClick={() => {
-                navigate('/auth');
+                navigate('/auth/sign-in');
               }}
             />
           ) : (

@@ -8,21 +8,25 @@ export function InputBlock_Input({
   placeholder,
   inputValue,
   onInputValueChange,
+  containerClassname,
 }) {
   return (
-    <div className="w-full space-y-[8px]">
+    <div className={`w-full space-y-2 ${containerClassname}`}>
       <Label className="gap-1  text-[14px]">
         {isRequired && <span className="text-destructive">*</span>} {label}
       </Label>
-      <Label className="gap-1 text-[12px] text-muted-foreground">
-        {description}
-      </Label>
+      {description && (
+        <Label className="gap-1 text-[12px] text-muted-foreground">
+          {description}
+        </Label>
+      )}
       <Input
         type="email"
         placeholder={placeholder}
         required={isRequired}
         value={inputValue}
         onChange={onInputValueChange}
+        className={"bg-white"}
       />
     </div>
   );

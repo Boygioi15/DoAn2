@@ -5,7 +5,7 @@ const baseConfig = {
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 5000,
+  timeout: 10000,
 };
 export const axiosClient_Backend = axios.create(baseConfig);
 //logger

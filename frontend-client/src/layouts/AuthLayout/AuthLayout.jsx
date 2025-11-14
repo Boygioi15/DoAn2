@@ -10,9 +10,6 @@ export const AuthPageContext = createContext();
 export default function AuthLayout() {
   const [authState, setAuthState] = useState(1);
   const navigate = useNavigate();
-  useEffect(() => {
-    navigate('/auth/sign-in');
-  }, []);
 
   return (
     <div className="AuthLayout">

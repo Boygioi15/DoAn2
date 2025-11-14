@@ -9,6 +9,7 @@ import {
 import { toast } from 'sonner';
 import { useEffect, useState } from 'react';
 import { all } from 'axios';
+import { nameRegex, phoneRegex } from '@/utils/util';
 
 export default function AddressForm({
   mode,
@@ -121,8 +122,7 @@ export default function AddressForm({
     ) {
       formErrors.push('Vui lòng điền đầy đủ các trường');
     }
-    const nameRegex = /^[\p{L}\s'.-]{2,50}$/u;
-    const phoneRegex = /^\d{10}$/;
+
     if (!nameRegex.test(finalFormData.contact_name)) {
       formErrors.push('Định dạng tên không hợp lệ!');
     }
