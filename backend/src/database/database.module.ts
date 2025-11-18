@@ -29,11 +29,13 @@ import {
   VariantOption,
   VariantOptionSchema,
 } from './schemas/product.schema';
+import { Category, CategorySchema } from './schemas/category.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: Product.name, schema: ProductSchema },
+      { name: Category.name, schema: CategorySchema },
       { name: ProductVariant.name, schema: ProductVariantSchema },
       { name: VariantOption.name, schema: VariantOptionSchema },
 

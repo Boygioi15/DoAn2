@@ -1,0 +1,4 @@
+curl http://localhost:3000/category
+curl -X POST http://localhost:3000/category \
+-H "Content-Type: application/json" \
+-d '{"categoryName":"Không xác định"}'

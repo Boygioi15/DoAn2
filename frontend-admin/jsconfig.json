@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "ignoreDeprecations": "6.0",
+    "module": "es6",
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]

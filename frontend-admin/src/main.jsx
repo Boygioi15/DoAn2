@@ -8,6 +8,7 @@ import "./others/local_copy_of_google_font.css";
 import AddNewProductPage from "./pages/AddNewProductPage/AddNewProductPage";
 import ProductManagementPage from "./pages/ProductManagementPage";
 import TestUploadPage from "./pages/Test/TestUpload";
+import CategoryPage from "./pages/CategoryPage/CategoryPage";
 
 const router = createBrowserRouter([
   {
@@ -25,6 +26,10 @@ const router = createBrowserRouter([
       {
         element: <ProductManagementPage />,
         path: "product-management",
+      },
+      {
+        element: <CategoryPage />,
+        path: "category-management",
       },
       {
         element: <TestUploadPage />,

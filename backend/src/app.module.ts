@@ -10,6 +10,7 @@ import { SmsServiceModule } from './sms_service/sms_service.module';
 import { HttpModule } from '@nestjs/axios';
 import { UserModule } from './user/user.module';
 import { ProductModule } from './product/product.module';
+import { CategoryModule } from './category/category.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { ProductModule } from './product/product.module';
     SmsServiceModule,
     UserModule,
     ProductModule,
+    CategoryModule,
   ],
   controllers: [AppController],
   providers: [
