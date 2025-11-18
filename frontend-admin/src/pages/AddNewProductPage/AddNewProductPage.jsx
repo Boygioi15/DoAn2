@@ -1,4 +1,16 @@
+import categoryApi from "@/api/categoryApi";
 import FileUploadCompact from "@/components/compact-upload";
+import {
+  AlertDialogContent,
+  AlertDialogTrigger,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialog,
+  AlertDialogDescription,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,36 +23,75 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import ComboBoxWithSearch from "@/reuseables/ComboboxWithSearch";
 import { InputBlock_Input } from "@/reuseables/Input";
 import UploadComponent from "@/reuseables/UploadComponent";
-import { Menu, Trash2Icon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { buildCategoryNameRecursively } from "@/utils";
+import { Menu, Trash, Trash2Icon } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
 import { v4 } from "uuid";
 const reusableStyle = {
   inputBlock:
-    "flex flex-col p-[12px] pt-[20px] gap-[20px] rounded-[4px] bg-[white] w-full h-auto",
+    "flex flex-col p-[16px] pt-[20px] gap-[20px] rounded-[8px] bg-[white] w-full h-auto shadow-lg",
   variantBlock: "bg-gray-50 rounded-[4px] flex flex-col gap-6 p-4",
+  errorBorder:
+    " border border-red-200 drop-shadow-[0_0_8px_rgba(255,0,0,0.05)]",
 };
 export default function AddNewProductPage() {
   const [productName, setProductName] = useState("");
+  const [allCategories, setAllCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [productProperties, setProductProperties] = useState([
     { name: "", value: "" },
   ]);
   const [variant1, setVariant1] = useState(null);
   const [variant2, setVariant2] = useState(null);
   const [variantSellingPoint, setVariantSellingPoint] = useState([]);
-  const [formErrors, setFormErrors] = useState([]);
+  const [formErrors, setFormErrors] = useState({
+    basicInfoError: [],
+    propertiesError: [],
+    descriptionError: [],
+    variant1Error: [],
+    variant2Error: [],
+    variantTableError: [],
+  });
 
   const addNewProperty = () => {
     setProductProperties((prev) => [...prev, { name: "", value: "" }]);
   };
+  //basic info block
+  const getAllCategory = async () => {
+    try {
+      const response = await categoryApi.getAllCategory();
+      setAllCategories(response.data);
+    } catch (error) {
+      toast.error("Có lỗi khi lấy dữ liệu ngành hàng");
+    }
+  };
+  useEffect(() => {
+    getAllCategory();
+  }, []);
+
+  //all categories
   useEffect(() => {
     console.log(productProperties);
   }, [productProperties]);
+
+  //variant table
   useEffect(() => {
     if (!variant1 && !variant2) {
+      const specialCase = [
+        {
+          sellerSku: "special-case",
+          sellingPrice: "",
+          stock: "",
+          isInUse: true,
+          isOpenToSale: true,
+        },
+      ];
+      setVariantSellingPoint(specialCase);
       return;
     }
     const oldDataRow = variantSellingPoint;
@@ -91,88 +142,322 @@ export default function AddNewProductPage() {
         }
       }
     }
-    // console.log("O:", oldDataRow);
-    // console.log("N:", newDataRow);
     //helping filling
-    oldDataRow.forEach((dataRow, index) => {
-      const _v1Exist = v1Exist && dataRow.v1_tempId;
-      const _v2Exist = v2Exist && dataRow.v2_tempId;
+    for (let i = 0; i < oldDataRow.length; i++) {
+      const _v1Exist = v1Exist && oldDataRow[i].v1_tempId;
+      const _v2Exist = v2Exist && oldDataRow[i].v2_tempId;
       if (!_v1Exist && !_v2Exist) {
-        return;
+        break;
       }
       if (_v1Exist) {
         if (_v2Exist) {
           const match = newDataRow.find(
             (element) =>
-              element.v1_tempId === dataRow.v1_tempId &&
-              element.v2_tempId === dataRow.v2_tempId
+              element.v1_tempId === oldDataRow[i].v1_tempId &&
+              element.v2_tempId === oldDataRow[i].v2_tempId
           );
           if (match) {
-            match.isOpenToSale = dataRow.isOpenToSale;
-            match.isInUse = dataRow.isInUse;
-            match.sellerSku = dataRow.sellerSku;
-            match.stock = dataRow.stock;
-            match.sellingPrice = dataRow.sellingPrice;
+            match.isOpenToSale = oldDataRow[i].isOpenToSale;
+            match.isInUse = oldDataRow[i].isInUse;
+            match.sellerSku = oldDataRow[i].sellerSku;
+            match.stock = oldDataRow[i].stock;
+            match.sellingPrice = oldDataRow[i].sellingPrice;
           }
         } else {
+          console.log("C: ");
           const match = newDataRow.find((element) => {
             if (!element.v1_tempId) return false;
-            return element.v1_tempId === dataRow.v1_tempId;
+            return element.v1_tempId === oldDataRow[i].v1_tempId;
           });
+          console.log("Match: ", match);
           if (match) {
-            match.isOpenToSale = dataRow.isOpenToSale;
-            match.isInUse = dataRow.isInUse;
-            match.sellerSku = dataRow.sellerSku;
-            match.stock = dataRow.stock;
-            match.sellingPrice = dataRow.sellingPrice;
+            match.isOpenToSale = oldDataRow[i].isOpenToSale;
+            match.isInUse = oldDataRow[i].isInUse;
+            match.sellerSku = oldDataRow[i].sellerSku;
+            match.stock = oldDataRow[i].stock;
+            match.sellingPrice = oldDataRow[i].sellingPrice;
           }
         }
       }
-    });
+    }
+    // console.log("A3");
+    // console.log("O:", oldDataRow);
+    // console.log("N: ", newDataRow);
     setVariantSellingPoint(newDataRow);
   }, [variant1, variant2]);
+
+  //tracker
+  const basicInfoRef = useRef(null);
+  const propertiesRef = useRef(null);
+  const descriptionRef = useRef(null);
+  const variantsRef = useRef(null);
+
+  const [currentStep, setCurrentStep] = useState(0);
+
+  useEffect(() => {
+    const sections = [
+      basicInfoRef.current,
+      propertiesRef.current,
+      descriptionRef.current,
+      variantsRef.current,
+    ];
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const index = sections.indexOf(entry.target);
+            if (index !== -1) setCurrentStep(index + 1);
+          }
+        });
+      },
+      {
+        threshold: 0.3, // 30% visible triggers activation
+        rootMargin: "-10% 0px -40% 0px", // feels natural like Shopee/Lazada
+      }
+    );
+
+    sections.forEach((sec) => sec && observer.observe(sec));
+
+    return () => observer.disconnect();
+  }, []);
+
+  //tip
+  const [tipState, setTipState] = useState(0);
+
+  //error
+  const basicFirstRun = useRef(true);
+  const descriptionFirstRun = useRef(true);
+  const propertiesFirstRun = useRef(true);
+  const variant1FirstRun = useRef(true);
+  const variant2FirstRun = useRef(true);
+  const variantTableFirstRun = useRef(true);
+  //basic info
+  useEffect(() => {
+    if (basicFirstRun.current) {
+      // console.log("A");
+      basicFirstRun.current = false;
+      return;
+    }
+    // console.log("B");
+    const newErrorList = [];
+    if (productName === "" || selectedCategory === "") {
+      newErrorList.push("Vui lòng nhập đầy đủ các trường");
+    }
+    console.log(productName.length);
+    if (productName.length < 10) {
+      newErrorList.push("Tên sản phẩm phải tối thiểu 10 ký tự!");
+    }
+    setFormErrors((prev) => ({ ...prev, basicInfoError: newErrorList }));
+  }, [productName, selectedCategory]);
+  //properties
+  useEffect(() => {
+    if (propertiesFirstRun.current) {
+      // console.log("A");
+      propertiesFirstRun.current = false;
+      return;
+    }
+    //at least 3 properties & no blank, no same name
+    const newErrorList = [];
+    if (productProperties.length < 3) {
+      newErrorList.push("Phải có ít nhất 3 thuộc tính sản phẩm");
+    }
+    productProperties.some((element) => {
+      if (element.name.trim() === "" || element.value.trim() === "") {
+        newErrorList.push("Không được để trống dòng thuộc tính");
+        return true; // stops iteration early
+      }
+    });
+    const names = productProperties.map((property) => property.name);
+    const sNames = new Set(names);
+    if (names.length !== sNames.size) {
+      console.log("S: ", sNames);
+      console.log("N: ", names);
+      newErrorList.push("Các thuộc tính không được trùng tên với nhau");
+    }
+    setFormErrors((prev) => ({ ...prev, propertiesError: newErrorList }));
+  }, [productProperties]);
+  useEffect(() => {
+    if (!variant1) return;
+    if (variant1FirstRun.current) {
+      variant1FirstRun.current = false;
+      return;
+    }
+    const newErrorList = [];
+    if (variant1.name.trim() === "") {
+      newErrorList.push("Không được để trống tên biến thể!");
+    }
+    const valueList = variant1.valueList;
+    if (valueList.length === 1) {
+      newErrorList.push("Phải có ít nhất một giá trị cho biến thể!");
+    }
+    for (let i = 0; i < valueList.length - 1; i++) {
+      if (valueList[i].name.trim() === "") {
+        newErrorList.push("Không được để trống giá trị của biến thể");
+        break;
+      }
+    }
+    for (let i = 0; i < valueList.length - 1; i++) {
+      if (valueList[i].img.length) {
+        newErrorList.push("Phải cung cấp ảnh cho mọi biến thể!");
+        break;
+      }
+    }
+    const names = valueList.map((value) => value.name);
+    if (names.length !== new Set(names).size) {
+      newErrorList.push("Các biến thể không được trùng tên nhau!");
+    }
+    setFormErrors((prev) => ({ ...prev, variant1Error: newErrorList }));
+  }, [variant1]);
+  useEffect(() => {
+    // console.log("2: ", variant2);
+    if (!variant2) return;
+    if (variant2FirstRun.current) {
+      variant2FirstRun.current = false;
+      return;
+    }
+    console.log("2a: ", variant2);
+    const newErrorList = [];
+    if (variant2.name.trim() === "") {
+      newErrorList.push("Không được để trống tên biến thể!");
+    }
+    const valueList = variant2.valueList;
+    if (valueList.length === 1) {
+      newErrorList.push("Phải có ít nhất một giá trị cho biến thể!");
+    }
+    for (let i = 0; i < valueList.length - 1; i++) {
+      if (valueList[i].name.trim() === "") {
+        newErrorList.push("Không được để trống giá trị của biến thể");
+        break;
+      }
+    }
+    for (let i = 0; i < valueList.length - 1; i++) {
+      if (valueList[i].img.length) {
+        newErrorList.push("Phải cung cấp ảnh cho mọi biến thể!");
+        break;
+      }
+    }
+    const names = valueList.map((value) => value.name);
+    if (names.length !== new Set(names).size) {
+      newErrorList.push("Các biến thể không được trùng tên nhau!");
+    }
+    setFormErrors((prev) => ({ ...prev, variant2Error: newErrorList }));
+  }, [variant2]);
+  const hasError = useMemo(() => {
+    // console.log(formErrors);
+    if (
+      formErrors.basicInfoError.length > 0 ||
+      formErrors.descriptionError.length > 0 ||
+      formErrors.propertiesError.length > 0 ||
+      formErrors.variant1Error.length > 0
+    ) {
+      return true;
+    }
+    return false;
+  }, [formErrors]);
+
   return (
     <div className="page-layout">
       <h1>Thêm sản phẩm mới</h1>
       {/* Big layout!*/}
       {/*Content*/}
-      <div className=" flex flex-col gap-[20px]">
-        <div className={reusableStyle.inputBlock}>
-          <h2>Thông tin cơ bản</h2>
-          <div className="flex flex-row gap-[40px]">
-            <div className="w-[70%] flex flex-col gap-[20px]">
-              <InputBlock_Input
-                label="Tên sản phẩm"
-                description="Tiêu đề nhiều ngôn ngữ sẽ được hiển thị khi người mua thay đổi cài đặt ngôn ngữ mặc định của ứng dụng của họ. Thiết lập nó có thể giúp cải thiện việc thu hồi sản phẩm trong các ứng dụng nhắm mục tiêu vào các ngôn ngữ khác nhau."
-                isRequired={true}
-                placeholder="Nhập tên sản phẩm"
-              />
-              <InputBlock_Input
-                label="Danh mục sản phẩm"
-                isRequired={true}
-                placeholder="Nhập danh mục sản phẩm"
-              />
-            </div>
-            <div className="w-[30%] flex flex-col gap-[10px]">
-              <h2>Ảnh bìa sản phẩm</h2>
-              <UploadComponent className="h-full" />
+      <div className="grid grid-cols-[75%_25%] gap-4">
+        <div className="flex flex-col gap-6">
+          <div ref={basicInfoRef} onClick={() => setTipState(1)}>
+            <div
+              className={
+                reusableStyle.inputBlock +
+                (formErrors.basicInfoError.length > 0 &&
+                  reusableStyle.errorBorder)
+              }
+            >
+              <h2>Thông tin cơ bản</h2>
+              <div className="flex flex-row gap-10">
+                <div className="w-[70%] flex flex-col gap-5">
+                  <InputBlock_Input
+                    label="Tên sản phẩm"
+                    description="Tiêu đề nhiều ngôn ngữ sẽ được hiển thị khi người mua thay đổi cài đặt ngôn ngữ mặc định của ứng dụng của họ. Thiết lập nó có thể giúp cải thiện việc thu hồi sản phẩm trong các ứng dụng nhắm mục tiêu vào các ngôn ngữ khác nhau."
+                    isRequired={true}
+                    placeholder="Nhập tên sản phẩm"
+                    value={productName}
+                    onInputValueChange={(e) => setProductName(e.target.value)}
+                  />
+                  <div className="grid gap-2">
+                    <Label className="gap-1 text-[14px]">
+                      <span className="text-destructive">*</span>Chọn ngành hàng
+                    </Label>
+                    <ComboBoxWithSearch
+                      textPlaceholder="Chọn ngành hàng cho sản phẩm"
+                      optionPlaceHolder="Tìm kiếm ngành hàng"
+                      comboboxValue={selectedCategory}
+                      comboboxValueList={allCategories.map((category) => ({
+                        id: category.categoryId,
+                        display: buildCategoryNameRecursively(
+                          category,
+                          allCategories
+                        ),
+                      }))}
+                      onValueChange={(value) => setSelectedCategory(value)}
+                    />
+                  </div>
+
+                  {formErrors.basicInfoError.length > 0 && (
+                    <ul
+                      style={{ marginTop: "20px", marginBottom: "-4px" }}
+                      className="ul-error"
+                    >
+                      {formErrors.basicInfoError.map((element, idx) => (
+                        <li key={idx}>{element}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <div className="w-[30%] flex flex-col gap-2.5">
+                  <h2>Ảnh bìa sản phẩm</h2>
+                  <UploadComponent className="h-full" />
+                </div>
+              </div>
             </div>
           </div>
+          <div ref={propertiesRef} onClick={() => setTipState(2)}>
+            <PropertiesBlock
+              properties={productProperties}
+              setProperties={setProductProperties}
+              onAddNewProperty={addNewProperty}
+              errors={formErrors.propertiesError}
+            />
+          </div>
+          <div ref={descriptionRef} onClick={() => setTipState(3)}>
+            <DescriptionBlock errors={formErrors.descriptionError} />
+          </div>
+          <div ref={variantsRef} onClick={() => setTipState(4)}>
+            <VariantAndSellingBlock
+              variant1={variant1}
+              variant2={variant2}
+              setVariant1={setVariant1}
+              setVariant2={setVariant2}
+              variantSellingPoint={variantSellingPoint}
+              setVariantSellingPoint={setVariantSellingPoint}
+              v1Errors={formErrors.variant1Error}
+              v2Errors={formErrors.variant2Error}
+              vTableErrors={formErrors.variantTableError}
+            />
+          </div>
+          <div
+            className={`${reusableStyle.inputBlock} flex flex-row gap-2! justify-end sticky bottom-0 bg-gray-50 shadow-3xl! -ml-1`}
+          >
+            <Button variant={"ghost"}>Hủy bỏ</Button>
+            <Button variant={"outline"} className={"border-blue-500"}>
+              Lưu bản nháp
+            </Button>
+            <Button className={"bg-blue-500"}>Gửi đi</Button>
+          </div>
         </div>
-        <PropertiesBlock
-          properties={productProperties}
-          setProperties={setProductProperties}
-          onAddNewProperty={addNewProperty}
-        />
-        <DescriptionBlock />
-        <VariantAndSellingBlock
-          variant1={variant1}
-          variant2={variant2}
-          setVariant1={setVariant1}
-          setVariant2={setVariant2}
-          variantSellingPoint={variantSellingPoint}
-          setVariantSellingPoint={setVariantSellingPoint}
-        />
+        <div className="flex flex-col gap-6 sticky top-5 h-fit">
+          <ProgressTracker currentStep={currentStep} />
+          <TipBlock state={tipState} />
+          <ErrorBlock hasError={hasError} />
+        </div>
       </div>
     </div>
   );
@@ -181,9 +466,16 @@ function DescriptionBlock({
   description,
   onDescriptionChange,
   onAddNewProperty,
+  errors,
 }) {
   return (
-    <div id="editor" className={reusableStyle.inputBlock}>
+    <div
+      id="editor"
+      className={
+        reusableStyle.inputBlock +
+        (errors.length > 0 && reusableStyle.errorBorder)
+      }
+    >
       <h2>Mô tả sản phẩm</h2>
       <ReactQuill
         theme="snow"
@@ -191,31 +483,41 @@ function DescriptionBlock({
         onChange={onDescriptionChange}
         className="flex flex-col min-h-[400px] max-h-[400px] overflow-clip pb-45px"
       />
+      {errors.length > 0 && (
+        <ul
+          style={{ marginTop: "20px", marginBottom: "-4px" }}
+          className="ul-error"
+        >
+          {errors.map((element, idx) => (
+            <li key={idx}>{element}</li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
-function PropertiesBlock({ properties, setProperties, onAddNewProperty }) {
+function PropertiesBlock({
+  properties,
+  setProperties,
+  onAddNewProperty,
+  errors,
+}) {
   return (
-    <div className={`${reusableStyle.inputBlock}`}>
+    <div
+      className={
+        reusableStyle.inputBlock +
+        (errors.length > 0 && reusableStyle.errorBorder)
+      }
+    >
       <h2>Đặc tính sản phẩm</h2>
-      <div className="flex flex-col gap-[20px]">
+      <div className="flex flex-col gap-5">
         {properties.map((productProperty, index) => (
-          <div key={index} className="flex flex-row gap-[12px] items-center">
+          <div key={index} className="flex flex-row gap-3 items-center">
             <Input
               className="w-[40%]"
               placeholder={"Tên thuộc tính"}
               value={productProperty.name}
               onChange={(e) => {
-                //check if there is any product property with matching name?
-                const matchedProduct = properties.find(
-                  (property) => property.name === e.target.value
-                );
-                if (matchedProduct) {
-                  setFormErrors((prev) => [
-                    ...prev,
-                    "Các thuộc tính không được trùng tên nhau!",
-                  ]);
-                }
                 const newList = [...properties];
                 newList[index].name = e.target.value;
                 setProperties(newList);
@@ -247,7 +549,17 @@ function PropertiesBlock({ properties, setProperties, onAddNewProperty }) {
       <Button onClick={onAddNewProperty} variant="outline">
         Thêm thuộc tính mới
       </Button>
-      <div className="flex flex-row gap-[20px]"></div>
+      {errors.length > 0 && (
+        <ul
+          style={{ marginTop: "20px", marginBottom: "-4px" }}
+          className="ul-error"
+        >
+          {errors.map((element, idx) => (
+            <li key={idx}>{element}</li>
+          ))}
+        </ul>
+      )}
+      <div className="flex flex-row gap-5"></div>
     </div>
   );
 }
@@ -258,10 +570,15 @@ function VariantAndSellingBlock({
   setVariant2,
   variantSellingPoint,
   setVariantSellingPoint,
+  v1Errors,
+  v2Errors,
+  vTableErrors,
 }) {
   let total = 0;
-  if (variant1) total++;
-  if (variant2) total++;
+  const v1Exist = variant1 && variant1.valueList.length > 1;
+  const v2Exist = variant2 && variant2.valueList.length > 1;
+  if (v1Exist) total++;
+  if (v2Exist) total++;
   const createNewVariant = () => {
     const newVariant = {
       index: total,
@@ -286,13 +603,24 @@ function VariantAndSellingBlock({
   const [allStock, setAllStock] = useState("");
   const [allSellerSku, setAllSellerSku] = useState("");
 
-  const v1Exist = variant1 && variant1.valueList.length > 1;
-  const v2Exist = variant2 && variant2.valueList.length > 1;
-
   const setNewVariantSellingPoint_Temp = (newVariantSellingPoint, index) => {
     const newList = [...variantSellingPoint];
     newList[index] = newVariantSellingPoint;
     setVariantSellingPoint(newList);
+  };
+  const handleSubmitApplyAllToolbar = () => {
+    const newVariantSellingPoint = variantSellingPoint.map((variant) => ({
+      ...variant,
+      sellingPrice: allPrice,
+      stock: allStock,
+      sellerSku: allSellerSku,
+    }));
+    setVariantSellingPoint(newVariantSellingPoint);
+  };
+  const handleRefreshApplyAllToolbar = () => {
+    setAllPrice("");
+    setAllStock("");
+    setAllSellerSku("");
   };
   return (
     <div className={`${reusableStyle.inputBlock}`}>
@@ -301,8 +629,20 @@ function VariantAndSellingBlock({
         Tạo biến thể nếu sản phẩm có hơn một tùy chọn, ví dụ như về kích thước
         hay màu sắc.
       </h6>
-      {variant1 && <VariantBlock variant={variant1} setVariant={setVariant1} />}
-      {variant2 && <VariantBlock variant={variant2} setVariant={setVariant2} />}
+      {variant1 && (
+        <VariantBlock
+          variant={variant1}
+          setVariant={setVariant1}
+          errors={v1Errors}
+        />
+      )}
+      {variant2 && (
+        <VariantBlock
+          variant={variant2}
+          setVariant={setVariant2}
+          errors={v2Errors}
+        />
+      )}
       {total < 2 && (
         <Button
           variant={"outline"}
@@ -312,32 +652,45 @@ function VariantAndSellingBlock({
           + Thêm biến thể mới{` (${total}/2)`}
         </Button>
       )}
-      <h2>Giá bán & Kho hàng</h2>
+      <h2>Giá bán & Kho hàng </h2>
       {variantSellingPoint.length > 0 ? (
         <div className="space-y-2">
-          <section className="flex gap-2 *:>m-w-[100px]">
-            <Input
-              placeholder="Giá"
-              value={allPrice}
-              onChange={(e) => setAllPrice(e.target.value)}
-            />
-            <Input
-              placeholder="Kho hàng"
-              value={allStock}
-              onChange={(e) => setAllStock(e.target.value)}
-            />
-            <Input
-              placeholder="SellerSku"
-              value={allSellerSku}
-              onChange={(e) => setAllSellerSku(e.target.value)}
-            />
-            <Button>Áp dụng cho tất cả</Button>
-          </section>
-
+          {total > 0 ? (
+            <section className="flex gap-2 *:>m-w-[100px]">
+              <Input
+                placeholder="Giá"
+                value={allPrice}
+                onChange={(e) => setAllPrice(e.target.value)}
+              />
+              <Input
+                placeholder="Kho hàng"
+                value={allStock}
+                onChange={(e) => setAllStock(e.target.value)}
+              />
+              <Input
+                placeholder="SellerSku"
+                value={allSellerSku}
+                onChange={(e) => setAllSellerSku(e.target.value)}
+              />
+              <Button onClick={handleSubmitApplyAllToolbar}>
+                Áp dụng cho tất cả
+              </Button>
+              <Button
+                onClick={handleRefreshApplyAllToolbar}
+                variant={"outline"}
+              >
+                Làm mới
+              </Button>
+            </section>
+          ) : (
+            <h6>Trường hợp không có biến thể</h6>
+          )}
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[100px]">{variant1.name}</TableHead>
+                {v1Exist && (
+                  <TableHead className="w-[100px]">{variant1.name}</TableHead>
+                )}
                 {v2Exist && (
                   <TableHead className="w-[100px]">{variant2.name}</TableHead>
                 )}
@@ -350,10 +703,12 @@ function VariantAndSellingBlock({
             </TableHeader>
             <TableBody>
               {variantSellingPoint.map((row, index) => (
-                <TableRow key={index}>
-                  <TableCell>
-                    <Label>{row.v1_name}</Label>
-                  </TableCell>
+                <TableRow key={index} className={!row.isInUse && "bg-gray-100"}>
+                  {row.v1_name && (
+                    <TableCell>
+                      <Label>{row.v1_name}</Label>
+                    </TableCell>
+                  )}
                   {row.v2_name && (
                     <TableCell>
                       <Label>{row.v2_name}</Label>
@@ -417,6 +772,7 @@ function VariantAndSellingBlock({
                   </TableCell>
                   <TableCell>
                     <Switch
+                      disabled={!row.isInUse}
                       checked={row.isOpenToSale}
                       onCheckedChange={(e) => {
                         setNewVariantSellingPoint_Temp(
@@ -440,10 +796,40 @@ function VariantAndSellingBlock({
     </div>
   );
 }
-function VariantBlock({ variant, setVariant }) {
+function VariantBlock({ variant, setVariant, errors }) {
   return (
     <div className={reusableStyle.variantBlock}>
-      <h2>Biến thể {variant.index + 1}</h2>
+      <div className="flex justify-between items-center">
+        <h2>Biến thể {variant.index + 1}</h2>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant={"ghost"}>
+              <Trash />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent className={"max-w-[300px]"}>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                Bạn có chắc chắn muốn xóa biến thể này?
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                Thao tác này là không thể khôi phục được!
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Hủy bỏ</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  setVariant(null);
+                }}
+              >
+                Xác nhận
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+
       <InputBlock_Input
         label="Tên biến thể"
         isRequired={true}
@@ -462,7 +848,7 @@ function VariantBlock({ variant, setVariant }) {
         {variant.valueList.map((variantValue, index) => (
           <div
             key={index}
-            className="flex gap-4 p-2 pl-4  bg-white shadow-sm rounded-[4px] items-center"
+            className="flex gap-4 p-2 pl-4  bg-white shadow-sm rounded-lg items-center justify-between"
           >
             <Input
               placeholder="Nhập biến thể mới"
@@ -478,7 +864,7 @@ function VariantBlock({ variant, setVariant }) {
               }}
             />
             {/* gallery*/}
-            {variantValue.name.length > 0 && (
+            {variantValue.name.length > 0 && variant.index === 0 && (
               <FileUploadCompact
                 onFilesChange={(files) => {
                   console.log(files);
@@ -489,7 +875,16 @@ function VariantBlock({ variant, setVariant }) {
             )}
             {variantValue.name.length > 0 && (
               <div className="flex">
-                <Button variant={"ghost"}>
+                <Button
+                  variant={"ghost"}
+                  onClick={() => {
+                    let newValueList = [...variant.valueList];
+                    newValueList = newValueList.filter(
+                      (value, _index) => _index !== index
+                    );
+                    setVariant({ ...variant, valueList: newValueList });
+                  }}
+                >
                   <Trash2Icon />
                 </Button>
                 <Button variant={"ghost"}>
@@ -500,6 +895,121 @@ function VariantBlock({ variant, setVariant }) {
           </div>
         ))}
       </div>
+      {errors.length > 0 && (
+        <ul
+          style={{ marginTop: "0px", marginBottom: "-4px" }}
+          className="ul-error"
+        >
+          {errors.map((element, idx) => (
+            <li key={idx}>{element}</li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
+
+const steps = [
+  "Thông tin cơ bản",
+  "Thuộc tính",
+  "Mô tả",
+  "Phân loại & Giá bán",
+];
+
+const ProgressTracker = ({ currentStep }) => {
+  return (
+    <div
+      className={`flex flex-col w-full gap-4 h-fit ${reusableStyle.inputBlock}`}
+    >
+      <h2 className="text-blue-500">Tiến độ</h2>
+      {steps.map((step, index) => {
+        const isActive = index === currentStep;
+        const isDone = index < currentStep;
+
+        return (
+          <div key={step} className="flex flex-row items-center gap-2 pl-2">
+            <div
+              className={
+                "w-8 h-8 flex items-center justify-center rounded-full border " +
+                (isDone
+                  ? "bg-blue-500 text-white border-blue-500"
+                  : isActive
+                  ? "border-primary text-primary"
+                  : "border-muted-foreground text-muted-foreground")
+              }
+            >
+              {index + 1}
+            </div>
+            <span
+              className={
+                "text-sm " +
+                (isDone || isActive
+                  ? "text-primary font-medium"
+                  : "text-muted-foreground")
+              }
+            >
+              {step}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+const TipBlock = ({ state }) => {
+  let title = "Tips",
+    content = "Các tips hữu dụng sẽ xuất hiện ở đây khi bạn làm việc!";
+  if (state === 1) {
+    title = "Thông tin cơ bản";
+    content =
+      "Phần Mô tả sản phẩm cung cấp những thông tin hữu ích về sản phẩm để giúp khách hàng quyết định mua sắm";
+  } else if (state === 2) {
+    title = "Đặc tính sản phẩm";
+    content =
+      "Đặc tính sản phẩm càng đầy đủ càng tăng khả năng chọn mua của khách hàng tiềm năng. Hãy cung cấp cả đặc tính chính (key attributes) và đặc tính phụ để tăng hiển thị và chốt đơn";
+  } else if (state === 3) {
+    title = "Mô tả sản phẩm";
+    content =
+      "Vui lòng tải lên hình ảnh, điền tên sản phẩm và chọn đúng ngành hàng trước khi đăng tải sản phẩm.";
+  } else if (state === 4) {
+    title = "Giá bán, Kho hàng và Biến thể";
+    content =
+      "Vui lòng tải lên hình ảnh, điền tên sản phẩm và chọn đúng ngành hàng trước khi đăng tải sản phẩm.";
+  }
+  return (
+    <div className={reusableStyle.inputBlock}>
+      <h2
+        className="text-blue-500"
+        style={{ lineHeight: "25px", marginBottom: "-4px" }}
+      >
+        {title}
+      </h2>
+      <span
+        style={{
+          lineHeight: "20px",
+          fontWeight: 300,
+          fontSize: "14px",
+          textAlign: "justify",
+          paddingLeft: "8px",
+        }}
+      >
+        {content}
+      </span>
+    </div>
+  );
+};
+const ErrorBlock = ({ hasError }) => {
+  return (
+    <div className={reusableStyle.inputBlock}>
+      {!hasError ? (
+        <h2 style={{ color: "green", lineHeight: "25px" }}>
+          Hay quá, bạn đã sửa hết lỗi rồi!
+        </h2>
+      ) : (
+        <h2 style={{ color: "red", lineHeight: "25px" }}>
+          OOps, hãy sửa lỗi trước khi publish nhé!
+        </h2>
+      )}
+    </div>
+  );
+};
