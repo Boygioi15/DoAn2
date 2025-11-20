@@ -1,32 +1,36 @@
-'use client';;
-import { useState } from 'react';
-import { useFileUpload } from '@/hooks/use-file-upload';
-import { Alert, AlertContent, AlertDescription, AlertIcon, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { CloudUpload, ImageIcon, TriangleAlert, Upload, XIcon } from 'lucide-react';
-import { cn } from '@/lib/utils';
+"use client";
+import { useState } from "react";
+import { useFileUpload } from "@/hooks/use-file-upload";
+import {
+  Alert,
+  AlertContent,
+  AlertDescription,
+  AlertIcon,
+  AlertTitle,
+} from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import {
+  CloudUpload,
+  ImageIcon,
+  TriangleAlert,
+  Upload,
+  XIcon,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function CoverUpload({
   // 5MB default
-  maxSize = 5 * 1024 * 1024,
+  maxSize = 10 * 1024 * 1024,
 
-  accept = 'image/*',
+  accept = "image/*",
   className,
-  onImageChange
+  onImageChange,
 }) {
   // Default cover image
-  const defaultCoverImage = {
-    id: 'default-cover',
-    name: 'cover-image.jpg',
-    size: 2048000,
-    type: 'image/jpeg',
-    url: 'https://picsum.photos/1000/800?grayscale&random=3',
-  };
-
   const [coverImage, setCoverImage] = useState({
-    id: defaultCoverImage.id,
-    file: defaultCoverImage,
-    preview: defaultCoverImage.url,
+    id: null,
+    file: null,
+    preview: null,
   });
 
   const [imageLoading, setImageLoading] = useState(true);
@@ -36,7 +40,14 @@ export default function CoverUpload({
 
   const [
     { isDragging, errors },
-    { handleDragEnter, handleDragLeave, handleDragOver, handleDrop, openFileDialog, getInputProps },
+    {
+      handleDragEnter,
+      handleDragLeave,
+      handleDragOver,
+      handleDrop,
+      openFileDialog,
+      getInputProps,
+    },
   ] = useFileUpload({
     maxFiles: 1,
     maxSize,
@@ -66,8 +77,8 @@ export default function CoverUpload({
           setIsUploading(false);
 
           // Simulate occasional upload failure (10% chance)
-          if (Math.random() < 0.1) {
-            setUploadError('Upload failed. Please try again.');
+          if (Math.random() < 0.0001) {
+            setUploadError("Upload failed. Please try again.");
             return 0;
           }
 
@@ -75,7 +86,7 @@ export default function CoverUpload({
         }
 
         // Random progress increment between 5-15%
-        const increment = Math.random() * 10 + 5;
+        const increment = Math.random() * 10 + 15;
         return Math.min(prev + increment, 100);
       });
     }, 200);
@@ -102,21 +113,22 @@ export default function CoverUpload({
   const hasImage = coverImage && coverImage.preview;
 
   return (
-    <div className={cn('w-full space-y-4', className)}>
+    <div className={cn("w-full space-y-4", className)}>
       {/* Cover Upload Area */}
       <div
         className={cn(
-          'group relative overflow-hidden rounded-xl transition-all duration-200 border border-border',
+          "group relative overflow-hidden rounded-xl transition-all duration-200 border border-border",
           isDragging
-            ? 'border-dashed border-primary bg-primary/5'
+            ? "border-dashed border-primary bg-primary/5"
             : hasImage
-              ? 'border-border bg-background hover:border-primary/50'
-              : 'border-dashed border-muted-foreground/25 bg-muted/30 hover:border-primary hover:bg-primary/5'
+            ? "border-border bg-background hover:border-primary/50"
+            : "border-dashed border-muted-foreground/25 bg-muted/30 hover:border-primary hover:bg-primary/5"
         )}
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
         onDragOver={handleDragOver}
-        onDrop={handleDrop}>
+        onDrop={handleDrop}
+      >
         {/* Hidden file input */}
         <input {...getInputProps()} className="sr-only" />
 
@@ -126,8 +138,7 @@ export default function CoverUpload({
             <div className="relative aspect-[21/9] w-full">
               {/* Loading placeholder */}
               {imageLoading && (
-                <div
-                  className="absolute inset-0 animate-pulse bg-muted flex items-center justify-center">
+                <div className="absolute inset-0 animate-pulse bg-muted flex items-center justify-center">
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <ImageIcon className="size-5" />
                     <span className="text-sm">Loading image...</span>
@@ -140,29 +151,33 @@ export default function CoverUpload({
                 src={coverImage.preview}
                 alt="Cover"
                 className={cn(
-                  'h-full w-full object-cover transition-opacity duration-300',
-                  imageLoading ? 'opacity-0' : 'opacity-100'
+                  "h-full w-full object-cover transition-opacity duration-300",
+                  imageLoading ? "opacity-0" : "opacity-100"
                 )}
                 onLoad={() => setImageLoading(false)}
-                onError={() => setImageLoading(false)} />
+                onError={() => setImageLoading(false)}
+              />
 
               {/* Overlay on hover */}
-              <div
-                className="absolute inset-0 bg-black/0 transition-all duration-200 group-hover:bg-black/40" />
+              <div className="absolute inset-0 bg-black/0 transition-all duration-200 group-hover:bg-black/40" />
 
               {/* Action buttons overlay */}
-              <div
-                className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                 <div className="flex gap-2">
                   <Button
                     onClick={openFileDialog}
                     variant="secondary"
                     size="sm"
-                    className="bg-white/90 text-gray-900 hover:bg-white">
+                    className="bg-white/90 text-gray-900 hover:bg-white"
+                  >
                     <Upload />
                     Change Cover
                   </Button>
-                  <Button onClick={removeCoverImage} variant="destructive" size="sm">
+                  <Button
+                    onClick={removeCoverImage}
+                    variant="destructive"
+                    size="sm"
+                  >
                     <XIcon />
                     Remove
                   </Button>
@@ -181,7 +196,8 @@ export default function CoverUpload({
                         fill="none"
                         stroke="currentColor"
                         strokeWidth="4"
-                        className="text-white/20" />
+                        className="text-white/20"
+                      />
                       <circle
                         cx="32"
                         cy="32"
@@ -190,12 +206,17 @@ export default function CoverUpload({
                         stroke="currentColor"
                         strokeWidth="4"
                         strokeDasharray={`${2 * Math.PI * 28}`}
-                        strokeDashoffset={`${2 * Math.PI * 28 * (1 - uploadProgress / 100)}`}
+                        strokeDashoffset={`${
+                          2 * Math.PI * 28 * (1 - uploadProgress / 100)
+                        }`}
                         className="text-white transition-all duration-300"
-                        strokeLinecap="round" />
+                        strokeLinecap="round"
+                      />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-sm font-medium text-white">{Math.round(uploadProgress)}%</span>
+                      <span className="text-sm font-medium text-white">
+                        {Math.round(uploadProgress)}%
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -204,22 +225,27 @@ export default function CoverUpload({
           </>
         ) : (
           /* Empty State */
-          (<div
+          <div
             className="flex aspect-[21/9] w-full cursor-pointer flex-col items-center justify-center gap-4 p-8 text-center"
-            onClick={openFileDialog}>
+            onClick={openFileDialog}
+          >
             <div className="rounded-full bg-primary/10 p-4">
               <CloudUpload className="size-8 text-primary" />
             </div>
             <div className="space-y-2">
               <h3 className="text-lg font-semibold">Upload Cover Image</h3>
-              <p className="text-sm text-muted-foreground">Drag and drop an image here, or click to browse</p>
-              <p className="text-xs text-muted-foreground">Recommended size: 1200x514px • Max size: 5MB</p>
+              <p className="text-sm text-muted-foreground">
+                Drag and drop an image here, or click to browse
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Recommended size: 1200x514px • Max size: 5MB
+              </p>
             </div>
             <Button variant="outline" size="sm">
               <ImageIcon />
               Browse Files
             </Button>
-          </div>)
+          </div>
         )}
       </div>
       {/* Error Messages */}

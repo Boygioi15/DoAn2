@@ -1,4 +1,5 @@
 import categoryApi from "@/api/categoryApi";
+import { productApi } from "@/api/productApi";
 import FileUploadCompact from "@/components/compact-upload";
 import {
   AlertDialogContent,
@@ -31,6 +32,7 @@ import { Menu, Trash, Trash2Icon } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
+import { toast } from "sonner";
 import { v4 } from "uuid";
 const reusableStyle = {
   inputBlock:
@@ -39,15 +41,40 @@ const reusableStyle = {
   errorBorder:
     " border border-red-200 drop-shadow-[0_0_8px_rgba(255,0,0,0.05)]",
 };
+
+const variant1Default = {
+  index: 0,
+  name: "Màu sắc",
+  valueList: [
+    {
+      name: "",
+      img: [],
+      tempId: v4(),
+    },
+  ],
+};
+const variant2Default = {
+  index: 1,
+  name: "Kích thước",
+  valueList: [
+    {
+      name: "",
+      img: [],
+      tempId: v4(),
+    },
+  ],
+};
 export default function AddNewProductPage() {
   const [productName, setProductName] = useState("");
   const [allCategories, setAllCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [thumbnailFile, setThumbnailFile] = useState(null);
   const [productProperties, setProductProperties] = useState([
     { name: "", value: "" },
   ]);
-  const [variant1, setVariant1] = useState(null);
-  const [variant2, setVariant2] = useState(null);
+  const [productDescription, setProductDescription] = useState("");
+  const [variant1, setVariant1] = useState(variant1Default);
+  const [variant2, setVariant2] = useState(variant2Default);
   const [variantSellingPoint, setVariantSellingPoint] = useState([]);
   const [formErrors, setFormErrors] = useState({
     basicInfoError: [],
@@ -73,12 +100,14 @@ export default function AddNewProductPage() {
   useEffect(() => {
     getAllCategory();
   }, []);
-
-  //all categories
-  useEffect(() => {
-    console.log(productProperties);
-  }, [productProperties]);
-
+  const allSelectableCategories = useMemo(() => {
+    const newList = [...allCategories];
+    const allParentId = newList.map((category) => category.parentId);
+    const leaf = newList.filter(
+      (category) => !allParentId.includes(category.categoryId)
+    );
+    return leaf;
+  }, [allCategories]);
   //variant table
   useEffect(() => {
     if (!variant1 && !variant2) {
@@ -164,12 +193,12 @@ export default function AddNewProductPage() {
             match.sellingPrice = oldDataRow[i].sellingPrice;
           }
         } else {
-          console.log("C: ");
+          // console.log("C: ");
           const match = newDataRow.find((element) => {
             if (!element.v1_tempId) return false;
             return element.v1_tempId === oldDataRow[i].v1_tempId;
           });
-          console.log("Match: ", match);
+          // console.log("Match: ", match);
           if (match) {
             match.isOpenToSale = oldDataRow[i].isOpenToSale;
             match.isInUse = oldDataRow[i].isInUse;
@@ -244,12 +273,14 @@ export default function AddNewProductPage() {
     if (productName === "" || selectedCategory === "") {
       newErrorList.push("Vui lòng nhập đầy đủ các trường");
     }
-    console.log(productName.length);
     if (productName.length < 10) {
       newErrorList.push("Tên sản phẩm phải tối thiểu 10 ký tự!");
     }
+    if (!thumbnailFile) {
+      newErrorList.push("Vui lòng tải ảnh bìa sản phẩm lên!");
+    }
     setFormErrors((prev) => ({ ...prev, basicInfoError: newErrorList }));
-  }, [productName, selectedCategory]);
+  }, [productName, selectedCategory, thumbnailFile]);
   //properties
   useEffect(() => {
     if (propertiesFirstRun.current) {
@@ -298,7 +329,7 @@ export default function AddNewProductPage() {
       }
     }
     for (let i = 0; i < valueList.length - 1; i++) {
-      if (valueList[i].img.length) {
+      if (valueList[i].img.length < 1) {
         newErrorList.push("Phải cung cấp ảnh cho mọi biến thể!");
         break;
       }
@@ -316,7 +347,7 @@ export default function AddNewProductPage() {
       variant2FirstRun.current = false;
       return;
     }
-    console.log("2a: ", variant2);
+    // console.log("2a: ", variant2);
     const newErrorList = [];
     if (variant2.name.trim() === "") {
       newErrorList.push("Không được để trống tên biến thể!");
@@ -343,6 +374,36 @@ export default function AddNewProductPage() {
     }
     setFormErrors((prev) => ({ ...prev, variant2Error: newErrorList }));
   }, [variant2]);
+  useEffect(() => {
+    if (descriptionFirstRun.current) {
+      descriptionFirstRun.current = false;
+      return;
+    }
+    const newErrorList = [];
+    if (productDescription.length < 20) {
+      newErrorList.push("Mô tả sản phẩm quá ngắn!");
+    }
+    //console.log(newErrorList);
+    setFormErrors((prev) => ({ ...prev, descriptionError: newErrorList }));
+  }, [productDescription]);
+  useEffect(() => {
+    if (variantTableFirstRun.current) {
+      variantTableFirstRun.current = false;
+      return;
+    }
+    const newErrorList = [];
+    for (const dataRow of variantSellingPoint) {
+      if (
+        dataRow.sellingPrice.trim() === "" ||
+        dataRow.sellerSku.trim() === "" ||
+        dataRow.stock.trim() === ""
+      ) {
+        newErrorList.push("Không được bỏ trống bất kỳ dòng nào!");
+        break;
+      }
+    }
+    setFormErrors((prev) => ({ ...prev, variantTableError: newErrorList }));
+  }, [variantSellingPoint]);
   const hasError = useMemo(() => {
     // console.log(formErrors);
     if (
@@ -356,12 +417,91 @@ export default function AddNewProductPage() {
     return false;
   }, [formErrors]);
 
+  const handlePublishSubmit = async () => {
+    const formData = formFinalFormData();
+    try {
+      const response = await productApi.createNewProduct(formData);
+    } catch (error) {
+      toast.error("Có lỗi khi thêm mới sản phẩm");
+    }
+  };
+  const handleDraftSubmit = async () => {
+    const formData = formFinalFormData();
+    formData.append("isDraft", "1");
+    try {
+      const response = await productApi.createNewProduct(formData);
+    } catch (error) {
+      toast.error("Có lỗi khi thêm mới sản phẩm");
+    }
+  };
+  const formFinalFormData = async () => {
+    const formData = new FormData();
+    formData.append("productName", productName);
+    formData.append("categoryId", selectedCategory);
+    formData.append("thumbnailFile", thumbnailFile);
+
+    const propertyList = JSON.stringify(productProperties);
+    formData.append("propertyList", propertyList);
+
+    formData.append("description", productDescription);
+
+    //variants & img
+    //variantData
+    let total = 0;
+    const v1Exist = variant1 && variant1.valueList.length > 1;
+    const v2Exist = variant2 && variant2.valueList.length > 1;
+    if (v1Exist) total++;
+    if (v2Exist) total++;
+    formData.append("totalVariant", total);
+
+    if (v1Exist) {
+      let _v1 = { ...variant1 };
+      //filter out img data
+      _v1.valueList = _v1.valueList.filter((value) => value.name !== "");
+      _v1.valueList = _v1.valueList.map((value) => ({
+        value: value.name,
+        tempId: value.tempId,
+      }));
+      formData.append("variant1Data", JSON.stringify(_v1));
+
+      //process variant 1 image - file name - v1_tempId
+      const v1ImgList = variant1.valueList.map((value) => ({
+        img: value.img,
+        tempId: value.tempId,
+      }));
+      //each value( Đen, đỏ) level
+      v1ImgList.forEach((imgValue) => {
+        //because each img is encapsulated!
+        const imgArray = imgValue.img.map((img) => img.file);
+        console.log("V1 img:", imgArray);
+        //has to do it separately
+        imgArray.forEach((img) => {
+          formData.append("v1_" + imgValue.tempId, img);
+        });
+      });
+    }
+    if (v2Exist) {
+      let _v2 = { ...variant2 };
+      //filter out img data
+      _v2.valueList = _v2.valueList.map((value) => ({
+        value: value.value,
+        tempId: value.tempId,
+      }));
+      formData.append("variant2Data", JSON.stringify(_v2));
+    }
+    // console.log("V1: ", variant1);
+    formData.append("variantTableData", JSON.stringify(variantSellingPoint));
+    formData.forEach((v, k) => {
+      console.log(k, v);
+    });
+    return formData;
+  };
   return (
     <div className="page-layout">
       <h1>Thêm sản phẩm mới</h1>
       {/* Big layout!*/}
       {/*Content*/}
-      <div className="grid grid-cols-[75%_25%] gap-4">
+      <form className="grid grid-cols-[75%_25%] gap-4">
         <div className="flex flex-col gap-6">
           <div ref={basicInfoRef} onClick={() => setTipState(1)}>
             <div
@@ -390,20 +530,22 @@ export default function AddNewProductPage() {
                       textPlaceholder="Chọn ngành hàng cho sản phẩm"
                       optionPlaceHolder="Tìm kiếm ngành hàng"
                       comboboxValue={selectedCategory}
-                      comboboxValueList={allCategories.map((category) => ({
-                        id: category.categoryId,
-                        display: buildCategoryNameRecursively(
-                          category,
-                          allCategories
-                        ),
-                      }))}
+                      comboboxValueList={allSelectableCategories.map(
+                        (category) => ({
+                          id: category.categoryId,
+                          display: buildCategoryNameRecursively(
+                            category,
+                            allCategories
+                          ),
+                        })
+                      )}
                       onValueChange={(value) => setSelectedCategory(value)}
                     />
                   </div>
 
                   {formErrors.basicInfoError.length > 0 && (
                     <ul
-                      style={{ marginTop: "20px", marginBottom: "-4px" }}
+                      style={{ marginTop: "0px", marginBottom: "-4px" }}
                       className="ul-error"
                     >
                       {formErrors.basicInfoError.map((element, idx) => (
@@ -414,7 +556,10 @@ export default function AddNewProductPage() {
                 </div>
                 <div className="w-[30%] flex flex-col gap-2.5">
                   <h2>Ảnh bìa sản phẩm</h2>
-                  <UploadComponent className="h-full" />
+                  <UploadComponent
+                    className="h-full"
+                    onImageChange={(file) => setThumbnailFile(file)}
+                  />
                 </div>
               </div>
             </div>
@@ -428,7 +573,11 @@ export default function AddNewProductPage() {
             />
           </div>
           <div ref={descriptionRef} onClick={() => setTipState(3)}>
-            <DescriptionBlock errors={formErrors.descriptionError} />
+            <DescriptionBlock
+              errors={formErrors.descriptionError}
+              description={productDescription}
+              setDescription={setProductDescription}
+            />
           </div>
           <div ref={variantsRef} onClick={() => setTipState(4)}>
             <VariantAndSellingBlock
@@ -447,10 +596,16 @@ export default function AddNewProductPage() {
             className={`${reusableStyle.inputBlock} flex flex-row gap-2! justify-end sticky bottom-0 bg-gray-50 shadow-3xl! -ml-1`}
           >
             <Button variant={"ghost"}>Hủy bỏ</Button>
-            <Button variant={"outline"} className={"border-blue-500"}>
+            <Button
+              variant={"outline"}
+              className={"border-blue-500"}
+              onClick={handleDraftSubmit}
+            >
               Lưu bản nháp
             </Button>
-            <Button className={"bg-blue-500"}>Gửi đi</Button>
+            <Button className={"bg-blue-500"} onClick={handlePublishSubmit}>
+              Gửi đi
+            </Button>
           </div>
         </div>
         <div className="flex flex-col gap-6 sticky top-5 h-fit">
@@ -458,16 +613,11 @@ export default function AddNewProductPage() {
           <TipBlock state={tipState} />
           <ErrorBlock hasError={hasError} />
         </div>
-      </div>
+      </form>
     </div>
   );
 }
-function DescriptionBlock({
-  description,
-  onDescriptionChange,
-  onAddNewProperty,
-  errors,
-}) {
+function DescriptionBlock({ description, setDescription, errors }) {
   return (
     <div
       id="editor"
@@ -479,13 +629,13 @@ function DescriptionBlock({
       <h2>Mô tả sản phẩm</h2>
       <ReactQuill
         theme="snow"
-        value={"value"}
-        onChange={onDescriptionChange}
+        value={description}
+        onChange={setDescription}
         className="flex flex-col min-h-[400px] max-h-[400px] overflow-clip pb-45px"
       />
       {errors.length > 0 && (
         <ul
-          style={{ marginTop: "20px", marginBottom: "-4px" }}
+          style={{ marginTop: "-50px", marginBottom: "-4px" }}
           className="ul-error"
         >
           {errors.map((element, idx) => (
@@ -550,10 +700,7 @@ function PropertiesBlock({
         Thêm thuộc tính mới
       </Button>
       {errors.length > 0 && (
-        <ul
-          style={{ marginTop: "20px", marginBottom: "-4px" }}
-          className="ul-error"
-        >
+        <ul style={{ marginBottom: "-4px" }} className="ul-error">
           {errors.map((element, idx) => (
             <li key={idx}>{element}</li>
           ))}
@@ -789,9 +936,16 @@ function VariantAndSellingBlock({
               ))}
             </TableBody>
           </Table>
+          {vTableErrors.length > 0 && (
+            <ul style={{ marginBottom: "-4px" }} className="ul-error">
+              {vTableErrors.map((element, idx) => (
+                <li key={idx}>{element}</li>
+              ))}
+            </ul>
+          )}
         </div>
       ) : (
-        <h6>Hãy chọn biến thể trước!</h6>
+        <h6>Hãy tạo hoàn chỉnh biến thể trước!</h6>
       )}
     </div>
   );
@@ -803,7 +957,7 @@ function VariantBlock({ variant, setVariant, errors }) {
         <h2>Biến thể {variant.index + 1}</h2>
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button variant={"ghost"}>
+            <Button variant={"ghost"} disabled>
               <Trash />
             </Button>
           </AlertDialogTrigger>
@@ -842,6 +996,7 @@ function VariantBlock({ variant, setVariant, errors }) {
           }))
         }
         containerClassname={"max-w-[70%]"}
+        disabled
       />
       <div className="flex flex-col gap-4 max-w-[70%]">
         <Label>Danh sách biến thể</Label>
@@ -867,7 +1022,10 @@ function VariantBlock({ variant, setVariant, errors }) {
             {variantValue.name.length > 0 && variant.index === 0 && (
               <FileUploadCompact
                 onFilesChange={(files) => {
-                  console.log(files);
+                  const newValueList = variant.valueList;
+                  const currentValue = newValueList[index];
+                  currentValue.img = files;
+                  setVariant((prev) => ({ ...prev, valueList: newValueList }));
                 }}
                 maxFiles={6}
                 className={"grow"}

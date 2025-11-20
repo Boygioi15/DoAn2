@@ -7,12 +7,16 @@ import {
 } from 'src/database/schemas/category.schema';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category-';
+import { Product, ProductDocument } from 'src/database/schemas/product.schema';
 
 @Injectable()
 export class CategoryService {
   constructor(
     @InjectModel(Category.name)
     private categoryModel: Model<CategoryDocument>,
+
+    @InjectModel(Product.name)
+    private productModel: Model<ProductDocument>,
   ) {}
   async getAllCategories() {
     const allCategories = await this.categoryModel.find();
@@ -36,5 +40,12 @@ export class CategoryService {
     });
     //update all products of matching category
     return _deleted;
+  }
+  async getAllProductIdOfCategories(categoryId: string) {
+    const allProducts = await this.productModel.find({
+      categoryId: categoryId,
+    });
+    const allProductId = allProducts.map((product) => product.productId);
+    return allProductId;
   }
 }

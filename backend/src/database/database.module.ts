@@ -23,6 +23,12 @@ import {
 } from './schemas/user_refresh_token.schema';
 import {
   Product,
+  Product_Option,
+  ProductDescription,
+  ProductDescriptionSchema,
+  ProductOptionSchema,
+  ProductProperty,
+  ProductPropertySchema,
   ProductSchema,
   ProductVariant,
   ProductVariantSchema,
@@ -35,9 +41,14 @@ import { Category, CategorySchema } from './schemas/category.schema';
   imports: [
     MongooseModule.forFeature([
       { name: Product.name, schema: ProductSchema },
-      { name: Category.name, schema: CategorySchema },
       { name: ProductVariant.name, schema: ProductVariantSchema },
       { name: VariantOption.name, schema: VariantOptionSchema },
+      { name: Product_Option.name, schema: ProductOptionSchema },
+
+      { name: ProductProperty.name, schema: ProductPropertySchema },
+      { name: ProductDescription.name, schema: ProductDescriptionSchema },
+
+      { name: Category.name, schema: CategorySchema },
 
       { name: User.name, schema: UserSchema },
       { name: UserAddress.name, schema: UserAddressSchema },

@@ -7,6 +7,7 @@ import { Group, NumberField } from "react-aria-components";
 export function InputBlock_Input({
   label,
   isRequired,
+  disabled,
   description,
   placeholder,
   inputValue,
@@ -24,7 +25,7 @@ export function InputBlock_Input({
         </Label>
       )}
       <Input
-        type="email"
+        disabled={disabled}
         placeholder={placeholder}
         required={isRequired}
         value={inputValue}

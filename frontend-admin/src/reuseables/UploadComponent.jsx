@@ -17,28 +17,17 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 export default function UploadComponent({
-  maxSize = 5 * 1024 * 1024,
+  maxSize = 10 * 1024 * 1024,
   accept = "image/*",
   className,
   onImageChange,
 }) {
-  const defaultCoverImage = {
-    id: "default-cover",
-    name: "cover-image.jpg",
-    size: 2048000,
-    type: "image/jpeg",
-    url: "https://picsum.photos/1000/800?grayscale&random=3",
-  };
-
   const [coverImage, setCoverImage] = useState({
-    id: defaultCoverImage.id,
-    file: defaultCoverImage,
-    preview: defaultCoverImage.url,
+    id: null,
+    file: null,
+    preview: null,
   });
 
-  useEffect(() => {
-    console.log(coverImage);
-  }, [coverImage]);
   const [imageLoading, setImageLoading] = useState(true);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);

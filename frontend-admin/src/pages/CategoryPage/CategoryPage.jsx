@@ -164,7 +164,10 @@ export default function CategoryPage() {
                   setIsCreateDialogOpen(open);
                 }}
               >
-                <DialogTrigger onClick={() => setIsCreateDialogOpen(true)}>
+                <DialogTrigger
+                  onClick={() => setIsCreateDialogOpen(true)}
+                  asChild
+                >
                   <Button variant={"outline"}>
                     <Plus />
                   </Button>
