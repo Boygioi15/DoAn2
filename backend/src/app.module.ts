@@ -12,6 +12,7 @@ import { UserModule } from './user/user.module';
 import { ProductModule } from './product/product.module';
 import { CategoryModule } from './category/category.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { FrontendSettingModule } from './frontend-setting/frontend-setting.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
     ProductModule,
     CategoryModule,
     CloudinaryModule,
+    FrontendSettingModule,
   ],
   controllers: [AppController],
   providers: [

@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { FileIcon, PlusIcon, TriangleAlert, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
 
 export default function FileUploadCompact({
   maxFiles = 3,
@@ -19,6 +20,7 @@ export default function FileUploadCompact({
   multiple = true,
   className,
   onFilesChange,
+  initImages,
 }) {
   const [
     { files, isDragging, errors },
@@ -38,7 +40,10 @@ export default function FileUploadCompact({
     multiple,
     onFilesChange,
   });
-
+  const [detaultImages, setDefaultImages] = useState([]);
+  useEffect(() => {
+    setDefaultImages(initImages);
+  }, [initImages]);
   const isImage = (file) => {
     const type = file instanceof File ? file.type : file.type;
     return type.startsWith("image/");
@@ -72,47 +77,27 @@ export default function FileUploadCompact({
 
         {/* File Previews */}
         <div className="flex flex-1 items-center gap-2">
-          {files.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Thả ảnh ở đây hoặc nhấp để chọn (Tối đa: {maxFiles} ảnh)
-            </p>
-          ) : (
-            files.map((fileItem) => (
-              <div key={fileItem.id} className="group shrink-0">
-                <div className="relative">
-                  {isImage(fileItem.file) && fileItem.preview ? (
-                    <img
-                      src={fileItem.preview}
-                      alt={fileItem.file.name}
-                      className="h-10 w-10 rounded-lg border object-cover"
-                      title={`${fileItem.file.name} (${formatBytes(
-                        fileItem.file.size
-                      )})`}
-                    />
-                  ) : (
-                    <div
-                      className="flex h-10 w-10 items-center justify-center rounded-lg border bg-muted"
-                      title={`${fileItem.file.name} (${formatBytes(
-                        fileItem.file.size
-                      )})`}
-                    >
-                      <FileIcon className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                  )}
+          {detaultImages.map((fileItem) => (
+            <div key={fileItem} className="group shrink-0">
+              <div className="relative">
+                <img
+                  src={fileItem}
+                  alt={fileItem}
+                  className="h-10 w-10 rounded-lg border object-cover"
+                />
 
-                  {/* Remove Button */}
-                  <Button
-                    onClick={() => removeFile(fileItem.id)}
-                    variant="destructive"
-                    size="icon"
-                    className="size-5 border-2 border-background absolute -right-2 -top-2 rounded-full opacity-0 transition-opacity group-hover:opacity-100"
-                  >
-                    <XIcon className="size-3" />
-                  </Button>
-                </div>
+                {/* Remove Button */}
+                <Button
+                  onClick={() => removeFile(fileItem.id)}
+                  variant="destructive"
+                  size="icon"
+                  className="size-5 border-2 border-background absolute -right-2 -top-2 rounded-full opacity-0 transition-opacity group-hover:opacity-100"
+                >
+                  <XIcon className="size-3" />
+                </Button>
               </div>
-            ))
-          )}
+            </div>
+          ))}
         </div>
 
         {/* File Count */}

@@ -16,8 +16,9 @@ export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 
   @Get()
-  async getAllCategories() {
-    const allCategories = await this.categoryService.getAllCategories();
+  async getAllCategories(filterUndefined = false) {
+    const allCategories =
+      await this.categoryService.getAllCategories(filterUndefined);
     return allCategories;
   }
   @Post('/')

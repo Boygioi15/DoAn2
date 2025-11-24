@@ -18,10 +18,42 @@ export class CategoryService {
     @InjectModel(Product.name)
     private productModel: Model<ProductDocument>,
   ) {}
-  async getAllCategories() {
-    const allCategories = await this.categoryModel.find();
+  async getAllCategories(filterUndefined: boolean) {
+    let allCategories: CategoryDocument[] = [];
+    allCategories = await this.categoryModel.find();
+    if (filterUndefined) {
+      allCategories = allCategories.filter(
+        (cat) => cat.categoryName !== 'Không xác định',
+      );
+    }
     return allCategories;
   }
+  async getAllProductOfCategories(categoryId: string) {
+    const allProducts = await this.productModel.find({
+      categoryId: categoryId,
+    });
+    return allProducts;
+  }
+  async getAllDirectChildrenOfCategory(
+    categoryId: string | null = null,
+  ): Promise<CategoryDocument[]> {
+    let allDirectChilren = [];
+    if (!categoryId) {
+      allDirectChilren = await this.categoryModel.find({ parentId: null });
+    } else {
+      allDirectChilren = await this.categoryModel.find({
+        parentId: categoryId,
+      });
+    }
+    return allDirectChilren;
+  }
+  async getCategoryDetail(categoryId: string) {
+    const category = await this.categoryModel.findOne({
+      categoryId: categoryId,
+    });
+    return category?.categoryName;
+  }
+
   async createNewCategory(newCategory: CreateCategoryDto) {
     const _new = await this.categoryModel.create(newCategory);
     return _new;
@@ -40,12 +72,5 @@ export class CategoryService {
     });
     //update all products of matching category
     return _deleted;
-  }
-  async getAllProductIdOfCategories(categoryId: string) {
-    const allProducts = await this.productModel.find({
-      categoryId: categoryId,
-    });
-    const allProductId = allProducts.map((product) => product.productId);
-    return allProductId;
   }
 }

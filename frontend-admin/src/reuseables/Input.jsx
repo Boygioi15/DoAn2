@@ -74,3 +74,27 @@ export function InputBlock_NumberField({
     </NumberField>
   );
 }
+
+export const InputWithStartAddOn = ({
+  addOnlabel,
+  placeholder,
+  inputValue,
+  onInputValueChange,
+}) => {
+  return (
+    <div className="w-full space-y-2">
+      <div className="flex rounded-md shadow-xs">
+        <span className="border-input bg-gray-100 inline-flex items-center rounded-l-none border px-3 text-sm min-w-fit">
+          {addOnlabel}
+        </span>
+        <Input
+          type="text"
+          placeholder={placeholder}
+          className="-ms-px rounded-l-none shadow-none"
+          value={inputValue}
+          onChange={onInputValueChange}
+        />
+      </div>
+    </div>
+  );
+};

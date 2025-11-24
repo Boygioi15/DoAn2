@@ -25,7 +25,7 @@ export class Product {
   slug: string;
 
   @Prop()
-  display_price: number;
+  sku: string;
 
   @Prop()
   display_thumbnail_image: string;
@@ -38,6 +38,9 @@ export class Product {
 
   @Prop({ default: false })
   isDrafted: boolean;
+
+  @Prop({ default: false })
+  isDeleted: boolean;
 }
 
 @Schema({ timestamps: true, collection: 'product_variant' })
@@ -53,10 +56,13 @@ export class ProductVariant {
   stock: number;
 
   @Prop()
-  sku: string;
+  seller_sku: string;
+
+  @Prop({ unique: true })
+  platform_sku: string;
 
   @Prop()
-  price: string;
+  price: number;
 
   @Prop()
   isInUse: boolean;

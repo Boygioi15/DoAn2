@@ -27,10 +27,10 @@ const sidebarItems = [
     title: "Sản phẩm",
     icon: PackageSearch,
     children: [
+      { title: "Quản lý ngành hàng", url: "category-management" },
+
       { title: "Quản lý sản phẩm", url: "product-management" },
       { title: "Thêm mới sản phẩm", url: "add-product" },
-      { title: "Quản lý ngành hàng", url: "category-management" },
-      { title: "Cập nhật sản phẩm", url: "update-product" },
     ],
   },
   {

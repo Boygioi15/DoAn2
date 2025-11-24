@@ -3,11 +3,12 @@ import { ProductService } from './product.service';
 import { ProductController } from './product.controller';
 import { DatabaseModule } from 'src/database/database.module';
 import { CloudinaryModule } from 'src/cloudinary/cloudinary.module';
+import { CategoryModule } from 'src/category/category.module';
 
 @Module({
   controllers: [ProductController],
   providers: [ProductService],
-  imports: [DatabaseModule, CloudinaryModule],
+  imports: [DatabaseModule, CloudinaryModule, CategoryModule],
   exports: [ProductService],
 })
 export class ProductModule {}

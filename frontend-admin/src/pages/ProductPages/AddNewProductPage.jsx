@@ -24,6 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { slugifyOption } from "@/constants";
 import ComboBoxWithSearch from "@/reuseables/ComboboxWithSearch";
 import { InputBlock_Input } from "@/reuseables/Input";
 import UploadComponent from "@/reuseables/UploadComponent";
@@ -32,6 +33,7 @@ import { Menu, Trash, Trash2Icon } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
+import slugify from "slugify";
 import { toast } from "sonner";
 import { v4 } from "uuid";
 const reusableStyle = {
@@ -113,7 +115,7 @@ export default function AddNewProductPage() {
     if (!variant1 && !variant2) {
       const specialCase = [
         {
-          sellerSku: "special-case",
+          sellerSku: slugify(productName, slugifyOption) || "special-case",
           sellingPrice: "",
           stock: "",
           isInUse: true,
@@ -138,8 +140,12 @@ export default function AddNewProductPage() {
       );
       if (!v2Exist) {
         for (let i = 0; i < variant1ValueList.length; i++) {
+          let sellSku = "";
+          if (productName) {
+            sellSku = slugify(productName, slugifyOption);
+          }
           newDataRow.push({
-            sellerSku: "",
+            sellerSku: sellSku,
             sellingPrice: "",
             stock: "",
             isInUse: true,
@@ -156,8 +162,12 @@ export default function AddNewProductPage() {
         );
         for (let i = 0; i < variant1ValueList.length; i++) {
           for (let j = 0; j < variant2ValueList.length; j++) {
+            let sellSku = "";
+            if (productName) {
+              sellSku = slugify(productName);
+            }
             newDataRow.push({
-              sellerSku: "",
+              sellerSku: sellSku,
               sellingPrice: "",
               stock: "",
               isInUse: true,
@@ -402,6 +412,14 @@ export default function AddNewProductPage() {
         break;
       }
     }
+    const sellerSkuSet = new Set();
+    for (const dataRow of variantSellingPoint) {
+      if (sellerSkuSet.has(dataRow.sellerSku)) {
+        newErrorList.push("Không được trùng tên seller sku");
+        break;
+      }
+      sellerSkuSet.add(dataRow.sellerSku);
+    }
     setFormErrors((prev) => ({ ...prev, variantTableError: newErrorList }));
   }, [variantSellingPoint]);
   const hasError = useMemo(() => {
@@ -418,7 +436,7 @@ export default function AddNewProductPage() {
   }, [formErrors]);
 
   const handlePublishSubmit = async () => {
-    const formData = formFinalFormData();
+    const formData = await formFinalFormData();
     try {
       const response = await productApi.createNewProduct(formData);
     } catch (error) {
@@ -426,7 +444,7 @@ export default function AddNewProductPage() {
     }
   };
   const handleDraftSubmit = async () => {
-    const formData = formFinalFormData();
+    const formData = await formFinalFormData();
     formData.append("isDraft", "1");
     try {
       const response = await productApi.createNewProduct(formData);
@@ -483,6 +501,7 @@ export default function AddNewProductPage() {
     if (v2Exist) {
       let _v2 = { ...variant2 };
       //filter out img data
+      _v2.valueList = _v2.valueList.filter((value) => value.name !== "");
       _v2.valueList = _v2.valueList.map((value) => ({
         value: value.value,
         tempId: value.tempId,
@@ -501,7 +520,7 @@ export default function AddNewProductPage() {
       <h1>Thêm sản phẩm mới</h1>
       {/* Big layout!*/}
       {/*Content*/}
-      <form className="grid grid-cols-[75%_25%] gap-4">
+      <div className="grid grid-cols-[75%_25%] gap-4">
         <div className="flex flex-col gap-6">
           <div ref={basicInfoRef} onClick={() => setTipState(1)}>
             <div
@@ -613,7 +632,7 @@ export default function AddNewProductPage() {
           <TipBlock state={tipState} />
           <ErrorBlock hasError={hasError} />
         </div>
-      </form>
+      </div>
     </div>
   );
 }
@@ -756,12 +775,19 @@ function VariantAndSellingBlock({
     setVariantSellingPoint(newList);
   };
   const handleSubmitApplyAllToolbar = () => {
-    const newVariantSellingPoint = variantSellingPoint.map((variant) => ({
-      ...variant,
-      sellingPrice: allPrice,
-      stock: allStock,
-      sellerSku: allSellerSku,
-    }));
+    const newVariantSellingPoint = variantSellingPoint.map((variant) => {
+      const newVariant = { ...variant };
+      if (allPrice.trim() !== "") {
+        newVariant.sellingPrice = allPrice;
+      }
+      if (allStock.trim() !== "") {
+        newVariant.stock = allPrice;
+      }
+      if (allSellerSku.trim() !== "") {
+        newVariant.sellerSku = allSellerSku;
+      }
+      return newVariant;
+    });
     setVariantSellingPoint(newVariantSellingPoint);
   };
   const handleRefreshApplyAllToolbar = () => {
@@ -790,7 +816,7 @@ function VariantAndSellingBlock({
           errors={v2Errors}
         />
       )}
-      {total < 2 && (
+      {/* {total < 2 && (
         <Button
           variant={"outline"}
           className="w-fit"
@@ -798,7 +824,7 @@ function VariantAndSellingBlock({
         >
           + Thêm biến thể mới{` (${total}/2)`}
         </Button>
-      )}
+      )} */}
       <h2>Giá bán & Kho hàng </h2>
       {variantSellingPoint.length > 0 ? (
         <div className="space-y-2">
@@ -998,7 +1024,7 @@ function VariantBlock({ variant, setVariant, errors }) {
         containerClassname={"max-w-[70%]"}
         disabled
       />
-      <div className="flex flex-col gap-4 max-w-[70%]">
+      <div className="flex flex-col gap-4 max-w-[100%]">
         <Label>Danh sách biến thể</Label>
         {variant.valueList.map((variantValue, index) => (
           <div
