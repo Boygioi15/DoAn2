@@ -6,7 +6,18 @@ import ModalContextProvider, {
 import { useContext, useEffect, useState } from 'react';
 import UltilityContextProvider_1 from '../../contexts/UltilityContext_1';
 import { UltilityContext_1 } from '../../contexts/UltilityContext_1';
+import topBannerSample from '../../assets/topBannerSample.webp';
+import { FiSearch } from 'react-icons/fi';
+import { IoLogInOutline } from 'react-icons/io5';
+import { MdOutlineAccountCircle, MdAccountCircle } from 'react-icons/md';
+import { FaRegUserCircle, FaUserCircle } from 'react-icons/fa';
+import { FiShoppingBag } from 'react-icons/fi';
 
+import useAuthStore from '../../contexts/zustands/AuthStore';
+import { MdArrowBackIos, MdArrowForwardIos } from 'react-icons/md';
+import Breadcrumbs from '@/reusable_components/Breadcrumb';
+import { frontendApi } from '@/api/frontendApi';
+import { Button } from '@/components/ui/button';
 export default function RootLayout({ children }) {
   return (
     <ModalContextProvider>
@@ -22,17 +33,6 @@ export default function RootLayout({ children }) {
     </ModalContextProvider>
   );
 }
-
-import topBannerSample from '../../assets/topBannerSample.webp';
-import { FiSearch } from 'react-icons/fi';
-import { IoLogInOutline } from 'react-icons/io5';
-import { MdOutlineAccountCircle, MdAccountCircle } from 'react-icons/md';
-import { FaRegUserCircle, FaUserCircle } from 'react-icons/fa';
-import { FiShoppingBag } from 'react-icons/fi';
-
-import useAuthStore from '../../contexts/zustands/AuthStore';
-import { MdArrowBackIos, MdArrowForwardIos } from 'react-icons/md';
-import Breadcrumbs from '@/reusable_components/Breadcrumb';
 
 export function TopLayout() {
   const { openModal } = useContext(ModalContext);
@@ -81,6 +81,7 @@ export function TopLayout() {
           />
         </div>
       </div>
+      <TopLayout_CategorySelector />
     </div>
   );
 }
@@ -148,6 +149,65 @@ function TopLayout_MessageRotator() {
     </div>
   );
 }
+function TopLayout_CategorySelector() {
+  const [categoryData, setCategoryData] = useState([]);
+  const getCategoryData = async () => {
+    try {
+      const response = await frontendApi.getCategoryData();
+      setCategoryData(response.data);
+    } catch (error) {
+      toast.error('Có lỗi khi lấy dữ liệu ngành hàng');
+    }
+  };
+  useEffect(() => {
+    getCategoryData();
+  }, []);
+  if (!categoryData) return;
+  return (
+    <div className="flex w-full bg-(--color-preset-gray) pl-25 pr-25 relative">
+      {categoryData.map((t1) => (
+        <div className="group">
+          <button className="category-button">{t1.name}</button>
+          <div
+            className="
+              absolute left-0 z-100
+              hidden group-hover:block
+              bg-white shadow-lg border pl-25 pr-25 pt-10 pb-10
+              w-screen 
+            "
+          >
+            {t1.subCategory?.length > 0 ? (
+              <div className="flex gap-2">
+                <div className="flex flex-col gap-2">
+                  <Link className={reusableStyle.categoryLink}>
+                    Sản phẩm mới
+                  </Link>
+                  <Link className={reusableStyle.categoryLink}>Giá tốt</Link>
+                  <Link className={reusableStyle.categoryLink}>Free ship</Link>
+                </div>
+                <div className="w-px bg-gray-300"></div>
+                <div className="flex flex-col ml-5 gap-2">
+                  <h3>Danh mục sản phẩm</h3>
+                  <div className="flex flex-col flex-wrap max-h-[200px] gap-2">
+                    {t1.subCategory.map((t2) => (
+                      <Link className={reusableStyle.categoryLink}>
+                        {t2.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-gray-500 text-sm">Không có danh mục con</div>
+            )}
+          </div>
+        </div>
+      ))}
+      <button className="category-button">Sản phẩm mới</button>
+      <button className="category-button">Free ship</button>
+    </div>
+  );
+}
 function IconBlock({ icon, name, handleOnClick, note }) {
   return (
     <button className="icon-block" onClick={handleOnClick}>
@@ -198,3 +258,8 @@ export function BotLayout() {
     </div>
   );
 }
+
+const reusableStyle = {
+  categoryLink:
+    'p-2 font-medium text-(color-preset-gray) hover:text-red-500 cursor-pointer min-w-[200px]',
+};

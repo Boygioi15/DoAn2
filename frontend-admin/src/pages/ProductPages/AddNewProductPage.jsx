@@ -300,8 +300,8 @@ export default function AddNewProductPage() {
     }
     //at least 3 properties & no blank, no same name
     const newErrorList = [];
-    if (productProperties.length < 3) {
-      newErrorList.push("Phải có ít nhất 3 thuộc tính sản phẩm");
+    if (productProperties.length < 1) {
+      newErrorList.push("Phải có ít nhất 1 thuộc tính sản phẩm");
     }
     productProperties.some((element) => {
       if (element.name.trim() === "" || element.value.trim() === "") {
@@ -503,7 +503,7 @@ export default function AddNewProductPage() {
       //filter out img data
       _v2.valueList = _v2.valueList.filter((value) => value.name !== "");
       _v2.valueList = _v2.valueList.map((value) => ({
-        value: value.value,
+        value: value.name,
         tempId: value.tempId,
       }));
       formData.append("variant2Data", JSON.stringify(_v2));
@@ -534,6 +534,7 @@ export default function AddNewProductPage() {
               <div className="flex flex-row gap-10">
                 <div className="w-[70%] flex flex-col gap-5">
                   <InputBlock_Input
+                    inputId={"basicinfo-name"}
                     label="Tên sản phẩm"
                     description="Tiêu đề nhiều ngôn ngữ sẽ được hiển thị khi người mua thay đổi cài đặt ngôn ngữ mặc định của ứng dụng của họ. Thiết lập nó có thể giúp cải thiện việc thu hồi sản phẩm trong các ứng dụng nhắm mục tiêu vào các ngôn ngữ khác nhau."
                     isRequired={true}
@@ -576,6 +577,7 @@ export default function AddNewProductPage() {
                 <div className="w-[30%] flex flex-col gap-2.5">
                   <h2>Ảnh bìa sản phẩm</h2>
                   <UploadComponent
+                    uploadComponentId={"basicinfo-thumbnail"}
                     className="h-full"
                     onImageChange={(file) => setThumbnailFile(file)}
                   />
@@ -639,7 +641,7 @@ export default function AddNewProductPage() {
 function DescriptionBlock({ description, setDescription, errors }) {
   return (
     <div
-      id="editor"
+      id="descripton"
       className={
         reusableStyle.inputBlock +
         (errors.length > 0 && reusableStyle.errorBorder)
@@ -683,6 +685,7 @@ function PropertiesBlock({
         {properties.map((productProperty, index) => (
           <div key={index} className="flex flex-row gap-3 items-center">
             <Input
+              id={`property-i-${index}`}
               className="w-[40%]"
               placeholder={"Tên thuộc tính"}
               value={productProperty.name}
@@ -694,6 +697,7 @@ function PropertiesBlock({
             />
             <span>:</span>
             <Input
+              id={`property-v-${index}`}
               placeholder={"Giá trị"}
               value={productProperty.value}
               onChange={(e) => {
@@ -715,7 +719,11 @@ function PropertiesBlock({
           </div>
         ))}
       </div>
-      <Button onClick={onAddNewProperty} variant="outline">
+      <Button
+        onClick={onAddNewProperty}
+        variant="outline"
+        id={"add-new-property"}
+      >
         Thêm thuộc tính mới
       </Button>
       {errors.length > 0 && (
@@ -775,19 +783,26 @@ function VariantAndSellingBlock({
     setVariantSellingPoint(newList);
   };
   const handleSubmitApplyAllToolbar = () => {
-    const newVariantSellingPoint = variantSellingPoint.map((variant) => {
+    const newVariantSellingPoint = variantSellingPoint.map((variant, index) => {
       const newVariant = { ...variant };
       if (allPrice.trim() !== "") {
         newVariant.sellingPrice = allPrice;
       }
       if (allStock.trim() !== "") {
-        newVariant.stock = allPrice;
+        newVariant.stock = allStock;
       }
       if (allSellerSku.trim() !== "") {
-        newVariant.sellerSku = allSellerSku;
+        newVariant.sellerSku = allSellerSku + `-${index + 1}`;
       }
       return newVariant;
     });
+    for (let i = 0; i < newVariantSellingPoint.length; i++) {
+      const offset = i % (variant2.valueList.length - 1);
+      newVariantSellingPoint[i].sellingPrice = (
+        Number(allPrice) +
+        offset * 10000
+      ).toString();
+    }
     setVariantSellingPoint(newVariantSellingPoint);
   };
   const handleRefreshApplyAllToolbar = () => {
@@ -833,19 +848,25 @@ function VariantAndSellingBlock({
               <Input
                 placeholder="Giá"
                 value={allPrice}
+                id={"all-price"}
                 onChange={(e) => setAllPrice(e.target.value)}
               />
               <Input
                 placeholder="Kho hàng"
+                id={"all-stock"}
                 value={allStock}
                 onChange={(e) => setAllStock(e.target.value)}
               />
               <Input
+                id={"all-seller-sku"}
                 placeholder="SellerSku"
                 value={allSellerSku}
                 onChange={(e) => setAllSellerSku(e.target.value)}
               />
-              <Button onClick={handleSubmitApplyAllToolbar}>
+              <Button
+                id={"apply-all-submit"}
+                onClick={handleSubmitApplyAllToolbar}
+              >
                 Áp dụng cho tất cả
               </Button>
               <Button
@@ -1030,6 +1051,7 @@ function VariantBlock({ variant, setVariant, errors }) {
           <div
             key={index}
             className="flex gap-4 p-2 pl-4  bg-white shadow-sm rounded-lg items-center justify-between"
+            id={`option-value-${variant.index}-${index}`}
           >
             <Input
               placeholder="Nhập biến thể mới"

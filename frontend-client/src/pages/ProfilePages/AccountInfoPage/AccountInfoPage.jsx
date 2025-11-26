@@ -13,7 +13,7 @@ import {
   InputBlock_Select,
 } from '../../../reusable_components/comps';
 import { UltilityContext_1 } from '@/contexts/UltilityContext_1';
-import { emailRegex, nameRegex, phoneRegex } from '@/utils/util';
+import { emailRegex, nameRegex, phoneRegex } from '@/util';
 
 export default function AccountInfoPage() {
   const { convenience_1 } = useContext(UltilityContext_1);

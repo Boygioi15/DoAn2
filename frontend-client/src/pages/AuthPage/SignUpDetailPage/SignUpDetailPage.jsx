@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from 'react';
 import './SignUpDetailPage.css';
 import OTPInput from 'react-otp-input';
-import { Time_NumToText } from '../../../utils/util';
+import { Time_NumToText } from '../../../util';
 import { FaArrowLeft } from 'react-icons/fa6';
 import { PasswordField } from '../../../reusable_components/comps';
 

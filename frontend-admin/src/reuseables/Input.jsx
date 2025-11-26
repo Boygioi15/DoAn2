@@ -5,6 +5,7 @@ import { MinusIcon, PlusIcon } from "lucide-react";
 import { Group, NumberField } from "react-aria-components";
 
 export function InputBlock_Input({
+  inputId,
   label,
   isRequired,
   disabled,
@@ -25,6 +26,7 @@ export function InputBlock_Input({
         </Label>
       )}
       <Input
+        id={inputId}
         disabled={disabled}
         placeholder={placeholder}
         required={isRequired}

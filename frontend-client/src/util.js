@@ -8,3 +8,6 @@ export function Time_NumToText(num) {
 export const nameRegex = /^[\p{L}\s'.-]{2,50}$/u;
 export const phoneRegex = /^\d{10}$/;
 export const emailRegex = /^[\w\d]{1,}@([\w\d]{1,}.){1,}[\w\d]{1,}$/;
+export function formatMoney(value) {
+  return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}

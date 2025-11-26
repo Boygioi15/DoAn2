@@ -14,7 +14,7 @@ import { SMS_LoginModal } from './AuthModal';
 import authApi from '../../api/authApi';
 import useAuthStore from '../../contexts/zustands/AuthStore';
 import { toast } from 'sonner';
-import { phoneRegex } from '@/utils/util';
+import { phoneRegex } from '@/util';
 
 export function SignInBox() {
   const { openModal } = useContext(ModalContext);

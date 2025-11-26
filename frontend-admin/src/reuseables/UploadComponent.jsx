@@ -21,6 +21,7 @@ export default function UploadComponent({
   accept = "image/*",
   className,
   onImageChange,
+  uploadComponentId,
 }) {
   const [coverImage, setCoverImage] = useState({
     id: null,
@@ -113,7 +114,11 @@ export default function UploadComponent({
         onDragOver={handleDragOver}
         onDrop={handleDrop}
       >
-        <input {...getInputProps()} className="sr-only" />
+        <input
+          id={"upload-component-input"}
+          {...getInputProps()}
+          className="sr-only"
+        />
 
         {hasImage ? (
           <>
@@ -202,6 +207,7 @@ export default function UploadComponent({
           </>
         ) : (
           <div
+            id={uploadComponentId}
             className="flex aspect-[3/4] w-full cursor-pointer flex-col items-center justify-center gap-4 p-8 text-center"
             onClick={openFileDialog}
           >
@@ -219,7 +225,7 @@ export default function UploadComponent({
               </p>
             </div>
 
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" id={"upload-component-button"}>
               <ImageIcon />
               Chọn file
             </Button>

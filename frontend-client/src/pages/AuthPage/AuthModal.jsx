@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from 'react';
 import { ModalContext } from '../../contexts/ModalContext';
 import OtpInput from 'react-otp-input';
-import { Time_NumToText } from '../../utils/util';
+import { Time_NumToText } from '../../util';
 import authApi from '../../api/authApi';
 import { Link, useNavigate } from 'react-router-dom';
 import useAuthStore from '../../contexts/zustands/AuthStore';

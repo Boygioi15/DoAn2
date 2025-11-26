@@ -143,76 +143,84 @@ export default function CategoryPage() {
     <div className="page-layout">
       <h1>Quản lý ngành hàng</h1>
       {categoryTree && (
-        <div className="grid grid-cols-[30%_70%] gap-4">
-          <div className={reusableStyle.inputBlock}>
-            <h2>Danh sách ngành hàng</h2>
-            <div className="flex gap-2">
-              <div className="relative grow">
-                <div className="text-muted-foreground pointer-events-none absolute inset-y-0 left-0 flex items-center justify-center pl-3 peer-disabled:opacity-50">
-                  <Search className="size-4" />
-                  <span className="sr-only">Search</span>
+        <div className="grid grid-cols-[40%_60%] gap-4 ">
+          <div
+            className={
+              reusableStyle.inputBlock +
+              " shadow-xl overflow-scroll max-h-[650px]"
+            }
+          >
+            <div className="flex flex-col sticky -top-5 bg-white z-10 gap-4 leading-6">
+              <h2>Danh sách ngành hàng</h2>
+              <div className="flex gap-2 ">
+                <div className="relative grow">
+                  <div className="text-muted-foreground pointer-events-none absolute inset-y-0 left-0 flex items-center justify-center pl-3 peer-disabled:opacity-50">
+                    <Search className="size-4" />
+                    <span className="sr-only">Search</span>
+                  </div>
+                  <Input
+                    type="text"
+                    placeholder="Tìm kiếm ngành hàng"
+                    className="peer pl-9"
+                  />
                 </div>
-                <Input
-                  type="text"
-                  placeholder="Tìm kiếm ngành hàng"
-                  className="peer pl-9"
-                />
-              </div>
-              <Dialog
-                open={isCreateDialogOpen}
-                onOpenChange={(open) => {
-                  setIsCreateDialogOpen(open);
-                }}
-              >
-                <DialogTrigger
-                  onClick={() => setIsCreateDialogOpen(true)}
-                  asChild
+                <Dialog
+                  open={isCreateDialogOpen}
+                  onOpenChange={(open) => {
+                    setIsCreateDialogOpen(open);
+                  }}
                 >
-                  <Button variant={"outline"}>
-                    <Plus />
-                  </Button>
-                </DialogTrigger>
-                <CreateNewCategoryForm
-                  allCategories={allCategory}
-                  handleAddCategory={handleCreateCategory}
-                />
-              </Dialog>
+                  <DialogTrigger
+                    onClick={() => setIsCreateDialogOpen(true)}
+                    asChild
+                  >
+                    <Button variant={"outline"}>
+                      <Plus />
+                    </Button>
+                  </DialogTrigger>
+                  <CreateNewCategoryForm
+                    allCategories={allCategory}
+                    handleAddCategory={handleCreateCategory}
+                  />
+                </Dialog>
 
-              <Dialog
-                open={isUpdateDialogOpen}
-                onOpenChange={(open) => {
-                  setIsUpdateDialogOpen(open);
-                }}
-              >
-                <DialogTrigger onClick={() => setIsUpdateDialogOpen(true)}>
-                  <Button variant={"outline"}>
-                    <Edit />
-                  </Button>
-                </DialogTrigger>
-                <UpdateCategoryForm
-                  allCategories={allCategory}
-                  handleUpdateCategory={handleUpdateCategory}
-                />
-              </Dialog>
+                <Dialog
+                  open={isUpdateDialogOpen}
+                  onOpenChange={(open) => {
+                    setIsUpdateDialogOpen(open);
+                  }}
+                >
+                  <DialogTrigger onClick={() => setIsUpdateDialogOpen(true)}>
+                    <Button variant={"outline"}>
+                      <Edit />
+                    </Button>
+                  </DialogTrigger>
+                  <UpdateCategoryForm
+                    allCategories={allCategory}
+                    handleUpdateCategory={handleUpdateCategory}
+                  />
+                </Dialog>
 
-              <Dialog
-                open={isDeleteDialogOpen}
-                onOpenChange={(open) => {
-                  setIsDeleteDialogOpen(open);
-                }}
-              >
-                <DialogTrigger onClick={() => setIsDeleteDialogOpen(true)}>
-                  <Button variant={"outline"}>
-                    <Trash />
-                  </Button>
-                </DialogTrigger>
-                <DeleteCategoryForm
-                  allCategories={allCategory}
-                  handleDeleteCategory={handleDeleteCategory}
-                />
-              </Dialog>
+                <Dialog
+                  open={isDeleteDialogOpen}
+                  onOpenChange={(open) => {
+                    setIsDeleteDialogOpen(open);
+                  }}
+                >
+                  <DialogTrigger onClick={() => setIsDeleteDialogOpen(true)}>
+                    <Button variant={"outline"}>
+                      <Trash />
+                    </Button>
+                  </DialogTrigger>
+                  <DeleteCategoryForm
+                    allCategories={allCategory}
+                    handleDeleteCategory={handleDeleteCategory}
+                  />
+                </Dialog>
+              </div>
             </div>
-            <div className="border border-border h-[600px] rounded-sm bg-gray-50">
+
+            <div className="border border-border pt-2 rounded-sm bg-gray-50">
               <TreeView data={categoryTree} expandAll />
             </div>
           </div>

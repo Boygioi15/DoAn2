@@ -136,7 +136,6 @@ export class ProductService {
       newProduct = await this.productModel.create({
         name: productName,
         slug: productSlug,
-        sku: sku,
         display_price: productPrice,
         display_thumbnail_image: thumbnailURL,
         categoryId: categoryId,
@@ -144,6 +143,7 @@ export class ProductService {
       });
     } else {
       newProduct = await this.productModel.create({
+        sku: sku,
         name: productName,
         slug: productSlug,
         display_price: productPrice,
@@ -295,6 +295,53 @@ export class ProductService {
     const productList = await Promise.all(productListPromises);
     return productList;
   }
+  async getAllProduct_Client() {
+    const basicProductInfo = await this.productModel.find();
+    const productListPromises = basicProductInfo.map(async (product) => {
+      const { minPrice } = await this.getProductSellingPrice(product);
+      const totalStock = await this.getProductTotalStock(product);
+
+      let allProductVariants = await this.getAllVariantsOfProduct(product);
+      allProductVariants = allProductVariants.filter(
+        (variant) => variant.isInUse && variant.isOpenToSale,
+      );
+      let optionData: any = [];
+      for (const variant of allProductVariants) {
+        const exists = optionData.find((o) => o.optionId === variant.optionId1);
+        if (!exists) {
+          optionData.push({
+            optionId: variant.optionId1,
+            optionName: variant.optionName1,
+            optionValue: variant.optionValue1,
+            optionImage: variant.optionImage1[0],
+          });
+        }
+      }
+
+      return {
+        productId: product.productId,
+        thumbnailURL: product.display_thumbnail_image,
+        name: product.name,
+        categoryName:
+          (await this.getProductCategoryName(product)) || 'Không có dữ liệu',
+        displayedPrice: minPrice,
+        optionData,
+        totalStock,
+        isPublished: product.isPublished,
+        isDrafted: product.isDrafted,
+        isDeleted: product.isDeleted,
+      };
+    });
+    let productList = await Promise.all(productListPromises);
+    productList = productList.filter(
+      (product) =>
+        product.totalStock > 0 &&
+        product.isPublished &&
+        !product.isDrafted &&
+        !product.isDeleted,
+    );
+    return productList;
+  }
   async getProductCategoryName(product: ProductDocument) {
     const { categoryId } = product;
     const categoryName =
@@ -389,7 +436,7 @@ export class ProductService {
           optionId1: '$option1.optionId',
           optionName1: '$option1.name',
           optionValue1: '$option1.value',
-
+          optionImage1: '$option1.image',
           optionId2: '$option2.optionId',
           optionName2: '$option2.name',
           optionValue2: '$option2.value',
@@ -484,6 +531,65 @@ export class ProductService {
       isDeleted: product.isDeleted,
     };
   }
+  async getProductDetail_Client(productId: string) {
+    const product = await this.productModel.findOne({ productId: productId });
+    if (!product) {
+      throw new InternalServerErrorException('Product not found!');
+    }
+    const categoryName = await this.categoryService.getCategoryDetail(
+      product.categoryId,
+    );
+    const propertyListDb = await this.getProductPropertyList(product);
+    const propertyList = propertyListDb.map((property) => ({
+      name: property.name,
+      value: property.value,
+    }));
+    const descriptionDb = await this.getProductDescription(product);
+    const description = descriptionDb?.description;
+    let allProductVariants = await this.getAllVariantsOfProduct(product);
+    allProductVariants = allProductVariants.filter(
+      (variant) => variant.isInUse && variant.isOpenToSale,
+    );
+    let optionData: any = [];
+    const totalStock = await this.getProductTotalStock(product);
+    for (const variant of allProductVariants) {
+      const exists = optionData.find((o) => o.optionId === variant.optionId1);
+      if (!exists) {
+        optionData.push({
+          optionId: variant.optionId1,
+          optionName: variant.optionName1,
+          optionValue: variant.optionValue1,
+          optionImage: variant.optionImage1,
+        });
+      }
+    }
+    optionData = optionData.map((option1) => {
+      let allAssociatedOption2 = allProductVariants
+        .filter((variant) => variant.optionId1 === option1.optionId)
+        .map((variant) => ({
+          optionId: variant.optionId2,
+          optionName: variant.optionName2,
+          optionValue: variant.optionValue2,
+        }));
+      // console.log('ASS: ', allAssociatedOption2);
+      return {
+        ...option1,
+        subOption: allAssociatedOption2,
+      };
+    });
+    return {
+      name: product.name,
+      categoryName: categoryName,
+      thumbnailURL: product.display_thumbnail_image,
+      sku: product.sku,
+      propertyList: JSON.stringify(propertyList),
+      description: JSON.stringify(description),
+      allProductVariants,
+      optionData,
+      isOutOfStock: totalStock === 0,
+    };
+  }
+
   async resetAllProductData() {
     await this.productModel.deleteMany();
     await this.productOptionModel.deleteMany();

@@ -36,6 +36,14 @@ import {
   VariantOptionSchema,
 } from './schemas/product.schema';
 import { Category, CategorySchema } from './schemas/category.schema';
+import {
+  FrontendSetting,
+  FrontendSettingSchema,
+} from './schemas/frontend-setting.schema';
+import {
+  CloudinaryFileMap,
+  CloudinaryFileMapSchema,
+} from './schemas/cloudinary_file_map.schema';
 
 @Module({
   imports: [
@@ -68,6 +76,14 @@ import { Category, CategorySchema } from './schemas/category.schema';
       {
         name: TestUser.name,
         schema: TestUserSchema,
+      },
+      {
+        name: FrontendSetting.name,
+        schema: FrontendSettingSchema,
+      },
+      {
+        name: CloudinaryFileMap.name,
+        schema: CloudinaryFileMapSchema,
       },
     ]),
   ],

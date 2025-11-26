@@ -27,6 +27,7 @@ import AccountInfoPage from './pages/ProfilePages/AccountInfoPage/AccountInfoPag
 import PasswordPage from './pages/ProfilePages/PasswordPage/PasswordPage.jsx';
 import AddressPage from './pages/ProfilePages/AddressPage/AddressPage.jsx';
 import { Toaster } from 'sonner';
+import ProductDetailPage from './pages/ProductDetailPage';
 const router = createBrowserRouter([
   {
     path: '/',
@@ -54,6 +55,10 @@ const router = createBrowserRouter([
             element: <AddressPage />,
           },
         ],
+      },
+      {
+        path: '/product-detail/:productId',
+        element: <ProductDetailPage />,
       },
       {
         path: 'error',

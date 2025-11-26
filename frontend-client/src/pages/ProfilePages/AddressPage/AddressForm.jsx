@@ -9,7 +9,7 @@ import {
 import { toast } from 'sonner';
 import { useEffect, useState } from 'react';
 import { all } from 'axios';
-import { nameRegex, phoneRegex } from '@/utils/util';
+import { nameRegex, phoneRegex } from '@/util';
 
 export default function AddressForm({
   mode,

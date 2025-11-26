@@ -32,10 +32,21 @@ export class ProductController {
     const product = await this.productService.getProductDetail_Admin(productId);
     return product;
   }
+  @Get('get-detail/client/:id')
+  async getProductDetail_Client(@Param('id') productId: string) {
+    const product =
+      await this.productService.getProductDetail_Client(productId);
+    return product;
+  }
   @Get('item-management')
   async getAllProducts_ItemManagement() {
     const productList =
       await this.productService.getAllProduct_ItemManagement();
+    return productList;
+  }
+  @Get('client')
+  async getAllProducts_Client() {
+    const productList = await this.productService.getAllProduct_Client();
     return productList;
   }
   @Post('reset-all-product-data')
