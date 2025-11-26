@@ -300,15 +300,15 @@ export default function AddNewProductPage() {
     }
     //at least 3 properties & no blank, no same name
     const newErrorList = [];
-    if (productProperties.length < 1) {
-      newErrorList.push("Phải có ít nhất 1 thuộc tính sản phẩm");
-    }
-    productProperties.some((element) => {
-      if (element.name.trim() === "" || element.value.trim() === "") {
-        newErrorList.push("Không được để trống dòng thuộc tính");
-        return true; // stops iteration early
-      }
-    });
+    // if (productProperties.length < 1) {
+    //   newErrorList.push("Phải có ít nhất 1 thuộc tính sản phẩm");
+    // }
+    // productProperties.some((element) => {
+    //   if (element.name.trim() === "" || element.value.trim() === "") {
+    //     newErrorList.push("Không được để trống dòng thuộc tính");
+    //     return true; // stops iteration early
+    //   }
+    // });
     const names = productProperties.map((property) => property.name);
     const sNames = new Set(names);
     if (names.length !== sNames.size) {
@@ -458,7 +458,10 @@ export default function AddNewProductPage() {
     formData.append("categoryId", selectedCategory);
     formData.append("thumbnailFile", thumbnailFile);
 
-    const propertyList = JSON.stringify(productProperties);
+    let propertyList = productProperties.filter(
+      (property) => property.name !== ""
+    );
+    propertyList = JSON.stringify(productProperties);
     formData.append("propertyList", propertyList);
 
     formData.append("description", productDescription);
@@ -546,6 +549,12 @@ export default function AddNewProductPage() {
                     <Label className="gap-1 text-[14px]">
                       <span className="text-destructive">*</span>Chọn ngành hàng
                     </Label>
+                    <Input
+                      id={"category-input"}
+                      placeholder="For crawling data"
+                      value={selectedCategory}
+                      onChange={(e) => setSelectedCategory(e.target.value)}
+                    />
                     <ComboBoxWithSearch
                       textPlaceholder="Chọn ngành hàng cho sản phẩm"
                       optionPlaceHolder="Tìm kiếm ngành hàng"
@@ -624,7 +633,11 @@ export default function AddNewProductPage() {
             >
               Lưu bản nháp
             </Button>
-            <Button className={"bg-blue-500"} onClick={handlePublishSubmit}>
+            <Button
+              className={"bg-blue-500"}
+              id={"submit-button"}
+              onClick={handlePublishSubmit}
+            >
               Gửi đi
             </Button>
           </div>
@@ -796,13 +809,6 @@ function VariantAndSellingBlock({
       }
       return newVariant;
     });
-    for (let i = 0; i < newVariantSellingPoint.length; i++) {
-      const offset = i % (variant2.valueList.length - 1);
-      newVariantSellingPoint[i].sellingPrice = (
-        Number(allPrice) +
-        offset * 10000
-      ).toString();
-    }
     setVariantSellingPoint(newVariantSellingPoint);
   };
   const handleRefreshApplyAllToolbar = () => {

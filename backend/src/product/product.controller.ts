@@ -24,12 +24,13 @@ export class ProductController {
     @UploadedFiles() files: Array<Express.Multer.File>,
     @Body() createProductDto: CreateProductDto,
   ) {
-    // console.log('F: ', files);
+    console.log('F: ', files);
     return this.productService.createNewProduct(createProductDto, files);
   }
   @Get('get-detail/admin/:id')
   async getProductDetail_Admin(@Param('id') productId: string) {
     const product = await this.productService.getProductDetail_Admin(productId);
+
     return product;
   }
   @Get('get-detail/client/:id')

@@ -31,44 +31,85 @@ options.addArguments("--disable-sync");
 options.addArguments("--disable-translate");
 options.addArguments("--disable-features=site-per-process");
 
-async function loadUrls() {
-  const raw = fs.readFileSync("../urls.txt", "utf-8");
-  return raw
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0);
+const XLSX = require("xlsx");
+async function readFromExcel() {
+  const urlPath = path.join("..", "url.xlsx");
+
+  // Correct method for reading from file
+  const workbook = XLSX.readFile(urlPath);
+
+  const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+  const raw_data = XLSX.utils.sheet_to_json(worksheet);
+  for (const dataRow of raw_data) {
+    const response = await axios.get(
+      `http://localhost:3000/category/by-name?categoryName=${dataRow.Cat}`
+    );
+    dataRow.catId = response.data.categoryId;
+  }
+  console.log("Excel data: ", raw_data);
+  return raw_data;
+}
+function writeDoneToRow(rowNumber) {
+  const urlPath = path.join("..", "url.xlsx");
+
+  // 1️⃣ Read workbook
+  const workbook = XLSX.readFile(urlPath);
+
+  // 2️⃣ Get first sheet
+  const sheet = workbook.Sheets["Sheet1"];
+  // 3️⃣ Construct cell address (C + rowNumber)
+  const cellPos = XLSX.utils.encode_cell({ r: rowNumber + 1, c: 2 });
+  sheet[cellPos] = { v: "DONE" };
+  // 6️⃣ Write back to file
+  XLSX.writeFile(workbook, urlPath);
+  console.log(`✅ Wrote "DONE" to row ${rowNumber}`);
 }
 
+// Example usage: write "DONE" to row 5, column C
 async function main() {
-  const urls = await loadUrls();
+  const dataRows = await readFromExcel();
 
-  if (urls.length === 0) {
-    console.log("No URLs found in urls.txt");
+  if (dataRows.length === 0) {
+    console.log("No URLs found in url.xlsx");
     return;
   }
 
-  console.log("Loaded URLs:", urls);
+  console.log("Loaded URLs:", dataRows);
 
   let driver = await new Builder()
     .forBrowser("chrome")
     .setChromeOptions(options)
     .build();
-
-  for (const url of urls) {
-    console.log(`Opening: ${url}`);
-    await driver.get(url);
-    await clickColorsAndDownload(driver, baseFolder);
-    // After finishing crawling product details:
-    const productJson = await crawlProductData(driver);
-
-    // Save to file
-    saveProductData(productJson);
-    await driver.sleep(2000); // just to see it open for now
+  for (let [index, dataRow] of dataRows.entries()) {
+    try {
+      console.log(`Opening: `, dataRow);
+      if (dataRow.Status) {
+        console.log("Skip row ", index);
+        continue;
+      }
+      await driver.get(dataRow.URL);
+      await clickColorsAndDownload(driver, baseFolder);
+      // After finishing crawling product details:
+      let productJson = await crawlProductData(driver);
+      productJson = {
+        ...productJson,
+        categoryId: dataRow.catId,
+        url: dataRow.URL,
+      };
+      console.log("PJ: ", productJson);
+      // Save to file
+      saveProductData(productJson);
+      writeDoneToRow(index);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      await driver.sleep(2000);
+    }
   }
-  await driver.sleep(10000);
   await driver.quit();
 }
 async function clickColorsAndDownload(driver, baseFolder) {
+  await driver.sleep(5000);
   let colorEls = await driver.findElements(By.css(".product__option-color"));
 
   console.log("Found colors:", colorEls.length);
@@ -154,6 +195,7 @@ async function downloadImagesForColor(driver, targetFolder) {
       await downloadImage(src, targetFolder, i);
     }
   }
+  await driver.sleep(2000);
 }
 
 async function crawlProductData(driver) {
@@ -291,4 +333,6 @@ async function crawlBreadcrumb(driver) {
 
   return breadcrumb;
 }
+//writeDoneToRow(1);
+//readFromExcel();
 main();

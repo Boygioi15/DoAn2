@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { CategoryService } from './category.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
@@ -20,6 +21,12 @@ export class CategoryController {
     const allCategories =
       await this.categoryService.getAllCategories(filterUndefined);
     return allCategories;
+  }
+  @Get('by-name')
+  async getCategoryByName(@Query('categoryName') categoryName: string) {
+    const matchingCategory =
+      await this.categoryService.getCategoryByName(categoryName);
+    return matchingCategory;
   }
   @Post('/')
   async createNewCategory(@Body() newCategory: CreateCategoryDto) {

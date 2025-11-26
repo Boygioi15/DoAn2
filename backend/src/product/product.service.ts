@@ -173,6 +173,7 @@ export class ProductService {
   ) {
     const { propertyList } = createProductDto;
     let deStringed = JSON.parse(propertyList);
+    if (deStringed.length === 0) return;
     deStringed = deStringed.map((element) => ({
       ...element,
       productId,

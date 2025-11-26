@@ -34,6 +34,11 @@ export class CategoryService {
     });
     return allProducts;
   }
+  async getCategoryByName(categoryName: string) {
+    return await this.categoryModel.findOne({
+      categoryName: categoryName,
+    });
+  }
   async getAllDirectChildrenOfCategory(
     categoryId: string | null = null,
   ): Promise<CategoryDocument[]> {

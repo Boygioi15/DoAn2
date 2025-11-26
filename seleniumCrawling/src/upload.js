@@ -1,11 +1,13 @@
 const fs = require("fs");
 const path = require("path");
 const axios = require("axios");
-const { Builder, until, By } = require("selenium-webdriver");
 const { saveProductData } = require("./productSaver");
 const chrome = require("selenium-webdriver/chrome");
-const { loadJson } = require("./jsonWorking");
+const { loadJson, saveJson } = require("./jsonWorking");
 const slugify = require("slugify");
+const { v4 } = require("uuid");
+const FormData = require("form-data");
+const PRODUCT_JSON_PATH = path.join(__dirname, "../results/products.json");
 
 const slugifyOption = {
   replacement: "-", // replace spaces with replacement character, defaults to `-`
@@ -31,33 +33,37 @@ let options = new chrome.Options();
 // options.addArguments("--disable-features=site-per-process");
 
 async function main() {
-  let driver = await new Builder()
-    .forBrowser("chrome")
-    .setChromeOptions(options)
-    .build();
-
   // json loading
   const products = loadJson("../results/products.json");
+  const productsArray = Object.values(products); // [ {}, {}, ... ]
+  //load via frontend
+  // const tasks = Object.values(products).map(async (product, index) => {
+  //   let driver = await new Builder().forBrowser("chrome").build();
+  //   await addProductToAdminViaFrontend(driver, product);
+  // });
+  //load via JSON
 
-  const tasks = Object.values(products).map((product) =>
-    processProduct(product)
-  );
+  for (let [index, product] of productsArray.entries()) {
+    try {
+      await addProductToAdminViaJSON(product);
+      product.done = true; // FIXED
+      console.log("PROGRESS: ", index, "/", productsArray.length);
+    } catch (error) {}
+  }
 
-  await Promise.all(tasks); // run all in parallel
+  saveJson(PRODUCT_JSON_PATH, products);
 }
-async function processProduct(product) {
-  let driver = await new Builder().forBrowser("chrome").build();
 
-  await addProductToAdmin(driver, product);
-}
-
-async function addProductToAdmin(driver, product) {
+async function addProductToAdminViaFrontend(driver, product) {
   await driver.get("http://localhost:5173/add-product");
 
   // Fill text fields
   await driver
     .findElement(By.id("basicinfo-name"))
     .sendKeys(product.productName);
+  await driver
+    .findElement(By.id("category-input"))
+    .sendKeys(product.categoryId);
   await uploadThumbnail(driver, product);
 
   for (let i = 0; i < product.property.length; i++) {
@@ -74,8 +80,10 @@ async function addProductToAdmin(driver, product) {
       await driver.findElement(By.id(`property-i-${i}`)).sendKeys(pName);
     if (pValue)
       await driver.findElement(By.id(`property-v-${i}`)).sendKeys(pValue);
-    const buttonEl = driver.findElement(By.id("add-new-property"));
-    await driver.executeScript("arguments[0].click();", buttonEl);
+    if (pName && pValue) {
+      const buttonEl = driver.findElement(By.id("add-new-property"));
+      await driver.executeScript("arguments[0].click();", buttonEl);
+    }
   }
 
   await driver.findElement(By.css(".ql-editor")).sendKeys(product.description);
@@ -91,8 +99,151 @@ async function addProductToAdmin(driver, product) {
   await driver
     .findElement(By.id("all-seller-sku"))
     .sendKeys(slugify(product.productName, slugifyOption));
-  const buttonEl = await driver.findElement(By.id("apply-all-submit"));
+  let buttonEl = await driver.findElement(By.id("apply-all-submit"));
   await driver.executeScript("arguments[0].click();", buttonEl);
+
+  await driver.sleep(3000);
+  buttonEl = await driver.findElement(By.id("submit-button"));
+  await driver.executeScript("arguments[0].click();", buttonEl);
+}
+async function addProductToAdminViaJSON(product) {
+  if (product.done) {
+    return;
+  }
+  console.log("Working on: ", product);
+  const formData = await formFormDataJSON(product);
+  try {
+    const response = await axios.post(
+      "http://localhost:3000/product",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+  } catch (error) {
+    console.log(error);
+  }
+}
+async function formFormDataJSON(product) {
+  const formData = new FormData();
+  formData.append("productName", product.productName);
+  formData.append("categoryId", product.categoryId);
+
+  const thumbnailFilePath = getFirstImageOfFirstFolder(product);
+  console.log("TF path: ", thumbnailFilePath);
+  // Append file correctly
+  formData.append("thumbnailFile", fs.createReadStream(thumbnailFilePath), {
+    filename: thumbnailFilePath.split("/").pop(), // make sure to send a filename
+    contentType: "image/jpeg", // set MIME type if known
+  });
+
+  let propertyList = [];
+  for (let i = 0; i < product.property.length; i++) {
+    // Clean <br> and </br> tags
+    const clean = product.property[i].replace(/<br\s*\/?>/gi, "").trim();
+    const [pName, pValue] = clean.split(":").map((s) => s.trim());
+    if (pName && pValue) {
+      propertyList.push({ name: pName, value: pValue });
+    }
+  }
+  propertyList = JSON.stringify(propertyList);
+  formData.append("propertyList", propertyList);
+  formData.append("description", product.description);
+  formData.append("totalVariant", 2);
+
+  const variant1Data = {
+    index: 0,
+    name: "Màu sắc",
+    valueList: [],
+  };
+  const colorCodeTempIdMap = new Map();
+  product.colorList.forEach((color) => {
+    const lastWord = color.match(/\w+$/)[0];
+    const tempid = v4();
+    colorCodeTempIdMap.set(lastWord, tempid);
+    variant1Data.valueList.push({
+      value: color,
+      tempId: tempid,
+    });
+  });
+  console.log("Map: ", colorCodeTempIdMap);
+
+  //path to folder
+  for (let i = 0; i < product.colorList.length; i++) {
+    const colorName = product.colorList[i];
+    const lastWord = colorName.match(/\w+$/)[0];
+    // Example: ../images/3ot25w005/sk010/
+    const imagesPath = path.join(
+      __dirname,
+      "..",
+      "results",
+      "images",
+      product.sku,
+      lastWord.toLowerCase()
+    );
+
+    const files = fs
+      .readdirSync(imagesPath)
+      .map((file) => path.join(imagesPath, file));
+
+    const tempIdMatch = colorCodeTempIdMap.get(lastWord);
+
+    for (const filePath of files) {
+      console.log(filePath);
+
+      formData.append(`v1_${tempIdMatch}`, fs.createReadStream(filePath), {
+        filename: path.basename(filePath), // just the file name
+        contentType: "image/jpeg", // set MIME type if known
+      });
+    }
+  }
+  const variant2Data = {
+    index: 1,
+    name: "Kích thước",
+    valueList: [],
+  };
+  product.sizeList.forEach((size) => {
+    variant2Data.valueList.push({
+      value: size,
+      tempId: v4(),
+    });
+  });
+
+  const variantTableData = [];
+  for (let i = 0; i < variant1Data.valueList.length; i++) {
+    for (let j = 0; j < variant2Data.valueList.length; j++) {
+      const index = i * variant2Data.valueList.length + j + 1;
+      const offset = j;
+      const sellingPrice = parseVND(product.displayedPrice) + offset * 10000;
+
+      const toPush = {
+        seller_sku: slugify(product.productName, slugifyOption) + `-${index}`,
+        sellingPrice: sellingPrice,
+        stock: 20,
+        isInUse: true,
+        isOpenToSale: true,
+        v1_name: variant1Data.valueList[i].value,
+        v1_tempId: variant1Data.valueList[i].tempId,
+        v2_name: variant2Data.valueList[j].value,
+        v2_tempId: variant2Data.valueList[j].tempId,
+      };
+      variantTableData.push(toPush);
+    }
+  }
+
+  formData.append("variant1Data", JSON.stringify(variant1Data));
+  formData.append("variant2Data", JSON.stringify(variant2Data));
+  formData.append("variantTableData", JSON.stringify(variantTableData));
+
+  console.log("v1: ", JSON.stringify(variant1Data));
+  console.log("v2: ", JSON.stringify(variant2Data));
+  console.log("Vtable: ", variantTableData);
+  console.log("-----");
+  console.log("-----");
+  console.log("-----");
+  return formData;
 }
 async function uploadThumbnail(driver, product) {
   const imagePath = getFirstImageOfFirstFolder(product);
