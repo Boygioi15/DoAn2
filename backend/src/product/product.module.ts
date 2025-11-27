@@ -4,10 +4,11 @@ import { ProductController } from './product.controller';
 import { DatabaseModule } from 'src/database/database.module';
 import { CloudinaryModule } from 'src/cloudinary/cloudinary.module';
 import { CategoryModule } from 'src/category/category.module';
+import { ProductQueryService } from './product-query.service';
 
 @Module({
   controllers: [ProductController],
-  providers: [ProductService],
+  providers: [ProductService, ProductQueryService],
   imports: [DatabaseModule, CloudinaryModule, CategoryModule],
   exports: [ProductService],
 })

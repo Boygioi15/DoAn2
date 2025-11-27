@@ -8,46 +8,77 @@ import {
   Delete,
   UseInterceptors,
   UploadedFiles,
+  Query,
 } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
+import { ProductQueryService } from './product-query.service';
 
 @Controller('product')
 export class ProductController {
-  constructor(private readonly productService: ProductService) {}
-
+  constructor(
+    private readonly productService: ProductService,
+    private readonly productQueryService: ProductQueryService,
+  ) {}
   @Post()
   @UseInterceptors(AnyFilesInterceptor())
   create(
     @UploadedFiles() files: Array<Express.Multer.File>,
     @Body() createProductDto: CreateProductDto,
   ) {
-    console.log('F: ', files);
+    // console.log('F: ', files);
     return this.productService.createNewProduct(createProductDto, files);
   }
   @Get('get-detail/admin/:id')
   async getProductDetail_Admin(@Param('id') productId: string) {
-    const product = await this.productService.getProductDetail_Admin(productId);
+    const product =
+      await this.productQueryService.getProductDetail_Admin(productId);
 
     return product;
   }
   @Get('get-detail/client/:id')
   async getProductDetail_Client(@Param('id') productId: string) {
     const product =
-      await this.productService.getProductDetail_Client(productId);
+      await this.productQueryService.getProductDetail_Client(productId);
     return product;
   }
-  @Get('item-management')
-  async getAllProducts_ItemManagement() {
-    const productList =
-      await this.productService.getAllProduct_ItemManagement();
+  @Get('admin')
+  async getAllProducts_ItemManagement(@Query() q) {
+    const productList = await this.productQueryService.getAllProduct({
+      role: 'ADMIN',
+      filters: {
+        priceMin: q.priceMin,
+        priceMax: q.priceMax,
+        categoryId: q.categoryId,
+        search: q.query,
+      },
+      pagination: {
+        from: q.from || 1,
+        size: q.size || 24,
+      },
+      sort: q.sort,
+    });
     return productList;
   }
   @Get('client')
-  async getAllProducts_Client() {
-    const productList = await this.productService.getAllProduct_Client();
+  async getAllProducts_Client(@Query() q) {
+    console.log(q);
+    const productList = await this.productQueryService.getAllProduct({
+      role: 'CLIENT',
+      filters: {
+        priceMin: q.priceMin,
+        priceMax: q.priceMax,
+        categoryId: q.categoryId,
+        search: q.query,
+      },
+      pagination: {
+        from: q.from || 1,
+        size: q.size || 24,
+      },
+      sort: q.sort,
+    });
     return productList;
   }
   @Post('reset-all-product-data')

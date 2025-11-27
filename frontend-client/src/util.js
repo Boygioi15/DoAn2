@@ -11,3 +11,6 @@ export const emailRegex = /^[\w\d]{1,}@([\w\d]{1,}.){1,}[\w\d]{1,}$/;
 export function formatMoney(value) {
   return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
+export function buildQueryStringFromObject(queryString) {
+  return new URLSearchParams(queryString).toString();
+}

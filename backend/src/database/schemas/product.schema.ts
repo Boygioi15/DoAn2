@@ -41,6 +41,12 @@ export class Product {
 
   @Prop({ default: false })
   isDeleted: boolean;
+
+  @Prop()
+  minPrice: number;
+
+  @Prop()
+  totalStock: number;
 }
 
 @Schema({ timestamps: true, collection: 'product_variant' })

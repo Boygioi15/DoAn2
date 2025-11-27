@@ -222,8 +222,8 @@ function TableView({ currentTableSelection, filter, sortBy }) {
   const [productList, setProductList] = useState([]);
   const getAllProducts = async () => {
     try {
-      const response = await productApi.getAllProduct_ItemManagement();
-      setProductList(response.data);
+      const response = await productApi.getAllProduct();
+      setProductList(response.data.data);
     } catch (error) {
       toast.error("Có lỗi khi lấy danh sách sản phẩm");
     }

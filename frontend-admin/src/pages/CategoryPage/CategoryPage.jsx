@@ -1,4 +1,5 @@
 import categoryApi from "@/api/categoryApi";
+import { productApi } from "@/api/productApi";
 import { TreeView } from "@/components/tree-view";
 import {
   AlertDialog,
@@ -23,9 +24,18 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+} from "@/components/ui/pagination";
+import BriefProductCard from "@/reuseables/BriefProductCard";
 import ComboBoxWithSearch from "@/reuseables/ComboboxWithSearch";
 import { DialogTrigger } from "@radix-ui/react-dialog";
 import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
   Edit,
   FilePlusCorner,
   FileXCorner,
@@ -38,13 +48,19 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 const reusableStyle = {
   inputBlock:
-    "flex flex-col p-[12px] pt-[20px] gap-[20px] rounded-[4px] bg-[white] w-full h-auto",
+    "flex flex-col p-[12px] pt-[20px] gap-[20px] rounded-[4px] bg-[white] w-full h-screen",
 };
+const pageSize = 24;
 export default function CategoryPage() {
   const [allCategory, setAllCategory] = useState(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  const [selectedCategoryId, setSelectedCategoryId] = useState("");
+  const [productList, setProductList] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalItem, setTotalItem] = useState(0);
   const getAllCategory = async () => {
     try {
       const response = await categoryApi.getAllCategory();
@@ -53,6 +69,22 @@ export default function CategoryPage() {
       toast.error("Có lỗi khi lấy dữ liệu ngành hàng");
     }
   };
+  const getAllProductOfCategory = async () => {
+    try {
+      const response = await productApi.getAllProduct(
+        `categoryId=${selectedCategoryId}`
+      );
+      setProductList(response.data.data);
+      setTotalItem(response.data.total);
+    } catch (error) {
+      toast.error("Có lỗi khi lấy dữ liệu sản phẩm");
+    }
+  };
+  useEffect(() => {
+    if (selectedCategoryId !== "") {
+      getAllProductOfCategory();
+    }
+  }, [selectedCategoryId]);
   useEffect(() => {
     getAllCategory();
   }, []);
@@ -147,7 +179,7 @@ export default function CategoryPage() {
           <div
             className={
               reusableStyle.inputBlock +
-              " shadow-xl overflow-scroll max-h-[650px]"
+              " shadow-xl overflow-scroll max-h-[700px]"
             }
           >
             <div className="flex flex-col sticky -top-5 bg-white z-10 gap-4 leading-6">
@@ -190,7 +222,10 @@ export default function CategoryPage() {
                     setIsUpdateDialogOpen(open);
                   }}
                 >
-                  <DialogTrigger onClick={() => setIsUpdateDialogOpen(true)}>
+                  <DialogTrigger
+                    onClick={() => setIsUpdateDialogOpen(true)}
+                    asChild
+                  >
                     <Button variant={"outline"}>
                       <Edit />
                     </Button>
@@ -207,7 +242,10 @@ export default function CategoryPage() {
                     setIsDeleteDialogOpen(open);
                   }}
                 >
-                  <DialogTrigger onClick={() => setIsDeleteDialogOpen(true)}>
+                  <DialogTrigger
+                    onClick={() => setIsDeleteDialogOpen(true)}
+                    asChild
+                  >
                     <Button variant={"outline"}>
                       <Trash />
                     </Button>
@@ -220,13 +258,83 @@ export default function CategoryPage() {
               </div>
             </div>
 
-            <div className="border border-border pt-2 rounded-sm bg-gray-50">
-              <TreeView data={categoryTree} expandAll />
+            <div className="border border-border pt-2 rounded-s text-[14px] ">
+              <TreeView
+                data={categoryTree}
+                expandAll
+                onSelectChange={(item) => {
+                  if (!item.children) {
+                    setSelectedCategoryId(item._id);
+                  }
+                }}
+              />
             </div>
           </div>
 
-          <div className={reusableStyle.inputBlock}>
-            <h2>Các sản phẩm đi kèm</h2>
+          <div
+            className={reusableStyle.inputBlock + " overflow-y-scroll h-full"}
+          >
+            <h2>
+              Các sản phẩm đi kèm{" "}
+              {productList.length === 0 && " - Hiện không có sản phẩm"}{" "}
+            </h2>
+            {selectedCategoryId !== "" && (
+              <h3>
+                Ngành hàng -{" "}
+                {allCategory.find(
+                  (category) => category.categoryId === selectedCategoryId
+                ).categoryName || ""}
+              </h3>
+            )}
+            {productList.length > 0 && (
+              <div className="flex w-full justify-between items-center">
+                <p
+                  className="text-muted-foreground text-sm whitespace-nowrap"
+                  aria-live="polite"
+                >
+                  Tổng số sản phẩm: {totalItem}
+                </p>
+                <Pagination className={"w-auto! m-0!"}>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationLink
+                        href="#"
+                        aria-label="Go to previous page"
+                        size="icon"
+                      >
+                        <ChevronLeftIcon className="size-4" />
+                      </PaginationLink>
+                    </PaginationItem>
+                    <PaginationItem>
+                      <PaginationLink href="#" isActive>
+                        1
+                      </PaginationLink>
+                    </PaginationItem>
+                    <PaginationItem>
+                      <PaginationLink href="#">2</PaginationLink>
+                    </PaginationItem>
+                    <PaginationItem>
+                      <PaginationLink href="#">3</PaginationLink>
+                    </PaginationItem>
+                    <PaginationItem>
+                      <PaginationLink
+                        href="#"
+                        aria-label="Go to next page"
+                        size="icon"
+                      >
+                        <ChevronRightIcon className="size-4" />
+                      </PaginationLink>
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
+            <div className="grid grid-cols-4 gap-2">
+              {productList &&
+                productList.map((product) => (
+                  <BriefProductCard briefProduct={product} />
+                ))}
+            </div>
           </div>
         </div>
       )}
@@ -258,7 +366,7 @@ function CreateNewCategoryForm({ allCategories, handleAddCategory }) {
     }
     return buildNameRecursively(parent) + " > " + category.categoryName;
   }
-
+  // console.log("SP: ", selectedParentId);
   return (
     <DialogContent>
       <form

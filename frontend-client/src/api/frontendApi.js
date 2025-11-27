@@ -9,4 +9,9 @@ export const frontendApi = {
   getHomepageBanner: async () => {
     return await axiosClient_Backend.get('/frontend-setting/homepage-banner');
   },
+  getTopLayoutRotatorMessage: async () => {
+    return await axiosClient_Backend.get(
+      '/frontend-setting/toplayout-rotator-message'
+    );
+  },
 };

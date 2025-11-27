@@ -18,15 +18,39 @@ import { MdArrowBackIos, MdArrowForwardIos } from 'react-icons/md';
 import Breadcrumbs from '@/reusable_components/Breadcrumb';
 import { frontendApi } from '@/api/frontendApi';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import { ArrowDownToLine, Headset, MessageCircle } from 'lucide-react';
 export default function RootLayout({ children }) {
   return (
     <ModalContextProvider>
       <UltilityContextProvider_1>
-        <div>
+        <div className="relative">
           <TopLayout />
           <Breadcrumbs />
           {children}
           <Outlet />
+          <div className="fixed bottom-10 right-7 flex flex-col gap-5">
+            <Button
+              className={
+                'rounded-full w-[60px] h-[60px] bg-(--color-preset-gray) hover:bg-(--color-preset-gray) cursor-pointer'
+              }
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            >
+              <MessageCircle
+                className="w-[28px]! h-[28px]! text-white"
+                fill="white"
+              />
+            </Button>
+            <Button
+              className={
+                'rounded-full w-[60px] h-[60px] bg-[#edf1f5] hover:bg-[#edf1f5] cursor-pointer'
+              }
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            >
+              <ArrowDownToLine className="rotate-180 w-[24px]! h-[24px]! text-black" />
+            </Button>
+          </div>
+
           <BotLayout />
         </div>
       </UltilityContextProvider_1>
@@ -37,7 +61,6 @@ export default function RootLayout({ children }) {
 export function TopLayout() {
   const { openModal } = useContext(ModalContext);
   const { convenience_1 } = useContext(UltilityContext_1);
-
   const navigate = useNavigate();
   //get img and link of top banner from be
 
@@ -45,18 +68,29 @@ export function TopLayout() {
   const authStore = useAuthStore.getState();
   let loggedIn = false;
   loggedIn = !!authStore.refreshToken;
+
+  const [search, setSearch] = useState('');
   return (
     <div className="TopLayout">
       <TopLayout_TopBanner />
       <TopLayout_MessageRotator />
       <div className="TopLayout_Toolbar">
-        <div style={{}} className="title">
+        <div className="title cursor-pointer" onClick={() => navigate('/')}>
           Q-Shop
         </div>
         <div className="TopLayout_Toolbar_Right">
           <div className="input-with-icon-before">
             <FiSearch style={{ fontSize: '24px' }} />
-            <input placeholder="Tìm kiếm" />
+            <input
+              placeholder="Tìm kiếm"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  navigate(`/search?query=${encodeURIComponent(search)}`);
+                }
+              }}
+            />
           </div>
           {!loggedIn ? (
             <IconBlock
@@ -68,7 +102,7 @@ export function TopLayout() {
             />
           ) : (
             <IconBlock
-              icon={<FaUserCircle style={{ fontSize: '28px' }} />}
+              icon={<FaUserCircle style={{ fontSize: '24px' }} />}
               name={'Tài khoản'}
               handleOnClick={() => {
                 navigate('/profile/account-info');
@@ -76,8 +110,12 @@ export function TopLayout() {
             />
           )}
           <IconBlock
-            icon={<FiShoppingBag style={{ fontSize: '28px' }} />}
+            icon={<FiShoppingBag style={{ fontSize: '24px' }} />}
             name={'Giỏ hàng'}
+          />
+          <IconBlock
+            icon={<Headset style={{ fontSize: '24px' }} />}
+            name={'Liên hệ'}
           />
         </div>
       </div>
@@ -98,6 +136,17 @@ function TopLayout_MessageRotator() {
     'Quà hấp dẫn',
     'Ôi trời ơi',
   ]);
+  const getMessage = async () => {
+    try {
+      const response = await frontendApi.getTopLayoutRotatorMessage();
+      setMessage(response.data);
+    } catch (error) {
+      toast.error('Có lỗi khi lấy dữ liệu toplayout-message-rotator');
+    }
+  };
+  useEffect(() => {
+    getMessage();
+  }, []);
   const [messageIndex, setMessageIndex] = useState(1);
   const [slideClass, setSlideClass] = useState('');
   const [slideDirection, setSlideDirection] = useState('next');
@@ -166,7 +215,7 @@ function TopLayout_CategorySelector() {
   return (
     <div className="flex w-full bg-(--color-preset-gray) pl-25 pr-25 relative">
       {categoryData.map((t1) => (
-        <div className="group">
+        <div className="group" key={t1.name}>
           <button className="category-button">{t1.name}</button>
           <div
             className="
@@ -190,7 +239,10 @@ function TopLayout_CategorySelector() {
                   <h3>Danh mục sản phẩm</h3>
                   <div className="flex flex-col flex-wrap max-h-[200px] gap-2">
                     {t1.subCategory.map((t2) => (
-                      <Link className={reusableStyle.categoryLink}>
+                      <Link
+                        className={reusableStyle.categoryLink}
+                        key={t2.categoryId}
+                      >
                         {t2.name}
                       </Link>
                     ))}

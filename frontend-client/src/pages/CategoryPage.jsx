@@ -7,12 +7,10 @@ import { toast } from 'sonner';
 
 export default function HomePage() {
   const [allProduct, setAllproduct] = useState([]);
-  const [totalItem, setTotalItem] = useState(0);
   const getAllProduct = async () => {
     try {
       const response = await productApi.getAllProduct();
-      setAllproduct(response.data.data);
-      setTotalItem(response.data.totalItem);
+      setAllproduct(response.data);
     } catch (error) {
       toast.error('Có lỗi khi lấy dữ liệu sản phẩm');
     }

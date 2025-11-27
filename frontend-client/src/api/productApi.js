@@ -1,8 +1,8 @@
 import { axiosClient_Backend } from './apiClient';
 
 export const productApi = {
-  getAllProduct: async () => {
-    return await axiosClient_Backend.get('product/client');
+  getAllProduct: async (query) => {
+    return await axiosClient_Backend.get(`product/client?${query}`);
   },
   getProductDetail: async (productId) => {
     return await axiosClient_Backend.get(

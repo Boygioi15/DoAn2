@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import * as AccordionPrimitive from "@radix-ui/react-accordion";
 import { ChevronRight } from "lucide-react";
 import { cva } from "class-variance-authority";
@@ -34,12 +34,14 @@ const TreeView = React.forwardRef(
     const [selectedItemId, setSelectedItemId] = React.useState(
       initialSelectedItemId
     );
-
+    useEffect(() => {
+      console.log("SI: ", selectedItemId);
+    }, [selectedItemId]);
     const [draggedItem, setDraggedItem] = React.useState(null);
 
     const handleSelectChange = React.useCallback(
       (item) => {
-        setSelectedItemId(item?.id);
+        setSelectedItemId(item?._id);
         if (onSelectChange) {
           onSelectChange(item);
         }
@@ -245,7 +247,7 @@ const TreeNode = ({
           />
           <span
             className="text-sm truncate"
-            style={{ fontWeight: "400", fontSize: "16px", lineHeight: "20px" }}
+            style={{ fontSize: "16px", lineHeight: "20px" }}
           >
             {item.name}
           </span>
@@ -287,7 +289,6 @@ const TreeLeaf = React.forwardRef(
     ref
   ) => {
     const [isDragOver, setIsDragOver] = React.useState(false);
-
     const onDragStart = (e) => {
       if (!item.draggable || item.disabled) {
         e.preventDefault();
@@ -319,15 +320,18 @@ const TreeLeaf = React.forwardRef(
       setIsDragOver(false);
       handleDrop?.(item);
     };
+    if (selectedItemId === item._id) {
+      console.log("TE: ", `SI: ${selectedItemId}`, `ID: ${item._id}`);
+    }
 
     return (
       <div
         ref={ref}
         className={cn(
-          "ml-2 flex text-left items-center py-2 cursor-pointer before:right-1",
+          "ml-2 flex text-left items-center py-2 cursor-pointer before:right-1 rounded-[4px]",
           treeVariants(),
           className,
-          selectedItemId === item.id && selectedTreeVariants(),
+          selectedItemId === item._id && "bg-gray-200 font-bold",
           isDragOver && dragOverVariants(),
           item.disabled && "opacity-50 cursor-not-allowed pointer-events-none"
         )}
@@ -350,7 +354,7 @@ const TreeLeaf = React.forwardRef(
         />
         <span
           className="flex-grow truncate"
-          style={{ fontWeight: "400", fontSize: "16px", lineHeight: "20px" }}
+          style={{ fontSize: "16px", lineHeight: "20px" }}
         >
           {item.name}
         </span>

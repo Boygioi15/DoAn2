@@ -3,10 +3,13 @@ import { formatMoney } from '@/util';
 import { ShoppingCart } from 'lucide-react';
 import { useContext, useState } from 'react';
 import ProductModal from './ProductModal';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
 export default function BriefProductCard({ briefProduct }) {
   const [selectedOptionIndex, setSelectedOptionIndex] = useState(0);
   const { openModal } = useContext(ModalContext);
+  const navigate = useNavigate();
   const openProductModal = () => {
     openModal({
       modalContent: <ProductModal productId={briefProduct.productId} />,
@@ -14,19 +17,26 @@ export default function BriefProductCard({ briefProduct }) {
       disableBackdropClose: true,
     });
   };
+  if (!briefProduct.optionData) {
+    console.log('BP: ', briefProduct);
+  }
   return (
-    <div
-      className="flex flex-col gap-3 w-[250px] h-auto cursor-pointer"
-      onClick={openProductModal}
-    >
+    <div className="flex flex-col gap-3 w-full h-auto">
       <div className="w-full h-auto relative">
         <img
-          className="w-full h-auto"
+          className="w-full h-auto cursor-pointer"
           src={briefProduct.optionData[selectedOptionIndex].optionImage}
+          onClick={() => {
+            navigate(`/product-detail/${briefProduct.productId}`);
+          }}
         />
-        <div className="bottom-[10px] right-[10px] bg-white rounded-full absolute p-2">
+        <Button
+          className="bottom-[10px] right-[10px] bg-white rounded-full absolute p-2 text-black"
+          variant={'ghost'}
+          onClick={openProductModal}
+        >
           <ShoppingCart />
-        </div>
+        </Button>
       </div>
 
       <div className="flex gap-1 pl-2">

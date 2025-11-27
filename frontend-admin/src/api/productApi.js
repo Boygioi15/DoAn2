@@ -8,8 +8,8 @@ export const productApi = {
       },
     });
   },
-  getAllProduct_ItemManagement: async () => {
-    return await axiosClient_Backend.get("/product/item-management");
+  getAllProduct: async (query) => {
+    return await axiosClient_Backend.get(`/product/admin?${query}`);
   },
   getProductDetail_EditProduct: async (productId) => {
     return await axiosClient_Backend.get(

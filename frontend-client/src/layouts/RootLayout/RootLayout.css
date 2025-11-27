@@ -129,7 +129,7 @@
 .TopLayout_Toolbar_Right {
   display: flex;
   flex-direction: row;
-  gap: 16px;
+  gap: 24px;
 }
 .icon-block {
   display: flex;
@@ -138,6 +138,8 @@
   justify-content: center;
   gap: 4px;
   color: black;
+  padding-left: 4px;
+  padding-right: 4px;
 
   box-shadow: none;
   background-color: white;

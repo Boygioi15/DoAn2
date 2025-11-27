@@ -84,11 +84,13 @@ const ComboBoxWithSearch = ({
                 {comboboxValueList.map((_comboboxValue) => (
                   <CommandItem
                     key={_comboboxValue.id}
-                    value={_comboboxValue.id}
+                    value={`${_comboboxValue.display}___${_comboboxValue.id}`}
                     onSelect={(currentValue) => {
-                      onValueChange(
-                        currentValue === comboboxValue ? "" : currentValue
-                      );
+                      //detach id from display
+                      const [display, id] = currentValue.split("___");
+                      // console.log(currentValue);
+                      // console.log("ID: ", id);
+                      onValueChange(id === comboboxValue ? "" : id);
                       setOpen(false);
                     }}
                   >
