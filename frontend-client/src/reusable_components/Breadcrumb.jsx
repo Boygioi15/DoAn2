@@ -47,7 +47,7 @@ export default function Breadcrumbs() {
   if (crumbs.length === 0) return null;
 
   return (
-    <Breadcrumb className="mb-2 px-4 px-[100px] pt-[12px] pb-[12px]">
+    <Breadcrumb className="mb-2 p-4 pb-0 pl-20">
       <BreadcrumbList>
         <BreadcrumbItem>
           <BreadcrumbLink asChild>

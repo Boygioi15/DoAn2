@@ -54,54 +54,270 @@ export class ProductQueryService {
   ) {}
 
   //filter
-  async buildProductQuery(filters: {
-    role?: string;
-    categoryId?: string;
-    priceMin?: number;
-    priceMax?: number;
-    search?: string;
-  }) {
-    const { role, categoryId, priceMin, priceMax, search } = filters;
-    const q: any = {};
+  async buildQueryPipeline(
+    role: string,
+    filters: {
+      search?: string;
+      categoryIdList?: string;
+
+      colorList?: string;
+      sizeList?: string;
+
+      priceMin?: number;
+      priceMax?: number;
+    },
+    pagination: {
+      from: number;
+      size: number;
+    },
+    sortBy: string,
+  ) {
+    const { categoryIdList, colorList, sizeList, priceMin, priceMax, search } =
+      filters;
+    const { from, size } = pagination;
+    console.log('F: ', filters);
+    console.log('P: ', pagination);
+    const queryPipeline: any = [];
     if (search) {
-      q.$text = { $search: search };
+      queryPipeline.push({
+        $search: {
+          index: 'search_index',
+          text: {
+            query: search,
+            path: 'name',
+          },
+        },
+      });
     }
-    if (categoryId) q.categoryId = categoryId;
-    if (priceMin) q.minPrice = { $gte: priceMin };
-    if (priceMax) q.minPrice = { $lte: priceMax };
-
     if (role === 'CLIENT') {
-      q.isDeleted = false;
-      q.isPublished = true;
-      q.isDrafted = false;
-      q.totalStock = { $gt: 0 };
+      queryPipeline.push({
+        $match: {
+          isDeleted: false,
+          isPublished: true,
+          isDrafted: false,
+          totalStock: { $gt: 0 },
+        },
+      });
     }
+    if (categoryIdList) {
+      const _list = categoryIdList.split(',');
+      queryPipeline.push({
+        $match: {
+          categoryId: {
+            $in: _list,
+          },
+        },
+      });
+    }
+    //facet stage -- end of stage 1
+    queryPipeline.push({
+      $facet: {
+        stage1ComputedResults: [
+          {
+            $group: {
+              _id: null,
+              allColors: {
+                $addToSet: '$allColors',
+              },
+              allSizes: {
+                $addToSet: '$allSizes',
+              },
+              minPrice: {
+                $min: '$minPrice',
+              },
+              maxPrice: {
+                $max: '$minPrice',
+              },
+              totalItem1: { $sum: 1 },
+            },
+          },
+          {
+            $project: {
+              allColors: {
+                $reduce: {
+                  input: '$allColors',
+                  initialValue: [],
+                  in: {
+                    $concatArrays: ['$$value', '$$this'],
+                  },
+                },
+              },
+              allSizes: {
+                $reduce: {
+                  input: '$allSizes',
+                  initialValue: [],
+                  in: {
+                    $concatArrays: ['$$value', '$$this'],
+                  },
+                },
+              },
+              minPrice: 1,
+              maxPrice: 1,
+              totalItem1: 1,
+            },
+          },
+          {
+            $project: {
+              allColors: {
+                $setUnion: ['$allColors', []],
+              },
+              allSizes: {
+                $setUnion: ['$allSizes', []],
+              },
+              minPrice: 1,
+              maxPrice: 1,
+              totalItem1: 1,
+            },
+          },
+        ],
+        stage1ArrayResults: [
+          {
+            $replaceRoot: {
+              newRoot: '$$ROOT',
+            },
+          },
+        ],
+      },
+    });
+    let _colorList: any = [],
+      _sizeList: any = [];
+    if (colorList) _colorList = colorList.split(',');
+    if (sizeList) _sizeList = sizeList.split(',');
 
-    return q;
-  }
-  async getAllProduct({ role, filters, sort, pagination }) {
-    //filter => sort => pagination
-    const query = await this.buildProductQuery({ role, ...filters });
-    console.log('Query object: ', query);
-    let sortObj: any = {};
-    if (sort) {
-      const [field, order] = sort.split(':');
-      sortObj = {
-        [field]: order === 'desc' ? -1 : 1,
-      };
+    const colorFilter =
+      _colorList && _colorList.length > 0
+        ? {
+            $gt: [
+              {
+                $size: {
+                  $setIntersection: ['$$p.allColors', _colorList],
+                },
+              },
+              0,
+            ],
+          }
+        : true; // if no colors, always true
+
+    const sizeFilter =
+      _sizeList && _sizeList.length > 0
+        ? {
+            $gt: [
+              {
+                $size: {
+                  $setIntersection: ['$$p.allSizes', _sizeList],
+                },
+              },
+              0,
+            ],
+          }
+        : true;
+    const priceFilterBot = priceMin
+      ? {
+          $gte: ['$$p.minPrice', Number(priceMin)],
+        }
+      : true;
+    const priceFilterTop = priceMax
+      ? {
+          $lte: ['$$p.minPrice', Number(priceMax)],
+        }
+      : true;
+    const sortObj: any = {};
+    if (sortBy) {
+      if (sortBy === 'newest') {
+        sortObj.createdAt = -1;
+      }
+      if (sortBy === 'alphabetical-az') {
+        sortObj.name = -1;
+      }
+      if (sortBy === 'alphabetical-za') {
+        sortObj.name = 1;
+      }
+      if (sortBy === 'price-asc') {
+        sortObj.minPrice = 1;
+      }
+      if (sortBy === 'price-desc') {
+        sortObj.minPrice = -1;
+      }
     }
-    const skip = (pagination.from - 1) * pagination.size;
+    //stage2 result -- append sort
+    queryPipeline.push({
+      $project: {
+        stage1ComputedResults: 1,
+        productList: {
+          $filter: {
+            input: '$stage1ArrayResults',
+            as: 'p',
+            cond: {
+              $and: [colorFilter, sizeFilter, priceFilterBot, priceFilterTop],
+            },
+          },
+        },
+      },
+    });
+    //stage2 result -- append sort
+
+    if (sortBy) {
+      queryPipeline.push({
+        $project: {
+          stage1ComputedResults: 1,
+          productList: {
+            $sortArray: {
+              input: '$productList',
+              sortBy: sortObj,
+            },
+          },
+        },
+      });
+    }
+    //stage 2 computed result
+    queryPipeline.push({
+      $project: {
+        stage1ComputedResults: 1,
+        productList: 1,
+        stage2ComputedResults: {
+          totalItem2: { $size: '$productList' },
+        },
+      },
+    });
+    const skip = (Number(from) - 1) * size;
+
+    //pagination:
+    queryPipeline.push({
+      $project: {
+        stage1ComputedResults: 1,
+        productList: { $slice: ['$productList', skip, Number(size)] },
+        stage2ComputedResults: 1,
+      },
+    });
+    queryPipeline.push({
+      $match: {},
+    });
+    return queryPipeline;
+  }
+  async getAllProduct({ role, filters, sortBy, pagination }) {
+    //filter => sort => pagination
+
+    const queryPipeline: any = await this.buildQueryPipeline(
+      role,
+      filters,
+      pagination,
+      sortBy,
+    );
+    console.log('Query object: ', queryPipeline);
+
     //console.log('P: ', pagination);
-    let [basicProductInfo, total] = await Promise.all([
-      this.productModel
-        .find(query)
-        .skip(skip)
-        .limit(Number(pagination.size))
-        .sort(sortObj),
-      this.productModel.countDocuments(query),
-    ]);
+    let result: any = await this.productModel.aggregate(queryPipeline);
+
+    // .sort(sortObj),
+    console.log('Result: ', result);
+    const productList = result[0].productList;
+    // console.log('T: ', totalItem);
+    // console.log('PL: ', productList);
+    const metadata1 = result[0].stage1ComputedResults;
+    const metadata2 = result[0].stage2ComputedResults;
+    // const metadata1 = result[0].stage1ComputedResults;
     if (role === 'ADMIN') {
-      const productListPromises = basicProductInfo.map(async (product) => {
+      const productListPromises = productList.map(async (product) => {
         const { minPrice, maxPrice } =
           await this.getProductSellingPrice(product);
         return {
@@ -119,64 +335,14 @@ export class ProductQueryService {
           isDeleted: product.isDeleted,
         };
       });
-      let productList = await Promise.all(productListPromises);
-      return { data: productList, total };
+      let _productList = await Promise.all(productListPromises);
+      return {
+        data: _productList,
+        metadata: { ...metadata1[0], ...metadata2 },
+      };
     } else {
       //all color & sizes
-      const queryRerunned = await this.productModel
-        .find(query)
-        .select('allSizes allColors minPrice');
-      console.log(
-        await this.productModel.aggregate([
-          {
-            $search: {
-              index: 'search_index',
-              autocomplete: {
-                query: 'váy',
-                path: 'name',
-                fuzzy: { maxEdits: 1 }, // optional, for minor typos
-              },
-            },
-          },
-        ]),
-      );
-      const allColor = Array.from(
-        new Set<string>(queryRerunned.flatMap((product) => product.allColors)),
-      );
-      const allSize = Array.from(
-        new Set<string>(queryRerunned.flatMap((product) => product.allSizes)),
-      );
-      const priceRange = [
-        Math.min(...queryRerunned.map((product) => product.minPrice)),
-        Math.max(...queryRerunned.map((product) => product.minPrice)),
-      ];
-      //secondary filter
-      let requiredColor: any = [],
-        requiredSize: any = [],
-        priceMin = 0,
-        priceMax = Infinity;
-      if (filters.colorList) requiredColor = filters.colorList.split(',');
-      if (filters.sizeList) requiredSize = filters.sizeList.split(',');
-      if (filters.priceMin) priceMin = filters.priceMin;
-      if (filters.priceMax) priceMax = filters.priceMax;
-      // console.log('RRRRR: ', requiredColor, requiredSize, priceMin, priceMax);
-      const secondaryFiltered = basicProductInfo.filter((product) => {
-        // console.log(product);
-        const matchesColor =
-          requiredColor.length === 0 ||
-          product.allColors.includes(requiredColor);
-
-        const matchesSize =
-          requiredSize.length === 0 || product.allSizes.includes(requiredSize);
-        // console.log('A: ', matchesColor, matchesSize);
-        return (
-          matchesColor &&
-          matchesSize &&
-          product.minPrice >= priceMin &&
-          product.minPrice <= priceMax
-        );
-      });
-      const productListPromises = basicProductInfo.map(async (product) => {
+      const productListPromises = productList.map(async (product) => {
         //price
         const { minPrice } = await this.getProductSellingPrice(product);
         let allProductVariants = await this.getAllVariantsOfProduct(product);
@@ -206,93 +372,15 @@ export class ProductQueryService {
             (await this.getProductCategoryName(product)) || 'Không có dữ liệu',
           displayedPrice: minPrice,
           optionData,
-          isPublished: product.isPublished,
-          isDrafted: product.isDrafted,
-          isDeleted: product.isDeleted,
         };
       });
-      let productList = await Promise.all(productListPromises);
+      let _productList = await Promise.all(productListPromises);
       return {
-        data: productList,
-        total: total,
-        allColor,
-        allSize,
-        priceRangeBot: priceRange[0],
-        priceRangeTop: priceRange[1],
+        productList: _productList,
+        metadata: { ...metadata1[0], ...metadata2 },
       };
     }
   }
-
-  /////get block
-  // async getAllProduct_ItemManagement() {
-  //   const basicProductInfo = await this.productModel.find();
-  //   const productListPromises = basicProductInfo.map(async (product) => {
-  //     const { minPrice, maxPrice } = await this.getProductSellingPrice(product);
-  //     return {
-  //       productId: product.productId,
-  //       thumbnailURL: product.display_thumbnail_image,
-  //       name: product.name,
-  //       categoryName:
-  //         (await this.getProductCategoryName(product)) || 'Không có dữ liệu',
-  //       sku: product.sku,
-  //       sellingPriceBot: minPrice,
-  //       sellingPriceTop: maxPrice,
-  //       inStorageTotal: await this.getProductTotalStock(product),
-  //       isPublished: product.isPublished,
-  //       isDrafted: product.isDrafted,
-  //       isDeleted: product.isDeleted,
-  //     };
-  //   });
-  //   const productList = await Promise.all(productListPromises);
-  //   return productList;
-  // }
-  // async getAllProduct_Client() {
-  //   const basicProductInfo = await this.productModel.find();
-  //   const productListPromises = basicProductInfo.map(async (product) => {
-  //     const { minPrice } = await this.getProductSellingPrice(product);
-  //     const totalStock = await this.getProductTotalStock(product);
-
-  //     let allProductVariants = await this.getAllVariantsOfProduct(product);
-  //     allProductVariants = allProductVariants.filter(
-  //       (variant) => variant.isInUse && variant.isOpenToSale,
-  //     );
-  //     let optionData: any = [];
-  //     for (const variant of allProductVariants) {
-  //       const exists = optionData.find((o) => o.optionId === variant.optionId1);
-  //       if (!exists) {
-  //         optionData.push({
-  //           optionId: variant.optionId1,
-  //           optionName: variant.optionName1,
-  //           optionValue: variant.optionValue1,
-  //           optionImage: variant.optionImage1[0],
-  //         });
-  //       }
-  //     }
-
-  //     return {
-  //       productId: product.productId,
-  //       thumbnailURL: product.display_thumbnail_image,
-  //       name: product.name,
-  //       categoryName:
-  //         (await this.getProductCategoryName(product)) || 'Không có dữ liệu',
-  //       displayedPrice: minPrice,
-  //       optionData,
-  //       totalStock,
-  //       isPublished: product.isPublished,
-  //       isDrafted: product.isDrafted,
-  //       isDeleted: product.isDeleted,
-  //     };
-  //   });
-  //   let productList = await Promise.all(productListPromises);
-  //   productList = productList.filter(
-  //     (product) =>
-  //       product.totalStock > 0 &&
-  //       product.isPublished &&
-  //       !product.isDrafted &&
-  //       !product.isDeleted,
-  //   );
-  //   return productList;
-  // }
 
   async getProductCategoryName(product: ProductDocument) {
     const { categoryId } = product;

@@ -52,6 +52,43 @@ export class CategoryService {
     }
     return allDirectChilren;
   }
+  async getAllDirectChildrenOfCategoryWithImage(
+    categoryId: string | null = null,
+  ): Promise<CategoryDocument[]> {
+    let allDirectChilren: any = [];
+    if (!categoryId) {
+      allDirectChilren = await this.categoryModel
+        .find({ parentId: null })
+        .lean();
+    } else {
+      allDirectChilren = await this.categoryModel
+        .find({
+          parentId: categoryId,
+        })
+        .lean();
+    }
+    console.log('ADC1: ', allDirectChilren);
+    allDirectChilren = await Promise.all(
+      allDirectChilren.map(async (children: any) => {
+        const firstProduct: any = await this.productModel
+          .findOne({
+            categoryId: children.categoryId,
+          })
+          .lean();
+        let img = null;
+        if (firstProduct) {
+          img = firstProduct.display_thumbnail_image;
+        }
+
+        return {
+          ...children,
+          img,
+        };
+      }),
+    );
+    console.log('ADC: ', allDirectChilren);
+    return allDirectChilren;
+  }
   async getCategoryDetail(categoryId: string) {
     const category = await this.categoryModel.findOne({
       categoryId: categoryId,

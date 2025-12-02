@@ -51,7 +51,9 @@ export default function BriefProductCard({ briefProduct }) {
           />
         ))}
       </div>
-      <span className="text-[14px] font-medium pl-2">{briefProduct.name}</span>
+      <span className="text-[14px] font-medium pl-2 leading-5">
+        {briefProduct.name}
+      </span>
       <span className="text-[14px] font-bold pl-2">
         {formatMoney(briefProduct.displayedPrice)} VNĐ
       </span>

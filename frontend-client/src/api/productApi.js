@@ -9,4 +9,14 @@ export const productApi = {
       `product/get-detail/client/${productId}`
     );
   },
+  getAllDirectChildrenOfCategory: async (categoryId) => {
+    return await axiosClient_Backend.get(
+      `category/direct-children/${categoryId}`
+    );
+  },
+  getAllDirectChildrenOfCategoryWithImage: async (categoryId) => {
+    return await axiosClient_Backend.get(
+      `category/direct-children-img/${categoryId}`
+    );
+  },
 };

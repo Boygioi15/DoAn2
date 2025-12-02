@@ -29,6 +29,7 @@ import AddressPage from './pages/ProfilePages/AddressPage/AddressPage.jsx';
 import { Toaster } from 'sonner';
 import ProductDetailPage from './pages/ProductDetailPage';
 import SearchPage from './pages/SearchPage';
+import DetailedCategoryPage from './pages/DetailedCategoryPage';
 const router = createBrowserRouter([
   {
     path: '/',
@@ -64,6 +65,14 @@ const router = createBrowserRouter([
       {
         path: '/search',
         element: <SearchPage />,
+      },
+      {
+        path: '/category/:category1Id/:category2Id',
+        element: <DetailedCategoryPage />,
+      },
+      {
+        path: '/category/:category1Id/:category2Id/:category3Id',
+        element: <DetailedCategoryPage />,
       },
       {
         path: 'error',

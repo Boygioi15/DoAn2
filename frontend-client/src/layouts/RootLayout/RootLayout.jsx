@@ -19,7 +19,14 @@ import Breadcrumbs from '@/reusable_components/Breadcrumb';
 import { frontendApi } from '@/api/frontendApi';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { ArrowDownToLine, Headset, MessageCircle } from 'lucide-react';
+import {
+  ArrowDownToLine,
+  Headset,
+  MessageCircle,
+  ShoppingBag,
+} from 'lucide-react';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import CartSheet from '@/reusable_components/CartSheet';
 export default function RootLayout({ children }) {
   return (
     <ModalContextProvider>
@@ -109,14 +116,32 @@ export function TopLayout() {
               }}
             />
           )}
-          <IconBlock
-            icon={<FiShoppingBag style={{ fontSize: '24px' }} />}
-            name={'Giỏ hàng'}
-          />
-          <IconBlock
-            icon={<Headset style={{ fontSize: '24px' }} />}
-            name={'Liên hệ'}
-          />
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button
+                variant={'ghost'}
+                className={
+                  'flex flex-col gap-1 h-full p-0! items-center justify-center'
+                }
+              >
+                <ShoppingBag style={{ width: '24px', height: '24px' }} />
+                <span className="text-[14px] font-medium"> Giỏ hàng</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent className="max-w-150! w-150">
+              <CartSheet />
+            </SheetContent>
+          </Sheet>
+
+          <Button
+            variant={'ghost'}
+            className={
+              'flex flex-col gap-1 h-full p-0! items-center justify-center'
+            }
+          >
+            <Headset style={{ width: '24px', height: '24px' }} />
+            <span className="text-[14px] font-medium">Liên hệ</span>
+          </Button>
         </div>
       </div>
       <TopLayout_CategorySelector />
@@ -242,6 +267,7 @@ function TopLayout_CategorySelector() {
                       <Link
                         className={reusableStyle.categoryLink}
                         key={t2.categoryId}
+                        to={`/category/${t1.categoryId}/${t2.categoryId}`}
                       >
                         {t2.name}
                       </Link>

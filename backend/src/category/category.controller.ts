@@ -28,6 +28,21 @@ export class CategoryController {
       await this.categoryService.getCategoryByName(categoryName);
     return matchingCategory;
   }
+  @Get('direct-children/:categoryId')
+  async getAllDirectChildrenOfCategory(
+    @Param('categoryId') categoryId: string,
+  ) {
+    return this.categoryService.getAllDirectChildrenOfCategory(categoryId);
+  }
+  //cat2
+  @Get('direct-children-img/:categoryId')
+  async getAllDirectChildrenOfCategoryWithImage(
+    @Param('categoryId') categoryId: string,
+  ) {
+    return this.categoryService.getAllDirectChildrenOfCategoryWithImage(
+      categoryId,
+    );
+  }
   @Post('/')
   async createNewCategory(@Body() newCategory: CreateCategoryDto) {
     // console.log(newCategory);

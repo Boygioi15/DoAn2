@@ -60,30 +60,34 @@ export class ProductController {
         from: q.from || 1,
         size: q.size || 24,
       },
-      sort: q.sort,
+      sortBy: q.sort,
     });
     return productList;
   }
   @Get('client')
   async getAllProducts_Client(@Query() q) {
     console.log(q);
-    const productList = await this.productQueryService.getAllProduct({
-      role: 'CLIENT',
-      filters: {
-        priceMin: q.priceMin,
-        priceMax: q.priceMax,
-        categoryId: q.categoryId,
-        search: q.query,
-        colorList: q.colorList,
-        sizeList: q.sizeList,
-      },
-      pagination: {
-        from: q.from || 1,
-        size: q.size || 24,
-      },
-      sort: q.sort,
-    });
-    return productList;
+    const { productList, metadata } =
+      await this.productQueryService.getAllProduct({
+        role: 'CLIENT',
+        filters: {
+          categoryIdList: q.categoryIdList,
+          search: q.query,
+
+          priceMin: q.priceMin,
+          priceMax: q.priceMax,
+
+          colorList: q.colorList,
+          sizeList: q.sizeList,
+        },
+        pagination: {
+          from: q.from || 1,
+          size: q.size || 24,
+        },
+        sortBy: q.sortBy,
+      });
+    // console.log('Result: ', productList, metadata);
+    return { productList, metadata };
   }
   @Delete('reset-all-product-data')
   async resetAllData() {

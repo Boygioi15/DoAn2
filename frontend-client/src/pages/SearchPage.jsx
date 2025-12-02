@@ -7,11 +7,6 @@ import {
 } from '@/components/ui/collapsible';
 import { Input } from '@/components/ui/input';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -68,18 +63,21 @@ export default function SearchPage() {
   const [searchParam, setSearchParam] = useSearchParams();
   const [productList, setProductList] = useState([]);
   const [listLoading, setListLoading] = useState(false);
+  const [addLoading, setAddLoading] = useState(false);
   const [searchResultMetadata, setSearchResultMetadata] = useState({
-    totalItem: 0,
+    totalItem1: 0,
+    totalItem2: 0,
     allSize: [],
     allColor: [],
     priceRange: [0, 999999999],
   });
+  const sortBy = useMemo(() => searchParam.get('sortBy'), [searchParam]);
   const selectedColor = useMemo(
     () => searchParam.getAll('color'),
     [searchParam]
   );
   const selectedSize = useMemo(() => searchParam.getAll('size'), [searchParam]);
-  const [priceRangeValue, setpriceRangeValue] = useState([0, 0]);
+  const [priceRangeValue, setpriceRangeValue] = useState([-1, -1]);
   useEffect(() => {
     if (!searchParam.get('priceMin') || !searchParam.get('priceMax')) return;
     const bot = parseVND(searchParam.get('priceMin'));
@@ -91,21 +89,32 @@ export default function SearchPage() {
   const getNewProductList = async () => {
     try {
       setListLoading(true);
+      window.scrollTo({ top: 100, behavior: 'smooth' });
       const queryObject = formQueryObject();
-      queryObject.form = 1;
+      queryObject.from = 1;
       const response = await productApi.getAllProduct(
         buildQueryStringFromObject(queryObject)
       );
-      setProductList(response.data.data);
-      setpriceRangeValue([
-        response.data.priceRangeBot,
-        response.data.priceRangeTop,
-      ]);
+      setProductList(response.data.productList);
+      if (response.data.productList && response.data.productList.length === 0)
+        return;
+
+      const metadata = response.data.metadata;
+      if (searchParam.get('priceMin') && searchParam.get('priceMax')) {
+        setpriceRangeValue([
+          searchParam.get('priceMin'),
+          searchParam.get('priceMax'),
+        ]);
+      } else if (priceRangeValue[0] === -1 && priceRangeValue[1] === -1) {
+        setpriceRangeValue([metadata.minPrice, metadata.maxPrice]);
+      }
+
       setSearchResultMetadata({
-        totalItem: response.data.total,
-        allColor: response.data.allColor.sort(),
-        allSize: sortSizeList(response.data.allSize),
-        priceRange: [response.data.priceRangeBot, response.data.priceRangeTop],
+        totalItem1: metadata.totalItem1,
+        totalItem2: metadata.totalItem2,
+        allColor: metadata.allColors.sort(),
+        allSize: sortSizeList(metadata.allSizes),
+        priceRange: [metadata.minPrice, metadata.maxPrice],
       });
       setCurrentPage(1);
     } catch (error) {
@@ -114,6 +123,11 @@ export default function SearchPage() {
     } finally {
       setListLoading(false);
     }
+  };
+  const handleSelectingSortBy = (value) => {
+    const params = new URLSearchParams(searchParam);
+    params.set('sortBy', value);
+    setSearchParam(params);
   };
   const handleSelectingColor = (color) => {
     const params = new URLSearchParams(searchParam);
@@ -141,19 +155,19 @@ export default function SearchPage() {
   };
   const handleAddMoreProduct = async () => {
     try {
-      setListLoading(true);
+      setAddLoading(true);
       const query = formQueryObject();
       query.from = currentPage + 1;
       const response = await productApi.getAllProduct(
         buildQueryStringFromObject(query)
       );
-      setProductList((prev) => [...prev, ...response.data.data]);
+      setProductList((prev) => [...prev, ...response.data.productList]);
       setCurrentPage((prev) => prev + 1);
     } catch (error) {
       console.log(error);
       toast.error('Có lỗi khi tải thêm dữ liệu');
     } finally {
-      setListLoading(false);
+      setAddLoading(false);
     }
   };
   const formQueryObject = () => {
@@ -161,6 +175,8 @@ export default function SearchPage() {
     const query = searchParam.get('query');
     if (query) queryObject.query = query;
     queryObject.size = pageSize;
+    if (searchParam.get('sortBy'))
+      queryObject.sortBy = searchParam.get('sortBy');
     if (searchParam.get('color'))
       queryObject.colorList = searchParam.getAll('color');
     if (searchParam.get('size'))
@@ -171,6 +187,7 @@ export default function SearchPage() {
       queryObject.priceMax = searchParam.get('priceMax');
     return queryObject;
   };
+
   useEffect(() => {
     getNewProductList();
   }, [searchParam]);
@@ -184,7 +201,13 @@ export default function SearchPage() {
   }, [searchResultMetadata, priceRangeValue]);
   //sort search result
   //param
-  if (productList.length === 0)
+  let mainScreenState = 'productList';
+  if (listLoading) {
+    mainScreenState = 'loading';
+  } else if (productList.length === 0) {
+    mainScreenState = 'empty';
+  }
+  if (productList.length === 0 && searchResultMetadata.totalItem1 === 0)
     return (
       <div className="w-full h-full flex flex-col gap-4 items-center justify-center pb-20">
         <img src={notFoundProductImage} className="-mt-20" />
@@ -199,7 +222,7 @@ export default function SearchPage() {
       </div>
     );
   return (
-    <div className="grid grid-cols-[2fr_7fr] gap-4 text-[14px] font-medium pl-25 pr-25 pb-25 relative">
+    <div className="grid grid-cols-[2fr_7fr] gap-4 text-[14px] font-medium pl-15 pr-20 pb-25 relative">
       <div className="flex flex-col h-fit gap-4 sticky top-5 pt-5 ">
         {/* color */}
         <Collapsible
@@ -347,25 +370,49 @@ export default function SearchPage() {
           </CollapsibleContent>
         </Collapsible>
       </div>
-      {!listLoading ? (
+      {mainScreenState === 'empty' && (
+        <div className="w-full h-full flex flex-col gap-4 items-center justify-center pb-20">
+          <img src={notFoundProductImage} className="-mt-20" />
+          <span className="text-xl font-bold -mt-20">
+            {' '}
+            Không tìm thấy sản phẩm!
+          </span>
+          <span className="max-w-[500px] leading-5">
+            Vui lòng thay đổi tiêu chí tìm kiếm và thử lại, hoặc truy cập Trang
+            chủ để xem sản phẩm phổ biến nhất của chúng tôi!
+          </span>
+        </div>
+      )}
+      {mainScreenState === 'loading' && (
+        <div className="w-full h-full flex flex-col gap-4 items-center justify-center bg-gray-50">
+          <Spinner className="size-10 text-blue-500" />
+          <h1>Đang tải kết quả</h1>
+        </div>
+      )}
+      {mainScreenState === 'productList' && (
         <div className="flex flex-col gap-4">
           <div className="flex justify-between items-center gap-6">
             <div>
-              {searchResultMetadata.totalItem} kết quả cho "
+              {searchResultMetadata.totalItem2} kết quả cho "
               <b>{searchParam.get('query')}</b>"
             </div>
             <div className="flex gap-2 items-center">
               <span className="text-muted-foreground">Sắp xếp theo: </span>
-              <Select>
+              <Select
+                defaultValue={searchParam.get('sortBy') || ''}
+                onValueChange={(value) => {
+                  handleSelectingSortBy(value);
+                }}
+              >
                 <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select a fruit" />
+                  <SelectValue placeholder="Sắp xếp" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="apple">Apple</SelectItem>
-                  <SelectItem value="banana">Banana</SelectItem>
-                  <SelectItem value="blueberry">Blueberry</SelectItem>
-                  <SelectItem value="grapes">Grapes</SelectItem>
-                  <SelectItem value="pineapple">Pineapple</SelectItem>
+                  <SelectItem value="newest">Mới nhất</SelectItem>
+                  <SelectItem value="alphabetical-az">Theo tên(A-Z)</SelectItem>
+                  <SelectItem value="alphabetical-za">Theo tên(Z-A)</SelectItem>
+                  <SelectItem value="price-asc">Giá tăng dần</SelectItem>
+                  <SelectItem value="price-desc">Giá giảm dần</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -377,21 +424,18 @@ export default function SearchPage() {
                 <BriefProductCard briefProduct={product} />
               ))}
           </div>
-          {currentPage * pageSize < searchResultMetadata.totalItem && (
+          {currentPage * pageSize < searchResultMetadata.totalItem2 && (
             <button
-              className="button-standard-1 max-w-[500px] self-center mt-5"
+              className="button-standard-1 max-w-[500px] self-center mt-5 flex gap-2"
               onClick={() => {
                 handleAddMoreProduct();
               }}
+              disabled={addLoading}
             >
+              {addLoading && <Spinner />}
               XEM THÊM
             </button>
           )}
-        </div>
-      ) : (
-        <div className="w-full h-full flex flex-col gap-4 items-center justify-center bg-gray-50">
-          <Spinner className="size-10 text-blue-500" />
-          <h1>Đang tải kết quả</h1>
         </div>
       )}
     </div>
