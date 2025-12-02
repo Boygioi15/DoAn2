@@ -1,0 +1,16 @@
+services:
+  mongodb:
+    hostname: mongodb
+    container_name: mongodb-container
+    image: mongodb/mongodb-atlas-local
+    environment:
+      - MONGODB_INITDB_ROOT_USERNAME=user
+      - MONGODB_INITDB_ROOT_PASSWORD=pass
+    ports:
+      - 27019:27017
+    volumes:
+      - data:/data/db
+      - config:/data/configdb
+volumes:
+  data:
+  config:

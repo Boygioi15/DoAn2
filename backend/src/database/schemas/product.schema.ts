@@ -42,11 +42,18 @@ export class Product {
   @Prop({ default: false })
   isDeleted: boolean;
 
+  //denormalized fields
   @Prop()
   minPrice: number;
 
   @Prop()
   totalStock: number;
+
+  @Prop()
+  allColors: string[];
+
+  @Prop()
+  allSizes: string[];
 }
 
 @Schema({ timestamps: true, collection: 'product_variant' })

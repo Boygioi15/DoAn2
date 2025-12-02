@@ -83,12 +83,8 @@ export class ProductService {
       const v2TempIdRealIdMap =
         await this.createProductVariant2(createProductDto);
       console.log('A2');
-      const {
-        v1TempIdVariantIdMap,
-        v2TempIdVariantIdMap,
-        minPrice,
-        totalStock,
-      } = await this.createProductVariantTable(createProductDto);
+      const { v1TempIdVariantIdMap, v2TempIdVariantIdMap } =
+        await this.createProductVariantTable(createProductDto);
       console.log('A3');
       const insertDbPromises1 = v1TempIdVariantIdMap.forEach(
         async (v1TempId, variantId) => {
@@ -115,18 +111,12 @@ export class ProductService {
       await Promise.all([insertDbPromises1, insertDbPromises2]);
       console.log('A4');
       console.log('Linkage created');
-
-      /////price & stock
-      const updatedProduct = await this.productModel.findOneAndUpdate(
-        {
-          productId,
-        },
-        { minPrice, totalStock },
-        { new: true },
-      );
-      console.log('Total price & stock updated: ', updatedProduct);
     }
+    const finalProduct = await this.denormalizeProduct(productId);
+    console.log('Product backfilled: ', finalProduct);
+    return finalProduct;
   }
+
   //return product id on success, null otherwise
   async createProductBasicInfo(
     createProductDto: CreateProductDto,
@@ -286,27 +276,10 @@ export class ProductService {
     await Promise.all(promises);
     console.log('V1 variant map: ', v1TempIdVariantIdMap);
     console.log('V2 variant map: ', v2TempIdVariantIdMap);
-    let minPrice = 999999999,
-      totalStock = 0;
-    for (const variant of _variantTableData) {
-      minPrice = Math.min(minPrice, variant.sellingPrice);
-      totalStock += variant.stock;
-    }
     return {
       v1TempIdVariantIdMap,
       v2TempIdVariantIdMap,
-      minPrice,
-      totalStock,
     };
-  }
-
-  async resetAllProductData() {
-    await this.productModel.deleteMany();
-    await this.productOptionModel.deleteMany();
-    await this.productVariantModel.deleteMany();
-    await this.variantOptionModel.deleteMany();
-    await this.productPropertyModel.deleteMany();
-    await this.productDescriptionModel.deleteMany();
   }
 
   async updateProductPublished(productId: string, state: boolean) {
@@ -316,20 +289,43 @@ export class ProductService {
     );
     return result;
   }
-  async softDeleteProduct(productId: string) {
-    const result = await this.productModel.findOneAndUpdate(
+
+  async denormalizeProduct(productId: string) {
+    const product = await this.productModel.findOne({ productId });
+    if (!product) {
+      throw new InternalServerErrorException(
+        'Denormalize product failed, no matching product',
+      );
+    }
+    //denormalize totalPrice and stock
+    const allProductVariants =
+      await this.productQueryService.getAllVariantsOfProduct(product);
+    let minPrice = 999999999,
+      totalStock = 0;
+
+    //denormalize color and size
+    let _allColors: Set<string> = new Set<string>(),
+      _allSizes: Set<string> = new Set<string>();
+
+    allProductVariants.forEach((variant) => {
+      minPrice = Math.min(minPrice, variant.price);
+      totalStock += variant.stock;
+      _allColors.add(variant.optionValue1);
+      _allSizes.add(variant.optionValue2);
+    });
+    let allColors = Array.from(_allColors);
+    let allSizes = Array.from(_allSizes);
+    const newProduct = await this.productModel.findOneAndUpdate(
       { productId },
-      { isDeleted: true },
+      {
+        minPrice,
+        totalStock,
+        allColors,
+        allSizes,
+      },
+      { new: true },
     );
-    return result;
-  }
-  async restoreProduct(productId: string) {
-    const result = await this.productModel.findOneAndUpdate(
-      { productId },
-      { isDeleted: false },
-    );
-    // console.log(result);
-    return result;
+    return newProduct;
   }
   generateSKU(length = 10) {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';

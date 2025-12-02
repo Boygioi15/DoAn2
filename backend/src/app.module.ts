@@ -17,7 +17,9 @@ import { FrontendSettingModule } from './frontend-setting/frontend-setting.modul
 @Module({
   imports: [
     AuthModule,
-    MongooseModule.forRoot('mongodb://localhost:27017/database'),
+    MongooseModule.forRoot(
+      'mongodb://user:pass@localhost:27019/database?directConnection=true&authSource=admin',
+    ),
     DatabaseModule,
     HttpModule.register({
       timeout: Number(process.env.HTTP_TimeOut ?? 5000),

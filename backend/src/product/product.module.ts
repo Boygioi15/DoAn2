@@ -5,10 +5,11 @@ import { DatabaseModule } from 'src/database/database.module';
 import { CloudinaryModule } from 'src/cloudinary/cloudinary.module';
 import { CategoryModule } from 'src/category/category.module';
 import { ProductQueryService } from './product-query.service';
+import { ProductDeleteService } from './product-delete.service';
 
 @Module({
   controllers: [ProductController],
-  providers: [ProductService, ProductQueryService],
+  providers: [ProductService, ProductQueryService, ProductDeleteService],
   imports: [DatabaseModule, CloudinaryModule, CategoryModule],
   exports: [ProductService],
 })

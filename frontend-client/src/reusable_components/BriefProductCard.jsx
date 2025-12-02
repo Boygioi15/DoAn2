@@ -17,9 +17,7 @@ export default function BriefProductCard({ briefProduct }) {
       disableBackdropClose: true,
     });
   };
-  if (!briefProduct.optionData) {
-    console.log('BP: ', briefProduct);
-  }
+  if (!briefProduct.optionData) return;
   return (
     <div className="flex flex-col gap-3 w-full h-auto">
       <div className="w-full h-auto relative">

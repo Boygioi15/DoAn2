@@ -50,7 +50,6 @@ async function main() {
       console.log("PROGRESS: ", index, "/", productsArray.length);
     } catch (error) {}
   }
-
   saveJson(PRODUCT_JSON_PATH, products);
 }
 
@@ -108,6 +107,7 @@ async function addProductToAdminViaFrontend(driver, product) {
 }
 async function addProductToAdminViaJSON(product) {
   if (product.done) {
+    console.log("Product was done!");
     return;
   }
   console.log("Working on: ", product);

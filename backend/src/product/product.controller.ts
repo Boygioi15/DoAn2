@@ -15,12 +15,14 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { ProductQueryService } from './product-query.service';
+import { ProductDeleteService } from './product-delete.service';
 
 @Controller('product')
 export class ProductController {
   constructor(
     private readonly productService: ProductService,
     private readonly productQueryService: ProductQueryService,
+    private readonly productDeleteService: ProductDeleteService,
   ) {}
   @Post()
   @UseInterceptors(AnyFilesInterceptor())
@@ -72,6 +74,8 @@ export class ProductController {
         priceMax: q.priceMax,
         categoryId: q.categoryId,
         search: q.query,
+        colorList: q.colorList,
+        sizeList: q.sizeList,
       },
       pagination: {
         from: q.from || 1,
@@ -81,9 +85,9 @@ export class ProductController {
     });
     return productList;
   }
-  @Post('reset-all-product-data')
+  @Delete('reset-all-product-data')
   async resetAllData() {
-    this.productService.resetAllProductData();
+    this.productDeleteService.resetAllProductData();
   }
   @Post('update-published/:id')
   async updateProductPublished(
@@ -96,14 +100,21 @@ export class ProductController {
     );
     return newProductList;
   }
+  @Delete(`/real-delete/:id`)
+  async realDeleteProduct(@Param('id') id: string) {
+    const newProductList =
+      await this.productDeleteService.deleteProductData(id);
+    return newProductList;
+  }
   @Delete('/:id')
   async softDeleteProduct(@Param('id') id: string) {
-    const newProductList = await this.productService.softDeleteProduct(id);
+    const newProductList =
+      await this.productDeleteService.softDeleteProduct(id);
     return newProductList;
   }
   @Post('/restore/:id')
   async restoreProduct(@Param('id') id: string) {
-    const newProductList = await this.productService.restoreProduct(id);
+    const newProductList = await this.productDeleteService.restoreProduct(id);
     return newProductList;
   }
 }

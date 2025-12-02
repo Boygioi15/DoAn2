@@ -67,8 +67,8 @@ export class ProductQueryService {
       q.$text = { $search: search };
     }
     if (categoryId) q.categoryId = categoryId;
-    if (priceMin) q.minPrice.$gte = priceMin;
-    if (priceMax) q.minPrice.$lte = priceMax;
+    if (priceMin) q.minPrice = { $gte: priceMin };
+    if (priceMax) q.minPrice = { $lte: priceMax };
 
     if (role === 'CLIENT') {
       q.isDeleted = false;
@@ -91,7 +91,7 @@ export class ProductQueryService {
       };
     }
     const skip = (pagination.from - 1) * pagination.size;
-    console.log('P: ', pagination);
+    //console.log('P: ', pagination);
     let [basicProductInfo, total] = await Promise.all([
       this.productModel
         .find(query)
@@ -122,14 +122,68 @@ export class ProductQueryService {
       let productList = await Promise.all(productListPromises);
       return { data: productList, total };
     } else {
-      const productListPromises = basicProductInfo.map(async (product) => {
-        const { minPrice } = await this.getProductSellingPrice(product);
-        const totalStock = await this.getProductTotalStock(product);
+      //all color & sizes
+      const queryRerunned = await this.productModel
+        .find(query)
+        .select('allSizes allColors minPrice');
+      console.log(
+        await this.productModel.aggregate([
+          {
+            $search: {
+              index: 'search_index',
+              autocomplete: {
+                query: 'váy',
+                path: 'name',
+                fuzzy: { maxEdits: 1 }, // optional, for minor typos
+              },
+            },
+          },
+        ]),
+      );
+      const allColor = Array.from(
+        new Set<string>(queryRerunned.flatMap((product) => product.allColors)),
+      );
+      const allSize = Array.from(
+        new Set<string>(queryRerunned.flatMap((product) => product.allSizes)),
+      );
+      const priceRange = [
+        Math.min(...queryRerunned.map((product) => product.minPrice)),
+        Math.max(...queryRerunned.map((product) => product.minPrice)),
+      ];
+      //secondary filter
+      let requiredColor: any = [],
+        requiredSize: any = [],
+        priceMin = 0,
+        priceMax = Infinity;
+      if (filters.colorList) requiredColor = filters.colorList.split(',');
+      if (filters.sizeList) requiredSize = filters.sizeList.split(',');
+      if (filters.priceMin) priceMin = filters.priceMin;
+      if (filters.priceMax) priceMax = filters.priceMax;
+      // console.log('RRRRR: ', requiredColor, requiredSize, priceMin, priceMax);
+      const secondaryFiltered = basicProductInfo.filter((product) => {
+        // console.log(product);
+        const matchesColor =
+          requiredColor.length === 0 ||
+          product.allColors.includes(requiredColor);
 
+        const matchesSize =
+          requiredSize.length === 0 || product.allSizes.includes(requiredSize);
+        // console.log('A: ', matchesColor, matchesSize);
+        return (
+          matchesColor &&
+          matchesSize &&
+          product.minPrice >= priceMin &&
+          product.minPrice <= priceMax
+        );
+      });
+      const productListPromises = basicProductInfo.map(async (product) => {
+        //price
+        const { minPrice } = await this.getProductSellingPrice(product);
         let allProductVariants = await this.getAllVariantsOfProduct(product);
         allProductVariants = allProductVariants.filter(
           (variant) => variant.isInUse && variant.isOpenToSale,
         );
+        //option data
         let optionData: any = [];
         for (const variant of allProductVariants) {
           const exists = optionData.find(
@@ -144,7 +198,6 @@ export class ProductQueryService {
             });
           }
         }
-
         return {
           productId: product.productId,
           thumbnailURL: product.display_thumbnail_image,
@@ -159,7 +212,14 @@ export class ProductQueryService {
         };
       });
       let productList = await Promise.all(productListPromises);
-      return { data: productList, total };
+      return {
+        data: productList,
+        total: total,
+        allColor,
+        allSize,
+        priceRangeBot: priceRange[0],
+        priceRangeTop: priceRange[1],
+      };
     }
   }
 
