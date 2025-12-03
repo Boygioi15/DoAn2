@@ -44,10 +44,18 @@ import {
   CloudinaryFileMap,
   CloudinaryFileMapSchema,
 } from './schemas/cloudinary_file_map.schema';
+import {
+  Cart,
+  CartItem,
+  CartItemSchema,
+  CartSchema,
+} from './schemas/cart.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
+      { name: Cart.name, schema: CartSchema },
+      { name: CartItem.name, schema: CartItemSchema },
       { name: Product.name, schema: ProductSchema },
       { name: ProductVariant.name, schema: ProductVariantSchema },
       { name: VariantOption.name, schema: VariantOptionSchema },

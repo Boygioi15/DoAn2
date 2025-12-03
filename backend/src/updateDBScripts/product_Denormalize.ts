@@ -1,7 +1,9 @@
 // run-migrate-denormalize.js
 import { MongoClient } from 'mongodb';
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
+const MONGO_URI =
+  process.env.MONGO_URI ||
+  'mongodb://user:pass@localhost:27019/database?directConnection=true&authSource=admin';
 const DB_NAME = process.env.DB_NAME || 'database';
 const BATCH_SIZE = 200;
 
@@ -29,7 +31,6 @@ async function run() {
       const product = await cursor.next();
       if (!product) continue;
       const productId = product.productId;
-
       // Aggregate on product_variant to reconstruct the same projection as getAllVariantsOfProduct
       const pipeline = [
         // 1. Join each variant with all option links
@@ -112,7 +113,6 @@ async function run() {
 
       // Run aggregation
       const variantDocs = await variantColl.aggregate(pipeline).toArray();
-
       // If no variants matched, set defaults
       if (!variantDocs || variantDocs.length === 0) {
         await productsColl.updateOne(
@@ -129,7 +129,6 @@ async function run() {
         console.log(`Product ${productId} → no variants. Defaulted.`);
         continue;
       }
-
       // Compute denormalized values
       let minPrice = Infinity;
       let totalStock = 0;

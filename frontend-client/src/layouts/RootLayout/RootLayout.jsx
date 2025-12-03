@@ -128,7 +128,7 @@ export function TopLayout() {
                 <span className="text-[14px] font-medium"> Giỏ hàng</span>
               </Button>
             </SheetTrigger>
-            <SheetContent className="max-w-150! w-150">
+            <SheetContent className="max-w-135! w-135">
               <CartSheet />
             </SheetContent>
           </Sheet>

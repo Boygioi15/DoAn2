@@ -11,6 +11,6 @@ import { ProductDeleteService } from './product-delete.service';
   controllers: [ProductController],
   providers: [ProductService, ProductQueryService, ProductDeleteService],
   imports: [DatabaseModule, CloudinaryModule, CategoryModule],
-  exports: [ProductService],
+  exports: [ProductService, ProductQueryService],
 })
 export class ProductModule {}

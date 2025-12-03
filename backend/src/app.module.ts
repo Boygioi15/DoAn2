@@ -13,6 +13,7 @@ import { ProductModule } from './product/product.module';
 import { CategoryModule } from './category/category.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { FrontendSettingModule } from './frontend-setting/frontend-setting.module';
+import { CartModule } from './cart/cart.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { FrontendSettingModule } from './frontend-setting/frontend-setting.modul
     CategoryModule,
     CloudinaryModule,
     FrontendSettingModule,
+    CartModule,
   ],
   controllers: [AppController],
   providers: [

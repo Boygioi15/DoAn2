@@ -5,8 +5,8 @@ export const auth_provider = {
 };
 export const otp_bounceback = 10; //in seconds
 export const otp_ttl = 180; //in seconds;
-export const refreshToken_ttl = 1200; //in seconds
-export const accessToken_ttl = 300;
+export const refreshToken_ttl = 60 * 60; //in seconds
+export const accessToken_ttl = 60 * 10;
 
 export const slugifyOption = {
   replacement: '-', // replace spaces with replacement character, defaults to `-`

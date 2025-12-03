@@ -1,6 +1,7 @@
 import { MongoClient } from 'mongodb';
 
-const uri = 'mongodb://localhost:27017'; // or your connection string
+const uri =
+  'mongodb://user:pass@localhost:27019/database?directConnection=true&authSource=admin';
 const client = new MongoClient(uri);
 
 async function run() {

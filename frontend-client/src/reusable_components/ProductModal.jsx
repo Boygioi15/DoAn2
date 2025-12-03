@@ -40,23 +40,40 @@ export default function ProductModal({ productId }) {
   };
   const defaultSelectOption1 = async () => {
     if (!optionData) return;
-    for (const option of optionData) {
+    for (const option1 of optionData) {
       //eligible to select
-      if (true) {
-        setSelectedOption1(option.optionId);
-        break;
+      let totalStock = 0;
+      totalStock = option1.subOption.reduce((acc, option2) => {
+        const option2Stock = allProductVariant.find(
+          (variant) =>
+            variant.optionId1 === option1.optionId &&
+            variant.optionId2 === option2.optionId
+        ).stock;
+        return Number(acc) + Number(option2Stock);
+      }, 0);
+      console.log('O1TS: ', option1, totalStock);
+      if (totalStock !== 0) {
+        setSelectedOption1(option1.optionId);
+        return;
       }
     }
+    setSelectedOption1(optionData[0].optionId);
   };
   const defaultSelectOption2 = async () => {
     if (!selectedOption1) return;
     for (const option of option2List) {
       //eligible to select
-      if (true) {
+      const associatedVariant = allProductVariant.find(
+        (variant) =>
+          variant.optionId1 === selectedOption1 &&
+          variant.optionId2 === option.optionId
+      );
+      if (!associatedVariant || associatedVariant.stock > 0) {
         setSelectedOption2(option.optionId);
-        break;
+        return;
       }
     }
+    setSelectedOption2(option2List[0].optionId);
   };
   useEffect(() => {
     if (!optionData) return;
@@ -119,6 +136,36 @@ export default function ProductModal({ productId }) {
     return 0;
   }, [allProductVariant, selectedOption1, selectedOption2]);
 
+  const productVariant = useMemo(() => {
+    if (!selectedOption1 || !selectedOption2) return;
+    const associatedVar = allProductVariant.find(
+      (variant) =>
+        variant.optionId1 === selectedOption1 &&
+        variant.optionId2 === selectedOption2
+    );
+    return associatedVar;
+  }, [selectedOption1, selectedOption2]);
+  const disabledOption1IdList = useMemo(() => {
+    if (!optionData || !allProductVariant) return [];
+    const disabledList = [];
+    for (const option1 of optionData) {
+      let totalStock = 0;
+      totalStock = option1.subOption.reduce((acc, option2) => {
+        const option2Stock = allProductVariant.find(
+          (variant) =>
+            variant.optionId1 === option1.optionId &&
+            variant.optionId2 === option2.optionId
+        ).stock;
+        return Number(acc) + Number(option2Stock);
+      }, 0);
+      console.log('O1TS: ', option1, totalStock);
+      if (totalStock === 0) {
+        disabledList.push(option1.optionId);
+      }
+    }
+    console.log('DL: ', disabledList);
+    return disabledList;
+  }, [optionData]);
   if (!productDetail) return null;
   return (
     <div className="flex flex-col w-[500px] h-auto text-(--color-preset-gray)] pt-4 pr-8 pl-8 gap-4 text-[12px]">
@@ -162,15 +209,24 @@ export default function ProductModal({ productId }) {
         </span>
         <div className="flex gap-2">
           {optionData.map((option1) => (
-            <img
+            <button
+              disabled={disabledOption1IdList.includes(option1.optionId)}
               className={
-                reusableStyle.colorImage +
-                (selectedOption1 === option1.optionId &&
-                  reusableStyle.colorImageSelected)
+                `relative ` +
+                  disabledOption1IdList.includes(option1.optionId) &&
+                'pointer-events-none opacity-50'
               }
-              onClick={() => setSelectedOption1(option1.optionId)}
-              src={option1.optionImage[0]}
-            />
+            >
+              <img
+                className={
+                  reusableStyle.colorImage +
+                  (selectedOption1 === option1.optionId &&
+                    reusableStyle.colorImageSelected)
+                }
+                onClick={() => setSelectedOption1(option1.optionId)}
+                src={option1.optionImage[0]}
+              />
+            </button>
           ))}
         </div>
       </div>
@@ -181,24 +237,48 @@ export default function ProductModal({ productId }) {
         </span>
         <div className="flex gap-2">
           {option2List &&
-            option2List.map((option2) => (
-              <button
-                className={
-                  reusableStyle.sizeButton +
-                  (selectedOption2 === option2.optionId &&
-                    reusableStyle.sizeButtonSelected)
-                }
-                onClick={() => setSelectedOption2(option2.optionId)}
-              >
-                {option2.optionValue}
-              </button>
-            ))}
+            option2List.map((option2) => {
+              let _disabled = false;
+              if (selectedOption1 && selectedOption2) {
+                const associatedVariant = allProductVariant.find(
+                  (variant) =>
+                    variant.optionId1 === selectedOption1 &&
+                    variant.optionId2 === option2.optionId
+                );
+                if (!associatedVariant) _disabled = false;
+                else if (associatedVariant.stock === 0) _disabled = true;
+
+                // console.log('O2: ', option2);
+                // console.log('AV: ', associatedVariant);
+                // console.log('D: ', _disabled);
+              }
+
+              return (
+                <button
+                  className={
+                    reusableStyle.sizeButton +
+                    (selectedOption2 === option2.optionId &&
+                      reusableStyle.sizeButtonSelected) +
+                    (_disabled && reusableStyle.sizeButtonDisabled)
+                  }
+                  disabled={_disabled}
+                  onClick={() => setSelectedOption2(option2.optionId)}
+                >
+                  {option2.optionValue}
+                </button>
+              );
+            })}
         </div>
       </div>
 
       <div className={reusableStyle.blockBorderBottom + ' w-full'}>
-        <button className="button-standard-1 w-full text-[16px]!">
-          THÊM VÀO GIỎ HÀNG
+        <button
+          className="button-standard-1 w-full"
+          disabled={productVariant && productVariant.stock === 0}
+        >
+          {productVariant && productVariant.stock === 0
+            ? 'ĐÃ HẾT HÀNG'
+            : 'THÊM VÀO GIỎ HÀNG'}
         </button>
       </div>
     </div>
@@ -215,7 +295,8 @@ const reusableStyle = {
   colorImageSelected: 'border-b border-black pb-[2px]',
   sizeButton:
     'w-[36px] h-[36px] flex items-center justify-center border border-[var(--color-preset-gray)] rounded-[4px] cursor-pointer ',
-  sizeButtonSelected: 'bg-[var(--color-preset-gray)] text-white',
+  sizeButtonSelected: 'bg-[var(--color-preset-gray)] text-white ',
+  sizeButtonDisabled: ' opacity-50 cursor-not-allowed pointer-events-none',
   imageShow: 'w-[60px] h-[80px] cursor-pointer',
   imageShowSelected: 'border border-black p-[2px]',
 };

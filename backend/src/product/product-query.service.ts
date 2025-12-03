@@ -296,6 +296,14 @@ export class ProductQueryService {
   }
   // category handling
   async getAllProductWrapper({ role, filters, sortBy, pagination }) {
+    if (!filters.categoryId) {
+      return this.getAllProduct({
+        role,
+        filters,
+        sortBy,
+        pagination,
+      });
+    }
     let catId = filters.categoryId;
     const catDetail = await this.categoryService.getCategoryDetail(catId);
     if (!catDetail) {
@@ -617,9 +625,13 @@ export class ProductQueryService {
     if (!product) {
       throw new InternalServerErrorException('Product not found!');
     }
-    const categoryName = await this.categoryService.getCategoryDetail(
+    const category = await this.categoryService.getCategoryDetail(
       product.categoryId,
     );
+    if (!category) {
+      throw new InternalServerErrorException('Không có category tương ứng!');
+    }
+    const categoryName = category.categoryName;
     const propertyListDb = await this.getProductPropertyList(product);
     const propertyList = propertyListDb.map((property) => ({
       name: property.name,
