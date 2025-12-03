@@ -1,4 +1,5 @@
 import {
+  BadGatewayException,
   BadRequestException,
   Injectable,
   InternalServerErrorException,
@@ -100,11 +101,10 @@ export class ProductQueryService {
       });
     }
     if (categoryIdList) {
-      const _list = categoryIdList.split(',');
       queryPipeline.push({
         $match: {
           categoryId: {
-            $in: _list,
+            $in: categoryIdList,
           },
         },
       });
@@ -293,6 +293,47 @@ export class ProductQueryService {
       $match: {},
     });
     return queryPipeline;
+  }
+  // category handling
+  async getAllProductWrapper({ role, filters, sortBy, pagination }) {
+    let catId = filters.categoryId;
+    const catDetail = await this.categoryService.getCategoryDetail(catId);
+    if (!catDetail) {
+      throw new InternalServerErrorException(
+        'Không tồn tại danh mục tương ứng',
+      );
+    }
+    const lv = catDetail.categoryLevel;
+    if (lv === 1) {
+      throw new BadGatewayException(
+        'Hệ thống chưa hỗ trợ lấy sản phẩm danh mục cấp độ 1',
+      );
+    }
+    if (lv === 2) {
+      let cat3List =
+        await this.categoryService.getAllDirectChildrenOfCategory(catId);
+      let cat3IdList = cat3List.map((cat3) => cat3.categoryId);
+      let _filters = { ...filters, categoryIdList: cat3IdList };
+      return this.getAllProduct({
+        role,
+        filters: _filters,
+        sortBy,
+        pagination,
+      });
+    }
+    if (lv === 3) {
+      let _filters = { ...filters, categoryIdList: [catId] };
+      return this.getAllProduct({
+        role,
+        filters: _filters,
+        sortBy,
+        pagination,
+      });
+    } else {
+      throw new InternalServerErrorException(
+        'Hệ thống không hỗ trợ ngoài danh mục cấp 1,2,3',
+      );
+    }
   }
   async getAllProduct({ role, filters, sortBy, pagination }) {
     //filter => sort => pagination

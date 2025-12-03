@@ -66,12 +66,11 @@ export class ProductController {
   }
   @Get('client')
   async getAllProducts_Client(@Query() q) {
-    console.log(q);
     const { productList, metadata } =
-      await this.productQueryService.getAllProduct({
+      await this.productQueryService.getAllProductWrapper({
         role: 'CLIENT',
         filters: {
-          categoryIdList: q.categoryIdList,
+          categoryId: q.categoryId,
           search: q.query,
 
           priceMin: q.priceMin,

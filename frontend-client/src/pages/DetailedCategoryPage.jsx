@@ -64,6 +64,8 @@ const sortSizeList = (sizeList) => {
 
 export default function DetailedCategoryPage() {
   const [searchParam, setSearchParam] = useSearchParams();
+  const { category1Id, category2Id, category3Id } = useParams();
+
   const navigate = useNavigate();
   const [productList, setProductList] = useState([]);
   const [listLoading, setListLoading] = useState(false);
@@ -94,7 +96,7 @@ export default function DetailedCategoryPage() {
   const getNewProductList = async () => {
     try {
       setListLoading(true);
-      window.scrollTo({ top: 100, behavior: 'smooth' });
+      window.scrollTo({ top: 250, behavior: 'smooth' });
       const queryObject = formQueryObject();
       queryObject.from = 1;
       const response = await productApi.getAllProduct(
@@ -190,15 +192,19 @@ export default function DetailedCategoryPage() {
       queryObject.priceMin = searchParam.get('priceMin');
     if (searchParam.get('priceMax'))
       queryObject.priceMax = searchParam.get('priceMax');
-
-    if (category3Id) {
+    console.log({ category1Id, category2Id, category3Id });
+    if (category2Id || category3Id) {
+      console.log('C2: ', category2Id);
+      let categoryId = category2Id;
+      if (category3Id) {
+        categoryId = category3Id;
+      }
+      queryObject.categoryId = categoryId;
     }
+
     return queryObject;
   };
 
-  useEffect(() => {
-    getNewProductList();
-  }, [searchParam]);
   const priceSliderRange = useMemo(() => {
     const totalDistance =
       searchResultMetadata.priceRange[1] - searchResultMetadata.priceRange[0];
@@ -209,7 +215,6 @@ export default function DetailedCategoryPage() {
   }, [searchResultMetadata, priceRangeValue]);
 
   ////CATEGORY HANDLING
-  const { category1Id, category2Id, category3Id } = useParams();
   const [selectedCat2Id, setSelectedCat2Id] = useState(category2Id);
   const [cat2List, setCat2List] = useState([]);
   const [selectedCat3Id, setSelectedCat3Id] = useState(category3Id || '');
@@ -249,35 +254,18 @@ export default function DetailedCategoryPage() {
   useEffect(() => {
     getCat3List();
   }, [selectedCat2Id]);
-  useEffect(() => {
-    console.log('S3: ', selectedCat3Id);
-  }, [selectedCat3Id]);
-  useEffect(() => {
-    console.log('CL3: ', cat3List);
-  }, [cat3List]);
+
   useEffect(() => {
     getNewProductList();
-  }, []);
+  }, [searchParam, category2Id, category3Id]);
+
   let mainScreenState = 'productList';
   if (listLoading) {
     mainScreenState = 'loading';
   } else if (productList.length === 0) {
     mainScreenState = 'empty';
   }
-  if (productList.length === 0 && searchResultMetadata.totalItem1 === 0)
-    return (
-      <div className="w-full h-full flex flex-col gap-4 items-center justify-center pb-20">
-        <img src={notFoundProductImage} className="-mt-20" />
-        <span className="text-xl font-bold -mt-20">
-          {' '}
-          Không tìm thấy sản phẩm!
-        </span>
-        <span className="max-w-[500px] leading-5">
-          Vui lòng thay đổi tiêu chí tìm kiếm và thử lại, hoặc truy cập Trang
-          chủ để xem sản phẩm phổ biến nhất của chúng tôi!
-        </span>
-      </div>
-    );
+
   return (
     <div className="flex flex-col gap-10 pt-10 pl-20 pr-20 pb-25">
       {cat3List.length > 0 && (
@@ -292,7 +280,10 @@ export default function DetailedCategoryPage() {
         <div className="flex gap-2 ">
           <div
             className="flex flex-col w-40 h-fit cursor-pointer"
-            onClick={() => setSelectedCat3Id('')}
+            onClick={() => {
+              setSelectedCat3Id('');
+              navigate(`/category/${category1Id}/${category2Id}`);
+            }}
           >
             <img
               src={allCategory}
@@ -330,7 +321,7 @@ export default function DetailedCategoryPage() {
       )}
 
       <div className="grid grid-cols-[2fr_7fr] gap-4 text-[14px] font-medium relative">
-        <div className="flex flex-col h-fit gap-4 sticky top-5 pt-5 ">
+        <div className="flex flex-col h-screen gap-4 sticky top-5 pt-5 overflow-scroll">
           {/* Cat2 list */}
           <Collapsible
             className={'w-full ' + reusableStyle.filterBlock}
@@ -364,156 +355,167 @@ export default function DetailedCategoryPage() {
             </CollapsibleContent>
           </Collapsible>
           {/* color */}
-          <Collapsible
-            className={'w-full ' + reusableStyle.filterBlock}
-            defaultOpen
-          >
-            <CollapsibleTrigger asChild>
-              <Button variant="ghost" className={'w-full justify-between'}>
-                <span className={reusableStyle.filterBlockTitle}>Màu sắc</span>
-                <ChevronUpIcon className="[[data-state=closed]>&]:rotate-180" />
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent
-              className={`grid grid-cols-5 gap-1 space-y-1 ${reusableStyle.filterBlockContent}`}
+          {productList.length > 0 && (
+            <Collapsible
+              className={'w-full ' + reusableStyle.filterBlock}
+              defaultOpen
             >
-              {searchResultMetadata.allColor.map((color) => (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      className={
-                        reusableStyle.colorButton +
-                        (selectedColor.find((_color) => _color === color) &&
-                          'border-black')
-                      }
-                      onClick={() => handleSelectingColor(color)}
-                    >
-                      <div
-                        style={{
-                          backgroundColor: colorMap[color] || '#111111',
-                        }}
-                        className="w-full h-full rounded-full flex items-center justify-center text-white"
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" className={'w-full justify-between'}>
+                  <span className={reusableStyle.filterBlockTitle}>
+                    Màu sắc
+                  </span>
+                  <ChevronUpIcon className="[[data-state=closed]>&]:rotate-180" />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent
+                className={`grid grid-cols-5 gap-1 space-y-1 ${reusableStyle.filterBlockContent}`}
+              >
+                {searchResultMetadata.allColor.map((color) => (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        className={
+                          reusableStyle.colorButton +
+                          (selectedColor.find((_color) => _color === color) &&
+                            'border-black')
+                        }
+                        onClick={() => handleSelectingColor(color)}
                       >
-                        {selectedColor.find((_color) => _color === color) && (
-                          <Check />
-                        )}
-                      </div>
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>{color}</TooltipContent>
-                </Tooltip>
-              ))}
-            </CollapsibleContent>
-          </Collapsible>
-          {/* size */}
-          <Collapsible
-            className={'w-full ' + reusableStyle.filterBlock}
-            defaultOpen
-          >
-            <CollapsibleTrigger asChild>
-              <Button variant="ghost" className={'w-full justify-between'}>
-                <span className={reusableStyle.filterBlockTitle}>Kích cỡ</span>
-                <ChevronUpIcon className="[[data-state=closed]>&]:rotate-180" />
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent
-              className={`grid grid-cols-5 gap-1 space-y-1 ${reusableStyle.filterBlockContent}`}
-            >
-              {searchResultMetadata.allSize.map((size) => (
-                <button
-                  className={
-                    reusableStyle.sizeButton +
-                    (selectedSize.find((_size) => _size === size) &&
-                      reusableStyle.sizeButtonSelected)
-                  }
-                  onClick={() => handleSelectingSize(size)}
-                >
-                  {size}
-                </button>
-              ))}
-            </CollapsibleContent>
-          </Collapsible>
+                        <div
+                          style={{
+                            backgroundColor: colorMap[color] || '#111111',
+                          }}
+                          className="w-full h-full rounded-full flex items-center justify-center text-white"
+                        >
+                          {selectedColor.find((_color) => _color === color) && (
+                            <Check />
+                          )}
+                        </div>
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>{color}</TooltipContent>
+                  </Tooltip>
+                ))}
+              </CollapsibleContent>
+            </Collapsible>
+          )}
           {/* price */}
-          <Collapsible
-            className={'w-full' + reusableStyle.filterBlock}
-            defaultOpen
-          >
-            <CollapsibleTrigger asChild>
-              <Button variant="ghost" className={'w-full justify-between'}>
-                <span className={reusableStyle.filterBlockTitle}>
-                  Khoảng giá
-                </span>
-                <ChevronUpIcon className="[[data-state=closed]>&]:rotate-180" />
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent
-              className={`${reusableStyle.filterBlockContent}`}
+          {productList.length > 0 && (
+            <Collapsible
+              className={'w-full ' + reusableStyle.filterBlock}
+              defaultOpen
             >
-              <div className="flex flex-col gap-4 mt-1">
-                <div className="flex justify-between items-center gap-4">
-                  <Input
-                    value={formatMoney(priceRangeValue[0])}
-                    onChange={(e) => {
-                      let value = parseVND(e.target.value);
-                      const temp = [Number(value), priceRangeValue[1]];
-                      setpriceRangeValue(temp);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" className={'w-full justify-between'}>
+                  <span className={reusableStyle.filterBlockTitle}>
+                    Kích cỡ
+                  </span>
+                  <ChevronUpIcon className="[[data-state=closed]>&]:rotate-180" />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent
+                className={`grid grid-cols-5 gap-1 space-y-1 ${reusableStyle.filterBlockContent}`}
+              >
+                {searchResultMetadata.allSize.map((size) => (
+                  <button
+                    className={
+                      reusableStyle.sizeButton +
+                      (selectedSize.find((_size) => _size === size) &&
+                        reusableStyle.sizeButtonSelected)
+                    }
+                    onClick={() => handleSelectingSize(size)}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </CollapsibleContent>
+            </Collapsible>
+          )}
+          {/* size */}
+
+          {productList.length > 0 && (
+            <Collapsible
+              className={'w-full' + reusableStyle.filterBlock}
+              defaultOpen
+            >
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" className={'w-full justify-between'}>
+                  <span className={reusableStyle.filterBlockTitle}>
+                    Khoảng giá
+                  </span>
+                  <ChevronUpIcon className="[[data-state=closed]>&]:rotate-180" />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent
+                className={`${reusableStyle.filterBlockContent}`}
+              >
+                <div className="flex flex-col gap-4 mt-1">
+                  <div className="flex justify-between items-center gap-4">
+                    <Input
+                      value={formatMoney(priceRangeValue[0])}
+                      onChange={(e) => {
+                        let value = parseVND(e.target.value);
+                        const temp = [Number(value), priceRangeValue[1]];
+                        setpriceRangeValue(temp);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleUpdatingPriceValueToRouter();
+                        }
+                      }}
+                      onMouseLeave={(e) => {
                         handleUpdatingPriceValueToRouter();
-                      }
+                      }}
+                      className={'max-w-[200px]!'}
+                    />
+                    <span className="text-2xl font-bold">-</span>
+                    <Input
+                      value={formatMoney(priceRangeValue[1])}
+                      onChange={(e) => {
+                        let value = parseVND(e.target.value);
+                        const temp = [priceRangeValue[0], Number(value)];
+                        setpriceRangeValue(temp);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleUpdatingPriceValueToRouter();
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        handleUpdatingPriceValueToRouter();
+                      }}
+                      className={'max-w-[200px]!'}
+                    />
+                  </div>
+
+                  <Slider
+                    value={priceSliderRange}
+                    onValueChange={(value) => {
+                      const [value1, value2] = value;
+                      const bot =
+                        (Number(value1) / 100) *
+                          (searchResultMetadata.priceRange[1] -
+                            searchResultMetadata.priceRange[0]) +
+                        searchResultMetadata.priceRange[0];
+                      const top =
+                        (value2 / 100) *
+                          (searchResultMetadata.priceRange[1] -
+                            searchResultMetadata.priceRange[0]) +
+                        searchResultMetadata.priceRange[0];
+                      setpriceRangeValue([bot, top]);
                     }}
-                    onMouseLeave={(e) => {
+                    onValueCommit={() => {
                       handleUpdatingPriceValueToRouter();
                     }}
-                    className={'max-w-[200px]!'}
-                  />
-                  <span className="text-2xl font-bold">-</span>
-                  <Input
-                    value={formatMoney(priceRangeValue[1])}
-                    onChange={(e) => {
-                      let value = parseVND(e.target.value);
-                      const temp = [priceRangeValue[0], Number(value)];
-                      setpriceRangeValue(temp);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        handleUpdatingPriceValueToRouter();
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      handleUpdatingPriceValueToRouter();
-                    }}
-                    className={'max-w-[200px]!'}
+                    max={100}
+                    step={5}
+                    className={''}
                   />
                 </div>
-
-                <Slider
-                  value={priceSliderRange}
-                  onValueChange={(value) => {
-                    const [value1, value2] = value;
-                    const bot =
-                      (Number(value1) / 100) *
-                        (searchResultMetadata.priceRange[1] -
-                          searchResultMetadata.priceRange[0]) +
-                      searchResultMetadata.priceRange[0];
-                    const top =
-                      (value2 / 100) *
-                        (searchResultMetadata.priceRange[1] -
-                          searchResultMetadata.priceRange[0]) +
-                      searchResultMetadata.priceRange[0];
-                    setpriceRangeValue([bot, top]);
-                  }}
-                  onValueCommit={() => {
-                    handleUpdatingPriceValueToRouter();
-                  }}
-                  max={100}
-                  step={5}
-                  className={''}
-                />
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
+              </CollapsibleContent>
+            </Collapsible>
+          )}
         </div>
         {mainScreenState === 'empty' && (
           <div className="w-full h-full flex flex-col gap-4 items-center justify-center pb-20">
@@ -537,10 +539,7 @@ export default function DetailedCategoryPage() {
         {mainScreenState === 'productList' && (
           <div className="flex flex-col gap-4">
             <div className="flex justify-between items-center gap-6">
-              <div>
-                {searchResultMetadata.totalItem2} kết quả cho "
-                <b>{searchParam.get('query')}</b>"
-              </div>
+              <div>{searchResultMetadata.totalItem2} kết quả</div>
               <div className="flex gap-2 items-center">
                 <span className="text-muted-foreground">Sắp xếp theo: </span>
                 <Select

@@ -93,7 +93,7 @@ export class CategoryService {
     const category = await this.categoryModel.findOne({
       categoryId: categoryId,
     });
-    return category?.categoryName;
+    return category;
   }
 
   async createNewCategory(newCategory: CreateCategoryDto) {

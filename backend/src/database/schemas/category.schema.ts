@@ -19,6 +19,8 @@ export class Category {
   @Prop()
   parentId: string;
 
+  @Prop({ default: 1 })
+  categoryLevel: number;
   @Prop({ default: false })
   isDefault: boolean;
 }

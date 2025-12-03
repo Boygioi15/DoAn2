@@ -18,7 +18,8 @@ import { FrontendSettingModule } from './frontend-setting/frontend-setting.modul
   imports: [
     AuthModule,
     MongooseModule.forRoot(
-      'mongodb://user:pass@localhost:27019/database?directConnection=true&authSource=admin',
+      process.env.MONGODB_URI ||
+        'mongodb://user:pass@localhost:27019/database?directConnection=true&authSource=admin',
     ),
     DatabaseModule,
     HttpModule.register({
