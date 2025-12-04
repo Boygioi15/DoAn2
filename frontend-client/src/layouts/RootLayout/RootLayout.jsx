@@ -8,10 +8,7 @@ import UltilityContextProvider_1 from '../../contexts/UltilityContext_1';
 import { UltilityContext_1 } from '../../contexts/UltilityContext_1';
 import topBannerSample from '../../assets/topBannerSample.webp';
 import { FiSearch } from 'react-icons/fi';
-import { IoLogInOutline } from 'react-icons/io5';
-import { MdOutlineAccountCircle, MdAccountCircle } from 'react-icons/md';
 import { FaRegUserCircle, FaUserCircle } from 'react-icons/fa';
-import { FiShoppingBag } from 'react-icons/fi';
 
 import useAuthStore from '../../contexts/zustands/AuthStore';
 import { MdArrowBackIos, MdArrowForwardIos } from 'react-icons/md';
@@ -19,14 +16,8 @@ import Breadcrumbs from '@/reusable_components/Breadcrumb';
 import { frontendApi } from '@/api/frontendApi';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import {
-  ArrowDownToLine,
-  Headset,
-  MessageCircle,
-  ShoppingBag,
-} from 'lucide-react';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import CartSheet from '@/reusable_components/CartSheet';
+import { ArrowDownToLine, Headset, MessageCircle } from 'lucide-react';
+import { CartWrapper } from './CartComponent';
 export default function RootLayout({ children }) {
   return (
     <ModalContextProvider>
@@ -116,23 +107,7 @@ export function TopLayout() {
               }}
             />
           )}
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button
-                variant={'ghost'}
-                className={
-                  'flex flex-col gap-1 h-full p-0! items-center justify-center'
-                }
-              >
-                <ShoppingBag style={{ width: '24px', height: '24px' }} />
-                <span className="text-[14px] font-medium"> Giỏ hàng</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent className="max-w-135! w-135">
-              <CartSheet />
-            </SheetContent>
-          </Sheet>
-
+          <CartWrapper />
           <Button
             variant={'ghost'}
             className={

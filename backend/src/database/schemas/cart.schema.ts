@@ -1,14 +1,20 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
+import { v4 } from 'uuid';
 export type CartDocument = HydratedDocument<Cart>;
 export type CartItemDocument = HydratedDocument<CartItem>;
 @Schema({ timestamps: true, collection: 'cart' })
 export class Cart {
-  @Prop()
+  @Prop({
+    type: String,
+    default: v4, // auto-generate unique string id
+    unique: true, // ensure uniqueness in DB
+    index: true,
+  })
   cartId: string;
 
   //reference to user
-  @Prop({})
+  @Prop({ unique: true })
   userId: string;
 
   @Prop({ default: 0 })
@@ -22,7 +28,12 @@ export class Cart {
 
 @Schema({ timestamps: true, collection: 'cart_item' })
 export class CartItem {
-  @Prop()
+  @Prop({
+    type: String,
+    default: v4, // auto-generate unique string id
+    unique: true, // ensure uniqueness in DB
+    index: true,
+  })
   cartItemId: string;
 
   @Prop()
@@ -32,6 +43,12 @@ export class CartItem {
   quantity: number;
   @Prop()
   maxAllowedQuantity: number;
+
+  @Prop()
+  unitPrice: number;
+  @Prop()
+  cashoutPrice: number;
+
   @Prop({ default: true })
   selected: boolean;
 
@@ -51,11 +68,6 @@ export class CartItem {
   variant_color: string;
   @Prop()
   variant_size: string;
-
-  @Prop()
-  defaultPrice: number;
-  @Prop()
-  cashoutPrice: number;
 }
 export const CartSchema = SchemaFactory.createForClass(Cart);
 export const CartItemSchema = SchemaFactory.createForClass(CartItem);

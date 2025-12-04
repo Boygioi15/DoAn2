@@ -607,6 +607,7 @@ export class ProductQueryService {
     const v2 = optionsGrouped.find((grouped: any) => grouped.index === 1);
     const allVariantsSellingPoint = await this.getAllVariantsOfProduct(product);
     return {
+      productId: product.productId,
       name: product.name,
       categoryId: product.categoryId,
       thumbnailURL: product.display_thumbnail_image,
