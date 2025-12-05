@@ -14,16 +14,23 @@ export class Cart {
   cartId: string;
 
   //reference to user
-  @Prop({ unique: true })
+  @Prop()
   userId: string;
 
   @Prop({ default: 0 })
   totalItem: number;
 
-  @Prop()
+  @Prop({ default: 0 })
   defaultPrice: number;
-  @Prop()
+  @Prop({ default: 0 })
   cashoutPrice: number;
+
+  @Prop({ default: false })
+  allSelected: boolean;
+  @Prop({ default: 0 })
+  totalSelected: number;
+  @Prop({ default: false })
+  allowedToPurchase: boolean;
 }
 
 @Schema({ timestamps: true, collection: 'cart_item' })

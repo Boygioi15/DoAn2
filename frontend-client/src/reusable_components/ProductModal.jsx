@@ -6,6 +6,7 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { ModalContext } from '@/contexts/ModalContext';
+import useCartStore from '@/contexts/zustands/CartStore';
 import { formatMoney } from '@/util';
 import {
   ChevronLeft,
@@ -16,6 +17,7 @@ import {
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import SpinnerOverlay from './SpinnerOverlay';
 
 export default function ProductModal({ productId }) {
   const navigate = useNavigate();
@@ -166,9 +168,61 @@ export default function ProductModal({ productId }) {
     console.log('DL: ', disabledList);
     return disabledList;
   }, [optionData]);
+
+  //cart functionalities
+  const [addLoading, setAddLoading] = useState(false);
+
+  const addItemToCart = useCartStore((s) => s.addItemToCart);
+  const setSheetOpen = useCartStore((s) => s.setSheetOpen);
+
+  const handleAddItemToCart = async () => {
+    try {
+      setAddLoading(true);
+      const result = await addItemToCart({
+        productId: productId,
+        variantId: productVariant.variantId,
+      });
+      toast.custom((t) => (
+        <div
+          className={`${
+            t.visible ? 'animate-enter' : 'animate-leave'
+          } max-w-sm w-full bg-white shadow-2xl rounded-xl pointer-events-auto flex items-center gap-3 p-4 border-l-4 border-l-green-700`}
+        >
+          <div className="flex gap-4">
+            <img
+              src={currentUrlList[0]}
+              className=" w-[60px] h-[80px] object-cover cursor-pointer 
+              border"
+            />
+            <p className="text-[14px] font-medium text-black leading-5 pt-2">
+              Sản phẩm đã được thêm vào giỏ hàng
+            </p>
+          </div>
+
+          <Button
+            onClick={() => {
+              toast.dismiss(t.id);
+              setSheetOpen(true);
+            }}
+            variant={'outline'}
+            className="button-standard-2 text-[black]"
+          >
+            Xem ngay
+          </Button>
+        </div>
+      ));
+    } catch (error) {
+      console.log(error);
+      toast.error('Có lỗi khi thêm mới sản phẩm');
+    } finally {
+      setAddLoading(false);
+    }
+  };
+
   if (!productDetail) return null;
   return (
     <div className="flex flex-col w-[500px] h-auto text-(--color-preset-gray)] pt-4 pr-8 pl-8 gap-4 text-[12px]">
+      {addLoading && <SpinnerOverlay />}
       <div className={reusableStyle.blockBorderBottom}>
         <h1 className={reusableStyle.modalTitle}>Thông tin sản phẩm</h1>
       </div>
@@ -210,11 +264,15 @@ export default function ProductModal({ productId }) {
         <div className="flex gap-2">
           {optionData.map((option1) => (
             <button
-              disabled={disabledOption1IdList.includes(option1.optionId)}
+              disabled={
+                disabledOption1IdList.length > 0 &&
+                disabledOption1IdList.includes(option1.optionId)
+              }
               className={
                 `relative ` +
+                (disabledOption1IdList.length > 0 &&
                   disabledOption1IdList.includes(option1.optionId) &&
-                'pointer-events-none opacity-50'
+                  'pointer-events-none opacity-50')
               }
             >
               <img
@@ -275,6 +333,7 @@ export default function ProductModal({ productId }) {
         <button
           className="button-standard-1 w-full"
           disabled={productVariant && productVariant.stock === 0}
+          onClick={handleAddItemToCart}
         >
           {productVariant && productVariant.stock === 0
             ? 'ĐÃ HẾT HÀNG'

@@ -8,7 +8,7 @@ export class AddNewItemDto {
   @IsString()
   variantId: string;
 }
-export class UpdateCartItemDto {
+export class UpdateCartItemQuantityDto {
   @IsNotEmpty()
   @IsString()
   cartItemId: string;

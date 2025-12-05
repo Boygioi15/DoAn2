@@ -16,7 +16,13 @@ import Breadcrumbs from '@/reusable_components/Breadcrumb';
 import { frontendApi } from '@/api/frontendApi';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { ArrowDownToLine, Headset, MessageCircle } from 'lucide-react';
+import {
+  ArrowDownToLine,
+  CircleUserRound,
+  Headset,
+  MessageCircle,
+  User,
+} from 'lucide-react';
 import { CartWrapper } from './CartComponent';
 export default function RootLayout({ children }) {
   return (
@@ -91,27 +97,37 @@ export function TopLayout() {
             />
           </div>
           {!loggedIn ? (
-            <IconBlock
-              icon={<FaRegUserCircle style={{ fontSize: '28px' }} />}
-              name={'Đăng nhập'}
-              handleOnClick={() => {
+            <Button
+              variant={'ghost'}
+              className={
+                'flex flex-col gap-1 h-full p-1! items-center justify-center'
+              }
+              onClick={() => {
                 navigate('/auth/sign-in');
               }}
-            />
+            >
+              <CircleUserRound style={{ width: '24px', height: '24px' }} />
+              <span className="text-[14px] font-medium">Đăng nhập</span>
+            </Button>
           ) : (
-            <IconBlock
-              icon={<FaUserCircle style={{ fontSize: '24px' }} />}
-              name={'Tài khoản'}
-              handleOnClick={() => {
+            <Button
+              variant={'ghost'}
+              className={
+                'flex flex-col gap-1 h-full p-1! items-center justify-center'
+              }
+              onClick={() => {
                 navigate('/profile/account-info');
               }}
-            />
+            >
+              <User style={{ width: '24px', height: '24px' }} />
+              <span className="text-[14px] font-medium">Tài khoản</span>
+            </Button>
           )}
           <CartWrapper />
           <Button
             variant={'ghost'}
             className={
-              'flex flex-col gap-1 h-full p-0! items-center justify-center'
+              'flex flex-col gap-1 h-full p-1! items-center justify-center'
             }
           >
             <Headset style={{ width: '24px', height: '24px' }} />

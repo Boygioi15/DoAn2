@@ -34,7 +34,8 @@ export default function ModalContextProvider({ children }) {
         createPortal(
           <div
             className="modal-backdrop"
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               if (!disableBackdropClose) {
                 closeModal();
               }

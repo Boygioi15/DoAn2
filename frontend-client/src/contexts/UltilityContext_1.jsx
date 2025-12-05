@@ -5,12 +5,14 @@ import { ModalContext } from './ModalContext';
 import { PromptModal } from '../reusable_components/PromptModal';
 import useAuthStore from './zustands/AuthStore';
 import { toast } from 'sonner';
+import useCartStore from './zustands/CartStore';
 export const UltilityContext_1 = createContext();
 
 export default function UltilityContextProvider_1({ children }) {
   const navigate = useNavigate();
   const { openModal } = useContext(ModalContext);
   const authStore = useAuthStore();
+  const cartStore = useCartStore();
   const convenience_1 = () => {
     openModal({
       modalContent: (
@@ -23,6 +25,7 @@ export default function UltilityContextProvider_1({ children }) {
       disableBackdropClose: true,
     });
     authStore.signOut();
+    cartStore.clearCart();
   };
   const showToastMessageInLocalStorage = () => {
     const message = localStorage.getItem('toastMessage');

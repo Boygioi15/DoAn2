@@ -5,6 +5,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import useCartStore from '@/contexts/zustands/CartStore';
+import SpinnerOverlay from '@/reusable_components/SpinnerOverlay';
 import { formatMoney } from '@/util';
 import { ChevronLeft, ChevronRight, ChevronUpIcon } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -169,9 +171,60 @@ export default function ProductDetailPage() {
     return 0;
   }, [allProductVariant, selectedOption1, selectedOption2]);
 
+  //cart functionalities
+  const [addLoading, setAddLoading] = useState(false);
+
+  const addItemToCart = useCartStore((s) => s.addItemToCart);
+  const setSheetOpen = useCartStore((s) => s.setSheetOpen);
+
+  const handleAddItemToCart = async () => {
+    try {
+      setAddLoading(true);
+      const result = await addItemToCart({
+        productId: productId,
+        variantId: productVariant.variantId,
+      });
+      toast.custom((t) => (
+        <div
+          className={`${
+            t.visible ? 'animate-enter' : 'animate-leave'
+          } max-w-sm w-full bg-white shadow-2xl rounded-xl pointer-events-auto flex items-center gap-3 p-4 border-l-4 border-l-green-700`}
+        >
+          <div className="flex gap-4">
+            <img
+              src={currentUrlList[0]}
+              className=" w-[60px] h-[80px] object-cover cursor-pointer 
+              border"
+            />
+            <p className="text-[14px] font-medium text-black leading-5 pt-2">
+              Sản phẩm đã được thêm vào giỏ hàng
+            </p>
+          </div>
+
+          <Button
+            onClick={() => {
+              toast.dismiss(t.id);
+              setSheetOpen(true);
+            }}
+            variant={'outline'}
+            className="button-standard-2 text-[black]"
+          >
+            Xem ngay
+          </Button>
+        </div>
+      ));
+    } catch (error) {
+      console.log(error);
+      toast.error('Có lỗi khi thêm mới sản phẩm');
+    } finally {
+      setAddLoading(false);
+    }
+  };
+
   if (!productDetail) return null;
   return (
     <div className="grid grid-cols-[1fr_1fr] text-[14px] font-medium pl-25 pr-25 gap-20">
+      {addLoading && <SpinnerOverlay />}
       <div className="">
         <ImageShow imageURLList={currentUrlList} />
       </div>
@@ -267,6 +320,7 @@ export default function ProductDetailPage() {
           <button
             className="button-standard-1 w-full"
             disabled={productVariant && productVariant.stock === 0}
+            onClick={handleAddItemToCart}
           >
             {productVariant && productVariant.stock === 0
               ? 'ĐÃ HẾT HÀNG'

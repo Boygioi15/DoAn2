@@ -81,12 +81,16 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+
+  z-index: 51;
+  pointer-events: all;
 }
 .modal-base {
   position: relative;
   min-height: 100px;
   background-color: white;
   border-radius: 4px;
+  z-index: 100;
 }
 .input-standard-1 {
   border: 1px solid #bdc7d4;
@@ -166,6 +170,7 @@ body {
   cursor: pointer;
   background-color: rgba(51, 63, 72, 0.1);
 }
+
 .link-standard-1 {
   font-size: 14px;
   font-weight: var(--fontWeight-preset-medium);

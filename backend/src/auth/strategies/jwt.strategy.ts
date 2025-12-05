@@ -30,11 +30,16 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 }
 export class JwtGuard extends AuthGuard('jwt') {
-  handleRequest(err: any, user: any, info: any, context: ExecutionContext) {
+  canActivate(context: ExecutionContext) {
+    // allow handleRequest() to catch passport errors
+    return super.canActivate(context) as any;
+  }
+
+  handleRequest(err: any, user: any, info: any) {
+    // info contains: JsonWebTokenError: jwt must be provided
     if (err || !user) {
-      // info.message contains the reason from Passport-JWT (like "jwt expired")
-      const message = info?.message || 'Token validation failed';
-      throw new UnauthorizedException(`JWT Error: ${message}`);
+      const message = info?.message || err?.message || 'Invalid token';
+      throw new UnauthorizedException(message);
     }
     return user;
   }

@@ -21,6 +21,7 @@ import { LuLogOut } from 'react-icons/lu';
 function Sidebar({ selectedTab }) {
   const navigate = useNavigate();
   const authStore = useAuthStore();
+  const cartStore = useCartStore();
   return (
     <div className="ProfileLayout_Sidebar">
       <SidebarTab
@@ -56,7 +57,8 @@ function Sidebar({ selectedTab }) {
         description={''}
         handleOnClick={async () => {
           await authStore.signOut();
-          navigate('/');
+          await cartStore.clearCart();
+          await navigate('/');
           toast.success('Đăng xuất thành công!');
         }}
       />
@@ -67,6 +69,7 @@ import { IoMdArrowRoundForward } from 'react-icons/io';
 import { useEffect, useState } from 'react';
 import useAuthStore from '../../contexts/zustands/AuthStore';
 import { toast } from 'sonner';
+import useCartStore from '@/contexts/zustands/CartStore';
 
 function SidebarTab({ icon, name, description, isSelected, handleOnClick }) {
   return (
