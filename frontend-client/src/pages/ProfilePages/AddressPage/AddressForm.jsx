@@ -176,26 +176,19 @@ export default function AddressForm({
         />
       </div>
       <div style={addressFormLineStyle}>
-        {!initialAddress ? (
-          <InputBlock_SelectWithSearch
-            label={'Tỉnh/ Thành phố'}
-            selectValue={selectedProvince ? selectedProvince.id : ''}
-            onInputValueChange={(selectedId) => {
-              const matchedProvince = allProvinces.find(
-                (province) => province.id === selectedId
-              );
-              setSelectedProvince(matchedProvince);
-            }}
-            placeholder={'Chọn tỉnh/ thành phố'}
-            selectValueList={allProvinces}
-          />
-        ) : (
-          <InputBlock_Input
-            label={'Tỉnh/ Thành phố'}
-            inputValue={initialAddress.provinceName}
-          />
-        )}
-        {!initialAddress ? (
+        <InputBlock_SelectWithSearch
+          label={'Tỉnh/ Thành phố'}
+          selectValue={selectedProvince ? selectedProvince.id : ''}
+          onInputValueChange={(selectedId) => {
+            const matchedProvince = allProvinces.find(
+              (province) => province.id === selectedId
+            );
+            setSelectedProvince(matchedProvince);
+          }}
+          placeholder={'Chọn tỉnh/ thành phố'}
+          selectValueList={allProvinces}
+        />
+        {/* {!initialAddress ? (
           <InputBlock_SelectWithSearch
             label={'Quận/ Huyện'}
             selectValue={selectedDistrict ? selectedDistrict.id : ''}
@@ -235,7 +228,7 @@ export default function AddressForm({
             label={'Phường/ Xã'}
             inputValue={initialAddress.wardName}
           />
-        )}
+        )} */}
       </div>
       <InputBlock_TextArea
         label={'Địa chỉ cụ thể'}

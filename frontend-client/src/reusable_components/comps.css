@@ -129,7 +129,7 @@
 .input-block {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 4px;
   flex-grow: 1;
   flex-basis: 0;
   min-width: 0px;

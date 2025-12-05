@@ -91,7 +91,10 @@ export function CartWrapper() {
           <div className="grid grid-cols-2 gap-2">
             <button
               className="button-standard-2"
-              onClick={() => setShowMergeDialog(false)}
+              onClick={() => {
+                getCartData();
+                setShowMergeDialog(false);
+              }}
             >
               Hủy
             </button>
@@ -143,6 +146,8 @@ export function CartWrapper() {
   );
 }
 function CartSheet({ cartItemList, cashoutPrice, setSheetOpen }) {
+  const navigate = useNavigate();
+
   const allowedToPurchase = useCartStore((s) => s.allowedToPurchase);
   const updateCartSelected = useCartStore((s) => s.updateCartSelected);
   const allSelected = useCartStore((s) => s.allSelected);
@@ -198,6 +203,10 @@ function CartSheet({ cartItemList, cashoutPrice, setSheetOpen }) {
         <button
           className="button-standard-1 bg-[#da291c]! text-[14px]! font-bold!"
           disabled={!allowedToPurchase}
+          onClick={() => {
+            console.log('HI');
+            navigate('/checkout');
+          }}
         >
           THANH TOÁN
         </button>

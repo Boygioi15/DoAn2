@@ -4,9 +4,7 @@ import { useState } from 'react';
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
@@ -147,9 +145,6 @@ export function InputBlock_SelectWithSearch({
   onInputValueChange,
   isDisabled,
 }) {
-  if (defaultSelectValue) {
-    console.log(defaultSelectValue);
-  }
   return (
     <div className="input-block">
       <div style={{ fontSize: '14px', fontWeight: '500' }}>{label}</div>

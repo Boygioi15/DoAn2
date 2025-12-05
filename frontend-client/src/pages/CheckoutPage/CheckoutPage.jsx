@@ -1,11 +1,18 @@
 import { Button } from '@/components/ui/button';
-import { OrBlock } from '@/reusable_components/comps';
-import { ShieldXIcon, Ticket, Undo2 } from 'lucide-react';
+import { CreditCard, Undo2 } from 'lucide-react';
 import { HiArrowLongRight } from 'react-icons/hi2';
+import AnonymousBlock from './AnonymousBlock';
+import ItemListBlock from './ItemListBlock';
+import CouponBlock from './CouponBlock';
+import CashoutBlock from './CashoutBlock';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import codPNG from '@/assets/cod.png';
+import momoPNG from '@/assets/momo.png';
+import { useNavigate } from 'react-router-dom';
 
 export default function CheckoutPage() {
   return (
-    <div className="grid grid-cols-[6fr_4fr] p-20 gap-10 text-[14px] font-medium leading-5 bg-[#f5f5f5]">
+    <div className="grid grid-cols-[6fr_4fr] p-25 gap-10 text-[14px] text-(--color-preset-gray) font-medium leading-5 bg-[#f5f5f5]">
       <TopLayout />
       <div className="flex flex-col gap-10 mt-5">
         <AnonymousBlock />
@@ -13,12 +20,14 @@ export default function CheckoutPage() {
       </div>
       <div className="flex flex-col gap-10 mt-5">
         <CouponBlock />
+        <PaymentMethodBlock />
         <CashoutBlock />
       </div>
     </div>
   );
 }
 function TopLayout() {
+  const navigate = useNavigate();
   return (
     <div className="flex fixed top-0 left-0 right-0 justify-between bg-white shadow-xl p-2 pl-20 pr-20">
       <div className="title cursor-pointer" onClick={() => navigate('/')}>
@@ -27,61 +36,40 @@ function TopLayout() {
       <TransactionProgress state={2} />
       <Button
         variant="ghost"
-        className="text-[14px] font-bold flex items-center w-fit! mt-1"
+        className="text-[14px] font-bold flex items-center w-fit! mt-2"
+        onClick={() => navigate('/')}
       >
         <Undo2 style={{ width: '20px', height: '20px' }} /> TIẾP TỤC MUA SẮM
       </Button>
     </div>
   );
 }
-function AnonymousBlock() {
+function PaymentMethodBlock() {
   return (
     <div className={reuseableStyle.block}>
-      <span className={reuseableStyle.blockTitle}>Đăng nhập/ Đăng ký</span>
-      <div className="grid grid-cols-[7fr_3fr] ">
-        <div className="flex flex-col gap-2 mb-5">
-          <span>
-            Đăng nhập/ Đăng ký để nhận ưu đãi giảm giá thành viên đến 20%
-          </span>
-          <Button className="w-fit bg-destructive/10 text-destructive focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40">
-            <Ticket />
-            Giảm 80K cho lần mua sắm đầu tiên
-          </Button>
-        </div>
-
-        <Button className="text-[14px] font-bold text-white rounded-none! p-6! pl-4! pr-4!">
-          ĐĂNG NHẬP/ ĐĂNG KÝ
-        </Button>
-      </div>
-      <OrBlock />
       <span className={reuseableStyle.blockTitle}>
-        Mua hàng không đăng nhập
+        <CreditCard /> Phương thức thanh toán
       </span>
+      <RadioGroup defaultValue="cod">
+        <div
+          className={
+            'cursor-pointer flex items-center gap-2 border border-[#bdc7d4] rounded-[4px] p-2' +
+            ' border-black'
+          }
+        >
+          <RadioGroupItem value="cod" className={'cursor-pointer w-5! h-5!'} />
+          <img src={codPNG} className="w-9 h-9 p-" />
+          <span> Thanh toán khi nhận hàng (COD)</span>
+        </div>
+        <div className=" cursor-pointer flex items-center gap-2 border border-[#bdc7d4] rounded-[4px] p-2">
+          <RadioGroupItem value="momo" className={'cursor-pointer w-5! h-5!'} />
+          <img src={momoPNG} className="w-9 h-9" />
+          <span> Cổng thanh toán Momo</span>
+        </div>
+      </RadioGroup>
     </div>
   );
 }
-function ItemListBlock() {
-  return (
-    <div className={reuseableStyle.block}>
-      <span className={reuseableStyle.blockTitle}>Sản phẩm</span>
-    </div>
-  );
-}
-function CouponBlock() {
-  return (
-    <div className={reuseableStyle.block}>
-      <span className={reuseableStyle.blockTitle}>Ưu đãi</span>
-    </div>
-  );
-}
-function CashoutBlock() {
-  return (
-    <div className={reuseableStyle.block}>
-      <span className={reuseableStyle.blockTitle}>Chi tiết đơn hàng</span>
-    </div>
-  );
-}
-
 function TransactionProgress({ state }) {
   return (
     <div className="flex w-fit gap-2 text-[14px] font-medium items-center">
@@ -123,7 +111,7 @@ function TransactionProgress({ state }) {
       <HiArrowLongRight
         className={
           reuseableStyle.progressArrow +
-          (state >= 2 && reuseableStyle.progressArrowMarked)
+          (state >= 3 && reuseableStyle.progressArrowMarked)
         }
       />
 
@@ -155,5 +143,5 @@ const reuseableStyle = {
   progressArrowMarked: ' text-blue-500',
 
   block: 'flex flex-col p-6 rounded-1 bg-white shadow-xl',
-  blockTitle: 'text-[16px] font-bold leading-6 mb-4',
+  blockTitle: 'flex items-center gap-2 text-[16px] font-bold leading-6 mb-4',
 };
