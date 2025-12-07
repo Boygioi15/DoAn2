@@ -7,10 +7,11 @@ import {
 import { CartModule } from 'src/cart/cart.module';
 import { ProductModule } from 'src/product/product.module';
 import { DatabaseModule } from 'src/database/database.module';
+import { PaymentGatewayService } from './payment-gateway.service';
 
 @Module({
   controllers: [TransactionController, AnonymousTransactionController],
-  providers: [TransactionService],
+  providers: [TransactionService, PaymentGatewayService],
   imports: [CartModule, ProductModule, DatabaseModule],
 })
 export class TransactionModule {}

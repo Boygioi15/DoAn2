@@ -11,11 +11,13 @@ import { TransactionService } from './transaction.service';
 import { JwtGuard } from 'src/auth/strategies/jwt.strategy';
 import { CartService } from 'src/cart/cart.service';
 import { AddressInfoFe, CartItemFe, PaymentDetailFe } from './transaction.dto';
+import { PaymentGatewayService } from './payment-gateway.service';
 
 @Controller('transaction')
 export class TransactionController {
   constructor(
     private readonly transactionService: TransactionService,
+    private readonly paymentGatewayService: PaymentGatewayService,
     private readonly cartService: CartService,
   ) {}
   @UseGuards(JwtGuard)
@@ -46,6 +48,28 @@ export class TransactionController {
     );
     console.log('Valid: ', valid);
     //verify that body match that of db.
+  }
+  @Post('test-payment/momo')
+  async testPaymentMomo() {
+    const result = await this.paymentGatewayService.createPaymentLink_MOMO(
+      'hi',
+      'hi',
+    );
+    console.log(result.data);
+    return result.data;
+  }
+  @Post('test-payment/payOS')
+  async testPaymentPayOS() {
+    const result = await this.paymentGatewayService.createPaymentLink_PayOS(
+      'hi',
+      'hi',
+    );
+    console.log(result.data);
+    return result.data;
+  }
+  @Post('callback/momo')
+  async momoCallBack(@Body() body) {
+    console.log('B: ', body);
   }
 }
 @Controller('anonymous-transaction')

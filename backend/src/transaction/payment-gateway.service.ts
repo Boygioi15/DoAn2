@@ -1,80 +1,52 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { CartService } from 'src/cart/cart.service';
-
-const config = {
-  orderInfo: 'pay with MoMo',
-  partnerCode: 'MOMO',
-  redirectUrl: '', // link frontend, fe will send
-  ipnUrl:
-    'https://198d-2402-800-629d-a6e-7123-99ac-b012-6643.ngrok-free.app/api/payment/callback', //chú ý: cần dùng ngrok thì momo mới post đến url này được
-  requestType: 'payWithMethod',
-  extraData: '',
-  orderGroupId: '',
-  autoCapture: true,
-  lang: 'vi',
-};
+import { momoConfig } from './payment-config';
+import { v4 } from 'uuid';
+import axios from 'axios';
+import crypto from 'crypto';
+import { CreatePaymentLinkRequest, PaymentLinkItem, PayOS } from '@payos/node';
+import mongoose from 'mongoose';
 const momo_endpoint = 'https://test-payment.momo.vn/v2/gateway/api/create';
+const momo_notifyURL =
+  'https://b3115c426f48.ngrok-free.app/transaction/callback/momo';
 
 @Injectable()
-export class PaymentService {
-  private readonly payOS;
-  private readonly HOST_URL;
-
+export class PaymentGatewayService {
   constructor(private readonly cartService: CartService) {
-    this.payOS = payOSInstance;
-    this.HOST_URL = this.configService.get<string>('HOST_URL');
+    // this.payOS = payOSInstance;
   }
-  async createPaymentLink_MOMO(userId: string): Promise<any> {
-    console.log('payOSInstance', payOSInstance);
+  async createPaymentLink_MOMO(
+    transactionData: any,
+    redirectUrl: any,
+  ): Promise<any> {
+    const secretKey = process.env.MOMO_SECRET_KEY;
+    const accessKey = process.env.MOMO_ACCESS_KEY;
+    const partnerCode = process.env.MOMO_PARTNER_CODE;
+    if (!secretKey || !accessKey || !partnerCode) {
+      throw new InternalServerErrorException('Không load được file .env');
+    }
+    console.log('S: ', secretKey);
+    console.log('A: ', accessKey);
+    console.log('PC: ', partnerCode);
+    console.log('Conf: ', momoConfig);
 
-    const cart = await this.cartService.findCartOfUser(userId);
-    const cartDetail = await this.cartService.getCartDetail(cart);
-    let selectedItem = [];
-    cartDetail.shopGroup.map((group) => {
-      group.itemList.map((item) => {
-        if (item.selected) {
-          selectedItem.push(item);
-        }
-      });
-    });
-    const paymentData = {
-      items: selectedItem.map((item) => {
-        return {
-          name: item.productName,
-          quantity: item.quantity,
-          price: item.quantity * item.productTypeDetailPrice,
-        };
-      }),
-      amount: 1000,
-    };
-    console.log(paymentData);
-    const {
-      accessKey,
-      secretKey,
-      partnerCode,
-      redirectUrl,
-      ipnUrl,
-      requestType,
-      autoCapture,
-      lang,
-    } = config;
-    console.log(config);
+    const requestId = Number(new mongoose.Types.ObjectId());
+    const orderId = Number(new mongoose.Types.ObjectId());
+    console.log('RID: ', requestId);
+    console.log('OID: ', orderId);
+    const rawSignature =
+      `accessKey=${accessKey}` +
+      `&amount=${50000}` +
+      `&extraData=nothing` +
+      `&ipnUrl=${momo_notifyURL}` +
+      `&orderId=${orderId}` +
+      `&orderInfo=${momoConfig.orderInfo}` + // MUST MATCH EXACTLY
+      `&partnerCode=${partnerCode}` +
+      `&redirectUrl=${redirectUrl}` +
+      `&requestId=${requestId}` +
+      `&requestType=${momoConfig.requestType}`;
 
-    const orderId = new mongoose.Types.ObjectId();
-
-    let rawSignature = [
-      `accessKey=${accessKey}`,
-      `amount=${paymentData.amount}`,
-      `extraData=${JSON.stringify(paymentData)}`,
-      `ipnUrl=${ipnUrl}`,
-      `orderId=${orderId}`,
-      `orderInfo=${'Thanh toán đơn hàng với MOMO'}`,
-      `partnerCode=${partnerCode}`,
-      `redirectUrl=${redirectUrl}`,
-      `requestId=${orderId}`,
-      `requestType=${requestType}`,
-    ].join('&');
-    //console.log(rawSignature);
+    console.log(rawSignature);
     // Create signature
 
     const signature = crypto
@@ -82,26 +54,26 @@ export class PaymentService {
       .update(rawSignature)
       .digest('hex');
     const requestBody = JSON.stringify({
-      partnerCode,
-      partnerName: 'Tìm hiểu và xây dựng sàn thương mại điện tử bán quần áo',
-      storeId: 'kqShop',
-      requestId: orderId,
-      amount: paymentData.amount,
-      orderId,
-      orderInfo: 'Thanh toán đơn hàng với MOMO',
-      redirectUrl,
-      ipnUrl,
-      lang,
-      requestType,
-      autoCapture,
-      extraData: JSON.stringify(paymentData), // Ensure it's a string
+      partnerCode: partnerCode,
+      partnerName: 'Xây dựng sàn thương mại điện tử bán quần áo',
+      storeId: 'QShop',
+      requestId: requestId,
+      amount: 50000,
+      orderId: orderId,
+      orderInfo: momoConfig.orderInfo,
+      redirectUrl: redirectUrl,
+      ipnUrl: momo_notifyURL,
+      lang: momoConfig.lang,
+      requestType: momoConfig.requestType,
+      autoCapture: momoConfig.autoCapture,
       signature,
+      extraData: 'nothing',
     });
 
     // Axios request with error handling
     const result = await axios({
       method: 'POST',
-      url: 'https://test-payment.momo.vn/v2/gateway/api/create',
+      url: momo_endpoint,
       headers: {
         'Content-Type': 'application/json',
         'Content-Length': Buffer.byteLength(requestBody),
@@ -110,59 +82,40 @@ export class PaymentService {
     });
     return result;
   }
-  async createPaymentLink_PayOS(userId: string): Promise<any> {
-    console.log('payOSInstance', payOSInstance);
-
-    const cart = await this.cartService.findCartOfUser(userId);
-    const cartDetail = await this.cartService.getCartDetail(cart);
-    let selectedItem = [];
-    cartDetail.shopGroup.map((group) => {
-      group.itemList.map((item) => {
-        if (item.selected) {
-          selectedItem.push(item);
-        }
-      });
+  async createPaymentLink_PayOS(
+    transactionData: any,
+    returnURL: string,
+  ): Promise<any> {
+    const clientID = process.env.PAYOS_CLIENTID,
+      apiKey = process.env.PAYOS_API_KEY,
+      checksumKey = process.env.PAYOS_CHECKSUM_KEY;
+    const payOSInstance = new PayOS({
+      clientId: clientID,
+      apiKey: apiKey,
+      checksumKey: checksumKey,
     });
-    const paymentData = {
-      items: selectedItem.map((item) => {
-        return {
-          name: item.productName,
-          quantity: item.quantity,
-          price: item.quantity * item.productTypeDetailPrice,
-        };
-      }),
-      amount: cartDetail.discountedPrice,
-    };
-    console.log(paymentData);
-    const body = {
-      orderCode: Number(String(Date.now()).slice(-6)),
-      items: paymentData.items,
-      amount: paymentData.amount || 2000,
-      description: 'Thanh toan don hang',
-      returnUrl: `${this.HOST_URL}?success=true`,
-      cancelUrl: `${this.HOST_URL}?canceled=true`,
-    };
-
-    return this.payOS.createPaymentLink(body);
-  }
-  async createPaymentLink(paymentData: any): Promise<any> {
     console.log('payOSInstance', payOSInstance);
 
-    const body = {
-      orderCode: Number(String(Date.now()).slice(-6)),
-      amount: paymentData.amount || 2000,
-      description: paymentData.description || 'Thanh toan don hang',
-      items: paymentData.items || [
-        {
-          name: 'Mì tôm Hảo Hảo ly',
-          quantity: 1,
-          price: 2000,
-        },
-      ],
-      returnUrl: `${this.HOST_URL}?success=true`,
-      cancelUrl: `${this.HOST_URL}?canceled=true`,
+    const requestId = Math.floor(Math.random() * 1000000000);
+    const orderId = 1000000000 + Math.floor(Math.random() * 8000000000);
+    console.log('RID: ', requestId);
+    console.log('OID: ', orderId);
+
+    const itemList: PaymentLinkItem[] = [
+      { name: 'Mì ly', quantity: 3, price: 50000 },
+    ];
+    console.log('Payment data: ', itemList);
+    const paymentData: CreatePaymentLinkRequest = {
+      orderCode: orderId,
+      amount: 50000,
+      items: itemList,
+      description: 'Thanh toán đơn hàng',
+      returnUrl: returnURL,
+      cancelUrl: returnURL,
     };
 
-    return this.payOS.createPaymentLink(body);
+    const paymentLink = await payOSInstance.paymentRequests.create(paymentData);
+    console.log(paymentLink);
+    return paymentLink;
   }
 }
