@@ -24,24 +24,23 @@ export default function AddressForm({
       address_detail: '',
     }
   );
-
+  console.log('I: ', initialAddress);
   const formFinalFormdata = () => {
     const finalFormData = formData;
-    if (initialAddress) {
-      finalFormData.provinceCode = initialAddress.provinceCode;
-      finalFormData.provinceName = initialAddress.provinceName;
-      finalFormData.districtCode = initialAddress.districtCode;
-      finalFormData.districtName = initialAddress.districtName;
-      finalFormData.wardCode = initialAddress.wardCode;
-      finalFormData.wardName = initialAddress.wardName;
-      return finalFormData;
-    }
-    finalFormData.provinceCode = selectedProvince?.id;
-    finalFormData.provinceName = selectedProvince?.name;
-    finalFormData.districtCode = selectedDistrict?.id;
-    finalFormData.districtName = selectedDistrict?.name;
-    finalFormData.wardCode = selectedWard?.id;
-    finalFormData.wardName = selectedWard?.name;
+    const province = allProvinces.find(
+      (province) => province.id === selectedProvinceId
+    );
+    const district = allDistrictsOfProvince.find(
+      (district) => district.id === selectedDistrictId
+    );
+    const ward = allWardsOfDistrict.find((ward) => ward.id === selectedWardId);
+    console.log(province, district, ward);
+    finalFormData.provinceCode = Number(province.id);
+    finalFormData.provinceName = province.name;
+    finalFormData.districtCode = Number(district.id);
+    finalFormData.districtName = district.name;
+    finalFormData.wardCode = Number(ward.id);
+    finalFormData.wardName = ward.name;
     return finalFormData;
   };
 
@@ -49,9 +48,15 @@ export default function AddressForm({
   const [allProvinces, setAllProvinces] = useState([]);
   const [allDistrictsOfProvince, setAllDistrictsOfProvince] = useState([]);
   const [allWardsOfDistrict, setAllWardOfDistrict] = useState([]);
-  const [selectedProvince, setSelectedProvince] = useState(null);
-  const [selectedDistrict, setSelectedDistrict] = useState(null);
-  const [selectedWard, setSelectedWard] = useState(null);
+  const [selectedProvinceId, setSelectedProvinceId] = useState(
+    (initialAddress && initialAddress.provinceCode) || ''
+  );
+  const [selectedDistrictId, setSelectedDistrictId] = useState(
+    (initialAddress && initialAddress.districtCode) || ''
+  );
+  const [selectedWardId, setSelectedWardId] = useState(
+    (initialAddress && initialAddress.wardCode) || ''
+  );
 
   //update provinces, districts & wards
   //fetch all provinces at first
@@ -80,34 +85,37 @@ export default function AddressForm({
       toast.error('Lấy dữ liệu xã/ phường thất bại');
     }
   };
-  useEffect(() => {
-    getAllProvinces();
-  }, []);
+  const handleOnProvinceSelect = async (provinceId) => {
+    if (provinceId !== '') {
+      getAllDistrictsOfProvince(provinceId);
 
-  //only fetch if province is selceted
-  useEffect(() => {
-    if (selectedProvince && selectedProvince.id !== '') {
-      //fetch district
-      getAllDistrictsOfProvince(selectedProvince.id);
-
-      //clear district and ward
+      // //clear district and ward
       setAllDistrictsOfProvince([]);
       setAllWardOfDistrict([]);
 
-      setSelectedDistrict(null);
-      setSelectedWard(null);
+      setSelectedDistrictId('');
+      setSelectedWardId('');
     }
-  }, [selectedProvince]);
-  //only fetch wards if district is selected
-  useEffect(() => {
-    if (selectedDistrict && selectedDistrict.id !== '') {
-      getAllWardsOfDistrict(selectedDistrict.id);
+  };
+  const handleOnDistrictSelect = async (districtId) => {
+    if (districtId !== '') {
+      getAllWardsOfDistrict(districtId);
 
+      // //clear district and ward
       setAllWardOfDistrict([]);
-
-      setSelectedWard(null);
+      setSelectedWardId('');
     }
-  }, [selectedDistrict]);
+  };
+  useEffect(() => {
+    getAllProvinces();
+  }, []);
+  useEffect(() => {
+    if (selectedProvinceId !== '')
+      getAllDistrictsOfProvince(selectedProvinceId);
+  }, [selectedProvinceId]);
+  useEffect(() => {
+    if (selectedDistrictId !== '') getAllWardsOfDistrict(selectedDistrictId);
+  }, [selectedDistrictId]);
   const handleOnSubmit = (e) => {
     e.preventDefault();
     const finalFormData = formFinalFormdata();
@@ -178,57 +186,35 @@ export default function AddressForm({
       <div style={addressFormLineStyle}>
         <InputBlock_SelectWithSearch
           label={'Tỉnh/ Thành phố'}
-          selectValue={selectedProvince ? selectedProvince.id : ''}
+          selectValue={selectedProvinceId}
           onInputValueChange={(selectedId) => {
-            const matchedProvince = allProvinces.find(
-              (province) => province.id === selectedId
-            );
-            setSelectedProvince(matchedProvince);
+            handleOnProvinceSelect(selectedId);
+            setSelectedProvinceId(selectedId);
           }}
           placeholder={'Chọn tỉnh/ thành phố'}
           selectValueList={allProvinces}
         />
-        {/* {!initialAddress ? (
-          <InputBlock_SelectWithSearch
-            label={'Quận/ Huyện'}
-            selectValue={selectedDistrict ? selectedDistrict.id : ''}
-            selectValueList={allDistrictsOfProvince}
-            onInputValueChange={(selectedId) => {
-              const matchedDistrict = allDistrictsOfProvince.find(
-                (district) => district.id === selectedId
-              );
-              setSelectedDistrict(matchedDistrict);
-            }}
-            placeholder={'Chọn quận/ huyện'}
-            isDisabled={!selectedProvince}
-          />
-        ) : (
-          <InputBlock_Input
-            label={'Quận/ Huyện'}
-            inputValue={initialAddress.districtName}
-          />
-        )}
-
-        {!initialAddress ? (
-          <InputBlock_SelectWithSearch
-            label={'Phường/ Xã'}
-            selectValue={selectedWard ? selectedWard.id : ''}
-            onInputValueChange={(selectedId) => {
-              const matchedWard = allWardsOfDistrict.find(
-                (ward) => ward.id === selectedId
-              );
-              setSelectedWard(matchedWard);
-            }}
-            placeholder={'Chọn phường/ xã'}
-            selectValueList={allWardsOfDistrict}
-            isDisabled={!selectedDistrict || allWardsOfDistrict?.length === 0}
-          />
-        ) : (
-          <InputBlock_Input
-            label={'Phường/ Xã'}
-            inputValue={initialAddress.wardName}
-          />
-        )} */}
+        <InputBlock_SelectWithSearch
+          label={'Quận/ Huyện'}
+          selectValue={selectedDistrictId}
+          selectValueList={allDistrictsOfProvince}
+          onInputValueChange={(selectedId) => {
+            handleOnDistrictSelect(selectedId);
+            setSelectedDistrictId(selectedId);
+          }}
+          placeholder={'Chọn quận/ huyện'}
+          isDisabled={selectedProvinceId === ''}
+        />
+        <InputBlock_SelectWithSearch
+          label={'Phường/ Xã'}
+          selectValue={selectedWardId}
+          selectValueList={allWardsOfDistrict}
+          onInputValueChange={(selectedId) => {
+            setSelectedWardId(selectedId);
+          }}
+          placeholder={'Chọn phường/ xã'}
+          isDisabled={!selectedDistrictId}
+        />
       </div>
       <InputBlock_TextArea
         label={'Địa chỉ cụ thể'}

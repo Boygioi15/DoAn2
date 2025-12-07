@@ -1,35 +1,195 @@
 import { Button } from '@/components/ui/button';
 import { CreditCard, Undo2 } from 'lucide-react';
 import { HiArrowLongRight } from 'react-icons/hi2';
-import AnonymousBlock from './AnonymousBlock';
+import AnonymousAddressBlock from './AnonymousAddressBlock';
 import ItemListBlock from './ItemListBlock';
 import CouponBlock from './CouponBlock';
 import CashoutBlock from './CashoutBlock';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import codPNG from '@/assets/cod.png';
 import momoPNG from '@/assets/momo.png';
-import { useNavigate } from 'react-router-dom';
+import { useLoaderData, useNavigate } from 'react-router-dom';
+import { createContext, useEffect, useState } from 'react';
+import { anonymousTransactionApi, transactionApi } from '@/api/transactionApi';
+import useAuthStore from '@/contexts/zustands/AuthStore';
+import useCartStore from '@/contexts/zustands/CartStore';
+import SpinnerOverlay from '@/reusable_components/SpinnerOverlay';
+import { toast } from 'sonner';
+import UserAddressBlock from './UserAddressBlock';
 
+const initAddress = {
+  contact_name: '',
+  contact_phone: '',
+  address_detail: '',
+  provinceCode: '',
+  provinceName: '',
+  districtCode: '',
+  districtName: '',
+  wardCode: '',
+  wardName: '',
+};
+const initFormError = {
+  AnonymousAddressBlockError: [],
+};
+export const CheckoutPageContext = createContext();
 export default function CheckoutPage() {
+  const authStore = useAuthStore.getState();
+
+  const [loading, setLoading] = useState(false);
+
+  const [cartItemList, setCartItemList] = useState(null);
+  const [defaultAmount, setDefaultAmount] = useState(null);
+  const [cashoutAmount, setCashoutAmount] = useState(null);
+  const [userAddress, setUserAddress] = useState(null);
+  const [anonymousUserAddress, setAnonymousUserAddress] = useState(initAddress);
+  const [paymentMethod, setPaymentMethod] = useState('cod');
+  const [formError, setFormError] = useState(initFormError);
+  const getAndUpdateCartTransactionData = async () => {
+    try {
+      setLoading(true);
+      const token = useAuthStore.getState().accessToken;
+      const cartId = useCartStore.getState().cartId;
+      let response;
+      if (token) {
+        response = await transactionApi.getTransactionDetailAndUpdateCart();
+      } else {
+        response =
+          await anonymousTransactionApi.getTransactionDetailAndUpdateCart(
+            cartId
+          );
+      }
+      setCartItemList(response.data.cartItemList);
+      setDefaultAmount(response.data.defaultAmount);
+      setCashoutAmount(response.data.cashoutAmount);
+    } catch (error) {
+      console.log(error);
+      toast.error('Có lỗi khi lấy dữ liệu thanh toán');
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+    getAndUpdateCartTransactionData();
+  }, []);
+
+  const [allowedToSubmit, setAllowedToSubmit] = useState(false);
+
+  const formFormData = () => {
+    let addressInfo;
+    if (!authStore.accessToken) {
+      const t = anonymousUserAddress;
+      addressInfo = {
+        address_name: t.contact_name,
+        address_phone: t.contact_phone,
+        address_province_code: t.provinceCode,
+        address_province_name: t.provinceName,
+        address_district_code: t.districtCode,
+        address_district_name: t.districtName,
+        address_ward_code: t.wardCode,
+        address_ward_name: t.wardName,
+        address_detail: t.address_detail,
+      };
+      // console.log('ANO A: ', anonymousUserAddress);
+    } else {
+      const t = userAddress;
+      addressInfo = {
+        address_name: t.contact_name,
+        address_phone: t.contact_phone,
+        address_province_code: t.province_detail.provinceCode,
+        address_province_name: t.province_detail.provinceName,
+        address_district_code: t.province_detail.districtCode,
+        address_district_name: t.province_detail.districtName,
+        address_ward_code: t.province_detail.wardCode,
+        address_ward_name: t.province_detail.wardName,
+        address_detail: t.address_detail,
+      };
+      // console.log('UA: ', userAddress);
+    }
+    console.log('AI: ', addressInfo);
+
+    let _cartItemList = cartItemList.map((cartItem) => ({
+      cartItemId: cartItem.cartItemId,
+      quantity: cartItem.quantity,
+      unitPrice: cartItem.unitPrice,
+      cashoutPrice: cartItem.unitPrice * cartItem.quantity,
+
+      productId: cartItem.productId,
+      variantId: cartItem.variantId,
+
+      product_name: cartItem.product_name,
+      product_thumbnail: cartItem.product_thumbnail,
+      product_sku: cartItem.product_sku,
+
+      variant_thumbnail: cartItem.variant_thumbnail,
+      variant_color: cartItem.variant_color,
+      variant_size: cartItem.variant_size,
+      variant_sku: cartItem.variant_sku,
+    }));
+
+    const paymentDetail = {
+      payment_method: paymentMethod,
+      payment_default_price: defaultAmount,
+      payment_cashout_price: cashoutAmount,
+    };
+    return {
+      addressInfo,
+      cartItemList: _cartItemList,
+      paymentDetail,
+    };
+  };
+  const handleSubmit = async () => {
+    try {
+      const formData = formFormData();
+      const result = await transactionApi.beginTransaction(formData);
+    } catch (error) {
+      console.log(error);
+      toast.error('Có lỗi khi khởi tạo giao dịch');
+    }
+  };
+
+  if (!cartItemList) return;
   return (
-    <div className="grid grid-cols-[6fr_4fr] p-25 gap-10 text-[14px] text-(--color-preset-gray) font-medium leading-5 bg-[#f5f5f5]">
-      <TopLayout />
-      <div className="flex flex-col gap-10 mt-5">
-        <AnonymousBlock />
-        <ItemListBlock />
+    <CheckoutPageContext.Provider value={{ getAndUpdateCartTransactionData }}>
+      <div className="overflow-scroll h-screen grid grid-cols-[6fr_4fr] p-25 gap-10 text-[14px] text-(--color-preset-gray) font-medium leading-5 bg-[#f5f5f5]">
+        {loading && <SpinnerOverlay />}
+        <TopLayout />
+        <div className="flex flex-col gap-10 mt-5">
+          {authStore.accessToken ? (
+            <UserAddressBlock
+              setAddress={setUserAddress}
+              address={userAddress}
+            />
+          ) : (
+            <AnonymousAddressBlock
+              address={anonymousUserAddress}
+              setAddress={setAnonymousUserAddress}
+              formError={formError}
+              setFormError={setFormError}
+            />
+          )}
+
+          <ItemListBlock cartItemList={cartItemList} />
+        </div>
+        <div className="flex flex-col gap-10 mt-5">
+          <CouponBlock />
+          <PaymentMethodBlock
+            paymentMethod={paymentMethod}
+            setPaymentMethod={setPaymentMethod}
+          />
+          <CashoutBlock
+            defaultAmount={defaultAmount}
+            cashoutAmount={cashoutAmount}
+            onCashoutSubmit={handleSubmit}
+          />
+        </div>
       </div>
-      <div className="flex flex-col gap-10 mt-5">
-        <CouponBlock />
-        <PaymentMethodBlock />
-        <CashoutBlock />
-      </div>
-    </div>
+    </CheckoutPageContext.Provider>
   );
 }
 function TopLayout() {
   const navigate = useNavigate();
   return (
-    <div className="flex fixed top-0 left-0 right-0 justify-between bg-white shadow-xl p-2 pl-20 pr-20">
+    <div className="flex fixed top-0 left-0 right-0 justify-between bg-white shadow-xl p-2 pl-20 pr-20 z-10">
       <div className="title cursor-pointer" onClick={() => navigate('/')}>
         Q-Shop
       </div>
@@ -44,24 +204,31 @@ function TopLayout() {
     </div>
   );
 }
-function PaymentMethodBlock() {
+function PaymentMethodBlock({ paymentMethod, setPaymentMethod }) {
   return (
     <div className={reuseableStyle.block}>
       <span className={reuseableStyle.blockTitle}>
         <CreditCard /> Phương thức thanh toán
       </span>
-      <RadioGroup defaultValue="cod">
+      <RadioGroup value={paymentMethod}>
         <div
           className={
-            'cursor-pointer flex items-center gap-2 border border-[#bdc7d4] rounded-[4px] p-2' +
-            ' border-black'
+            'cursor-pointer flex items-center gap-2 border border-[#bdc7d4] rounded-[4px] p-2 ' +
+            (paymentMethod === 'cod' && ' border-black')
           }
+          onClick={() => setPaymentMethod('cod')}
         >
           <RadioGroupItem value="cod" className={'cursor-pointer w-5! h-5!'} />
           <img src={codPNG} className="w-9 h-9 p-" />
           <span> Thanh toán khi nhận hàng (COD)</span>
         </div>
-        <div className=" cursor-pointer flex items-center gap-2 border border-[#bdc7d4] rounded-[4px] p-2">
+        <div
+          className={
+            ' cursor-pointer flex items-center gap-2 border border-[#bdc7d4] rounded-[4px] p-2 ' +
+            (paymentMethod === 'momo' && ' border-black')
+          }
+          onClick={() => setPaymentMethod('momo')}
+        >
           <RadioGroupItem value="momo" className={'cursor-pointer w-5! h-5!'} />
           <img src={momoPNG} className="w-9 h-9" />
           <span> Cổng thanh toán Momo</span>
@@ -125,7 +292,7 @@ function TransactionProgress({ state }) {
         >
           3
         </div>
-        <div className={state >= 3 && reuseableStyle.progressTextMarked}>
+        <div className={`${state >= 3 && reuseableStyle.progressTextMarked}`}>
           Hoàn tất
         </div>
       </div>

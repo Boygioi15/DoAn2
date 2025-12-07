@@ -68,13 +68,22 @@ export class CartItem {
   product_name: string;
   @Prop()
   product_thumbnail: string;
-
+  @Prop()
+  product_sku: string;
   @Prop()
   variant_thumbnail: string;
   @Prop()
   variant_color: string;
   @Prop()
   variant_size: string;
+  @Prop()
+  variant_sku: string;
+
+  @Prop({})
+  isUpdated: false;
+  //normal, invalid, outOfStock, overflow, /
+  @Prop({ default: 'normal' })
+  invalidState: string;
 }
 export const CartSchema = SchemaFactory.createForClass(Cart);
 export const CartItemSchema = SchemaFactory.createForClass(CartItem);

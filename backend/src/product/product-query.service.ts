@@ -433,9 +433,13 @@ export class ProductQueryService {
 
   async getProductCategoryName(product: ProductDocument) {
     const { categoryId } = product;
-    const categoryName =
-      await this.categoryService.getCategoryDetail(categoryId);
-    return categoryName;
+    const category = await this.categoryService.getCategoryDetail(categoryId);
+    if (!category) {
+      throw new InternalServerErrorException(
+        'Không tồn tại danh mục tương ứng',
+      );
+    }
+    return category.categoryName;
   }
   async getAllVariantsOfProduct(product: ProductDocument) {
     const { productId } = product;
@@ -609,6 +613,7 @@ export class ProductQueryService {
     return {
       productId: product.productId,
       name: product.name,
+      sku: product.sku,
       categoryId: product.categoryId,
       thumbnailURL: product.display_thumbnail_image,
       propertyList: JSON.stringify(propertyList),
@@ -684,6 +689,32 @@ export class ProductQueryService {
     };
   }
 
+  async checkAndGetIfProductAndVariantExisted(
+    productId: string,
+    variantId: string,
+  ) {
+    let product = await this.productModel.findOne({ productId });
+    let variant = await this.productVariantModel.findOne({ variantId });
+    const linked = await this.productOptionModel.findOne({
+      productId,
+      variantId,
+    });
+    if (!linked) {
+      throw new InternalServerErrorException(
+        'Product and variant exist, but not linked!',
+      );
+    }
+    if (!product || !variant) {
+      throw new BadRequestException(
+        'Không tồn tại sản phẩm hoặc biến thể tương ứng!',
+      );
+    }
+    let _product = await this.getProductDetail_Admin(productId);
+    let _variant = await _product.variantSellingPoint.find(
+      (variant) => variant.variantId === variantId,
+    );
+    return { product: _product, variant: _variant };
+  }
   groupOptions(options) {
     const map = {};
 

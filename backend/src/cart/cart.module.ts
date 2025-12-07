@@ -9,5 +9,6 @@ import { UserModule } from 'src/user/user.module';
   controllers: [CartController, AnonymousCartController],
   providers: [CartService],
   imports: [DatabaseModule, ProductModule, UserModule],
+  exports: [CartService],
 })
 export class CartModule {}

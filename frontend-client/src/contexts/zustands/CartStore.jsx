@@ -5,6 +5,7 @@ import { ModalContext } from '../ModalContext';
 import authApi from '@/api/authApi';
 import { anonymousCartApi, cartApi } from '@/api/cartApi';
 import useAuthStore from './AuthStore';
+import { anonymousTransactionApi, transactionApi } from '@/api/transactionApi';
 
 const useCartStore = create(
   persist(
@@ -26,7 +27,7 @@ const useCartStore = create(
       setAllSelected: (allSelected) => set({ allSelected }),
       setTotalSelected: (totalSelected) => set({ totalSelected }),
       setTotalSelected: (userId) => set({ userId }),
-      //entry point
+
       getCartData: async () => {
         const authStore = useAuthStore.getState();
         try {
@@ -82,8 +83,6 @@ const useCartStore = create(
           await set((state) => ({
             cartId: res.data.cartId,
           }));
-          const newCart = await get().getCartData();
-          return newCart;
         } catch (err) {
           console.log('E: ', err);
           await get().clearCart();
@@ -105,8 +104,6 @@ const useCartStore = create(
               newQuantity,
             });
           }
-          const newCart = await get().getCartData();
-          return newCart;
         } catch (err) {
           //console.log('E: ', error);
           this.get().clearCart();
@@ -125,8 +122,6 @@ const useCartStore = create(
           } else {
             res = await cartApi.updateCartItemSelected(cartItemId, selected);
           }
-          const newCart = await get().getCartData();
-          return newCart;
         } catch (err) {
           //console.log('E: ', error);
           this.get().clearCart();
@@ -147,9 +142,6 @@ const useCartStore = create(
               selected,
             });
           }
-
-          const newCart = await get().getCartData();
-          return newCart;
         } catch (err) {
           // console.log('E: ', err);
           this.get().clearCart();
@@ -165,8 +157,6 @@ const useCartStore = create(
           } else {
             res = await cartApi.deleteCartItem(cartItemId);
           }
-          const newCart = await get().getCartData();
-          return newCart;
         } catch (err) {
           console.log('E: ', err);
           this.get().clearCart();

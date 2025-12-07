@@ -173,6 +173,7 @@ export default function ProductModal({ productId }) {
   const [addLoading, setAddLoading] = useState(false);
 
   const addItemToCart = useCartStore((s) => s.addItemToCart);
+  const getCartData = useCartStore((s) => s.getCartData);
   const setSheetOpen = useCartStore((s) => s.setSheetOpen);
 
   const handleAddItemToCart = async () => {
@@ -182,6 +183,7 @@ export default function ProductModal({ productId }) {
         productId: productId,
         variantId: productVariant.variantId,
       });
+      await getCartData();
       toast.custom((t) => (
         <div
           className={`${

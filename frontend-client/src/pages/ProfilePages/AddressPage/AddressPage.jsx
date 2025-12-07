@@ -165,14 +165,13 @@ export default function AddressPage() {
   );
 }
 
-function AddressBlock({
+export function AddressBlock({
   address,
   handleOnEdit,
   handleOnDelete,
   handleOnActiveClick,
   includeDelete,
 }) {
-  const { openModal } = useContext(ModalContext);
   return (
     <div key={address.id} className="address-block">
       <div
@@ -193,6 +192,11 @@ function AddressBlock({
           handleOnDelete={() => handleOnDelete(address)}
           includeDelete={includeDelete}
         />
+      </div>
+      <div>
+        {`${address.provinceName}, 
+        ${address.districtName}, 
+        ${address.wardName}`}
       </div>
       <div>{address.address_detail}</div>
       <button

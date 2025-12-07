@@ -14,6 +14,8 @@ import { CategoryModule } from './category/category.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { FrontendSettingModule } from './frontend-setting/frontend-setting.module';
 import { CartModule } from './cart/cart.module';
+import { TransactionModule } from './transaction/transaction.module';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
@@ -34,6 +36,8 @@ import { CartModule } from './cart/cart.module';
     CloudinaryModule,
     FrontendSettingModule,
     CartModule,
+    TransactionModule,
+    EmailModule,
   ],
   controllers: [AppController],
   providers: [

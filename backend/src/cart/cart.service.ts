@@ -117,11 +117,13 @@ export class CartService {
         maxAllowedQuantity: variantInfo.stock,
         productId: productInfo.productId,
         variantId: variantInfo.variantId,
+        product_sku: productInfo.sku,
         product_name,
         product_thumbnail,
         variant_color,
         variant_size,
         variant_thumbnail,
+        variant_sku: variantInfo.platform_sku,
         unitPrice: variantInfo.price,
         cashoutPrice: variantInfo.price,
       });
@@ -142,11 +144,18 @@ export class CartService {
     if (newQuantity <= 0) {
       throw new InternalServerErrorException('Số lượng không hợp lệ!');
     }
-    const newCartItem = await this.cartItemModel.findOneAndUpdate(
+    let newCartItem = await this.cartItemModel.findOneAndUpdate(
       { cartItemId },
       { quantity: newQuantity, cashoutPrice: newQuantity * cartItem.unitPrice },
       { new: true },
     );
+    if (!newCartItem) {
+      throw new InternalServerErrorException('Có lỗi khi cập nhật sản phẩm!');
+    }
+    if (newCartItem?.invalidState !== 'normal') {
+      newCartItem =
+        await this.verifyAndUpdateCartItemForTransaction(newCartItem);
+    }
     await this.denormalizeCart(cartItem.cartId);
     return newCartItem;
   }
@@ -228,7 +237,9 @@ export class CartService {
     //select related
     for (const cartItem of cartItemList) {
       if (cartItem.quantity > cartItem.maxAllowedQuantity) {
-        allowedToPurchase = false;
+        if (cartItem.selected) {
+          allowedToPurchase = false;
+        }
       }
       if (!cartItem.selected) {
         allSelected = false;
@@ -289,5 +300,103 @@ export class CartService {
       }
     });
     const result = await Promise.all(mergePromises);
+  }
+
+  //transaction block
+  //end result: cart updated to match latest
+  async updateCartToMatchLatest(cartId: string) {
+    const cartDetail = await this.getCartDetail(cartId);
+    const cartItemList = cartDetail.cartItemList;
+    const updatedList: any = [];
+    await Promise.all(
+      cartItemList.map(async (cartItem) => {
+        let isUpdated = false;
+        let item = { ...cartItem };
+        const { product, variant } =
+          await this.productQueryService.checkAndGetIfProductAndVariantExisted(
+            cartItem.productId,
+            cartItem.variantId,
+          );
+        //comparison
+        if (
+          item.product_name !== product.name ||
+          item.product_thumbnail !== product.thumbnailURL ||
+          item.variant_color !== variant.optionValue1 ||
+          item.variant_size !== variant.optionValue2 ||
+          item.unitPrice !== variant.price
+        ) {
+          isUpdated = true;
+          updatedList.push(cartItem.cartItemId);
+        }
+        // console.log('I: ', item);
+        // console.log('P: ', product);
+        // console.log('V: ', variant);
+        //info
+
+        //replace regardless
+        const newCartItem = await this.cartItemModel.findOneAndUpdate(
+          { cartItemId: cartItem.cartItemId },
+          {
+            maxAllowedQuantity: variant.stock,
+            productId: product.productId,
+            variantId: variant.variantId,
+            product_name: product.name,
+            product_thumbnail: product.thumbnailURL,
+            variant_color: variant.optionValue1,
+            variant_size: variant.optionValue2,
+            variant_thumbnail: variant.optionImage1[0],
+            unitPrice: variant.price,
+            cashoutPrice: variant.price * cartItem.quantity,
+            isUpdated,
+          },
+          { new: true },
+        );
+        // console.log('New item: ', newCartItem);
+      }),
+    );
+    await this.denormalizeCart(cartId);
+    return updatedList;
+  }
+  //return array of invalid stuff
+  async verifyAndUpdateCartForTransaction(cartId: string) {
+    const cartDetail = await this.getCartDetail(cartId);
+    await Promise.all(
+      cartDetail.cartItemList.map(
+        async (item) => await this.verifyAndUpdateCartItemForTransaction(item),
+      ),
+    );
+    return true;
+  }
+  //helper
+  async verifyAndUpdateCartItemForTransaction(cartItem: any) {
+    let invalidState = 'normal';
+    try {
+      const { product, variant } =
+        await this.productQueryService.checkAndGetIfProductAndVariantExisted(
+          cartItem.productId,
+          cartItem.variantId,
+        );
+      if (
+        !product.isPublised ||
+        product.isDrafted ||
+        product.isDeleted ||
+        !variant.isOpenToSale
+      ) {
+        invalidState = 'invalid';
+      } else if (variant.stock === 0) {
+        invalidState = 'outOfStock';
+      } else if (cartItem.quantity > cartItem.maxAllowedQuantity) {
+        invalidState = 'overflow';
+      }
+    } catch (error) {
+      invalidState = 'invalid';
+    } finally {
+      const newCartItem = await this.cartItemModel.findOneAndUpdate(
+        { cartItemId: cartItem.cartItemId },
+        { invalidState },
+      );
+      // console.log('IS: ', invalidState);
+      return newCartItem;
+    }
   }
 }

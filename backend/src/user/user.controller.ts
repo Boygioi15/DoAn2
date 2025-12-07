@@ -57,6 +57,14 @@ export class UserController {
     return { stt: 200, newAllUserAddress: allUserAddress };
   }
   @UseGuards(JwtGuard)
+  @Get('/address-default')
+  async getDefaultAddress(@Request() req) {
+    const userId = req.user.userId;
+    const defaultUserAddress =
+      await this.userService.getDefaultAddressOfUser(userId);
+    return defaultUserAddress;
+  }
+  @UseGuards(JwtGuard)
   @Post('/address')
   async createNewUserAddress(
     @Request() req,

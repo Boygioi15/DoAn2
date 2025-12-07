@@ -52,7 +52,7 @@ export const anonymousCartApi = {
   },
   updateCartItemSelected: async (cartItemId, selected) => {
     return await axiosClient_Backend.patch(
-      `cart-anonymous//item/select/${cartItemId}`,
+      `cart-anonymous/item/select/${cartItemId}`,
       {
         selected,
       }

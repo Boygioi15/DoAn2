@@ -171,6 +171,30 @@ export class UserService {
     ]);
     return allUserAddress;
   }
+  async getDefaultAddressOfUser(userId: string) {
+    const result = await this.userAddressModel.aggregate([
+      {
+        $match: {
+          userId: userId,
+          isActive: true,
+        },
+      },
+      {
+        $lookup: {
+          from: 'address_detail_province',
+          localField: 'addressId',
+          foreignField: 'addressId',
+          as: 'province_detail',
+        },
+      },
+      {
+        $unwind: {
+          path: '$province_detail',
+        },
+      },
+    ]);
+    return result;
+  }
   async createNewUserAddress(userId: string, createAddress: CreateAddressDto) {
     const {
       contact_name,
@@ -219,6 +243,7 @@ export class UserService {
       wardCode,
       wardName,
     } = updateAddress;
+    console.log('UA: ', updateAddress);
     const newUserAddress = await this.userAddressModel.findOneAndUpdate(
       { addressId: updateAddress.addressId },
       {

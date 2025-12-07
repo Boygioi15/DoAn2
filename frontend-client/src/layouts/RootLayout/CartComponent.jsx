@@ -14,11 +14,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { ModalContext } from '@/contexts/ModalContext';
@@ -158,6 +153,7 @@ function CartSheet({ cartItemList, cashoutPrice, setSheetOpen }) {
     try {
       setLoading(true);
       await updateCartSelected(!allSelected);
+      await getCartData();
     } catch (error) {
       toast.error('Có lỗi khi cập nhật giỏ hàng');
     } finally {
@@ -215,13 +211,13 @@ function CartSheet({ cartItemList, cashoutPrice, setSheetOpen }) {
   );
 }
 function CartItem({ cartItem, setSheetOpen }) {
-  const { openModal } = useContext(ModalContext);
   const updateCartItemQuantity = useCartStore((s) => s.updateCartItemQuantity);
   const updateCartItemSelected = useCartStore((s) => s.updateCartItemSelected);
+  const getCartData = useCartStore((s) => s.getCartData);
   const deleteCartItem = useCartStore((s) => s.deleteCartItem);
   const [loading, setLoading] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-
+  const invalidState = cartItem.invalidState;
   const handleUpdate = async (state) => {
     try {
       setLoading(true);
@@ -240,6 +236,7 @@ function CartItem({ cartItem, setSheetOpen }) {
           setShowDeleteDialog(true);
         }
       }
+      await getCartData();
     } catch (error) {
       toast.error('Có lỗi khi tùy chỉnh số lượng sản phẩm');
     } finally {
@@ -250,6 +247,7 @@ function CartItem({ cartItem, setSheetOpen }) {
     try {
       setLoading(true);
       await deleteCartItem(cartItem.cartItemId);
+      await getCartData();
     } catch (error) {
       toast.error('Có lỗi khi xoá sản phẩm');
     } finally {
@@ -260,6 +258,7 @@ function CartItem({ cartItem, setSheetOpen }) {
     try {
       setLoading(true);
       await updateCartItemSelected(cartItem.cartItemId, !cartItem.selected);
+      await getCartData();
     } catch (error) {
       toast.error('Có lỗi khi cập nhật sản phẩm');
     } finally {
@@ -271,9 +270,20 @@ function CartItem({ cartItem, setSheetOpen }) {
     <div
       className={
         'flex gap-5 p-5 pt-2 pb-2 relative ' +
-        (cartItem.quantity > cartItem.maxAllowedQuantity && 'bg-red-50')
+        (invalidState !== 'normal' && 'bg-red-50')
       }
     >
+      {invalidState === 'invalid' && (
+        <div className="absolute top-0 left-0 w-full h-full bg-black/20 z-100 flex items-center justify-center">
+          <Button
+            variant="outline"
+            className="text-black opacity-100"
+            onClick={handleDelete}
+          >
+            Xóa sản phẩm
+          </Button>
+        </div>
+      )}
       {loading && <SpinnerOverlay />}
       <div className="flex items-center">
         <Checkbox
@@ -338,18 +348,30 @@ function CartItem({ cartItem, setSheetOpen }) {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        <Popover>
-          <PopoverTrigger asChild></PopoverTrigger>
-          <PopoverContent></PopoverContent>
-        </Popover>
         <div className="flex flex-col gap-2">
-          {cartItem.quantity > cartItem.maxAllowedQuantity && (
+          {invalidState === 'overflow' && (
             <span className="text-[red] text-[12px] font-bold text-end w-fit">
               Vượt quá số lượng cho phép
             </span>
           )}
+          {invalidState === 'outOfStock' && (
+            <span className="text-[red] text-[12px] font-bold text-end w-fit">
+              Sản phẩm đã hết hàng
+            </span>
+          )}
+          {invalidState === 'invalid' && (
+            <span className="text-[red] text-[12px] font-bold text-end w-fit">
+              Sản phẩm không còn mở bán!
+            </span>
+          )}
         </div>
-        <div className="flex gap-3 items-center">
+        <div
+          className={
+            'flex gap-3 items-center ' +
+            ((invalidState === 'outOfStock' || invalidState == 'invalid') &&
+              ' pointer-events-none opacity-50')
+          }
+        >
           <Button
             className={reusableStyle.button}
             variant={'outline'}

@@ -82,7 +82,7 @@ body {
   align-items: center;
   justify-content: center;
 
-  z-index: 51;
+  z-index: 40;
   pointer-events: all;
 }
 .modal-base {
@@ -90,7 +90,7 @@ body {
   min-height: 100px;
   background-color: white;
   border-radius: 4px;
-  z-index: 100;
+  z-index: 40;
 }
 .input-standard-1 {
   border: 1px solid #bdc7d4;

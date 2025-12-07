@@ -10,6 +10,9 @@ const userApi = {
   getAllUserAddress: async () => {
     return await axiosClient_Backend.get('/user/address');
   },
+  getDefaultAddress: async () => {
+    return await axiosClient_Backend.get('user/address-default');
+  },
   createNewUserAddress: async (formData) => {
     return await axiosClient_Backend.post('/user/address', formData);
   },

@@ -1,4 +1,4 @@
-import { IsNumber, IsString } from 'class-validator';
+import { IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreateAddressDto {
   @IsString()
@@ -24,6 +24,8 @@ export class CreateAddressDto {
   @IsNumber()
   wardCode: number;
 
+  @IsString()
+  @IsOptional()
   addressId: string;
   isActive: boolean;
 }
