@@ -8,10 +8,12 @@ import { CartModule } from 'src/cart/cart.module';
 import { ProductModule } from 'src/product/product.module';
 import { DatabaseModule } from 'src/database/database.module';
 import { PaymentGatewayService } from './payment-gateway.service';
+import { EmailModule } from 'src/email/email.module';
 
 @Module({
   controllers: [TransactionController, AnonymousTransactionController],
   providers: [TransactionService, PaymentGatewayService],
-  imports: [CartModule, ProductModule, DatabaseModule],
+  imports: [CartModule, ProductModule, DatabaseModule, EmailModule],
+  exports: [TransactionService],
 })
 export class TransactionModule {}

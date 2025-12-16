@@ -2,10 +2,10 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Cart, CartItem } from 'src/database/schemas/cart.schema';
-import { ProductService } from 'src/product/product.service';
+import { ProductService } from 'src/product/services/product.service';
 import { UserService } from 'src/user/user.service';
 import { AddNewItemDto } from './cart.dto';
-import { ProductQueryService } from 'src/product/product-query.service';
+import { ProductQueryService } from 'src/product/services/product-query.service';
 
 @Injectable()
 export class CartService {

@@ -7,6 +7,7 @@ export const otp_bounceback = 10; //in seconds
 export const otp_ttl = 180; //in seconds;
 export const refreshToken_ttl = 60 * 60; //in seconds
 export const accessToken_ttl = 60 * 10;
+export const order_ttl = 30 * 1000; // in ms
 
 export const slugifyOption = {
   replacement: '-', // replace spaces with replacement character, defaults to `-`

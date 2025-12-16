@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { CreditCard, Undo2 } from 'lucide-react';
+import { CreditCard, Mail, Undo2 } from 'lucide-react';
 import { HiArrowLongRight } from 'react-icons/hi2';
 import AnonymousAddressBlock from './AnonymousAddressBlock';
 import ItemListBlock from './ItemListBlock';
@@ -8,19 +8,26 @@ import CashoutBlock from './CashoutBlock';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import codPNG from '@/assets/cod.png';
 import momoPNG from '@/assets/momo.png';
+import payosPNG from '@/assets/payos.png';
 import { useLoaderData, useNavigate } from 'react-router-dom';
-import { createContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { anonymousTransactionApi, transactionApi } from '@/api/transactionApi';
 import useAuthStore from '@/contexts/zustands/AuthStore';
 import useCartStore from '@/contexts/zustands/CartStore';
 import SpinnerOverlay from '@/reusable_components/SpinnerOverlay';
 import { toast } from 'sonner';
 import UserAddressBlock from './UserAddressBlock';
+import UltilityContextProvider_1, {
+  UltilityContext_1,
+} from '@/contexts/UltilityContext_1';
+import ModalContextProvider from '@/contexts/ModalContext';
+import { Input } from '@/components/ui/input';
+import userApi from '@/api/userApi';
 
 const initAddress = {
-  contact_name: '',
-  contact_phone: '',
-  address_detail: '',
+  contact_name: 'Anh Quyền',
+  contact_phone: '0373865627',
+  address_detail: '329 đường Hải Đức',
   provinceCode: '',
   provinceName: '',
   districtCode: '',
@@ -31,10 +38,19 @@ const initAddress = {
 const initFormError = {
   AnonymousAddressBlockError: [],
 };
+export default function CheckoutPageWrapper() {
+  return (
+    <ModalContextProvider>
+      <UltilityContextProvider_1>
+        <CheckoutPage />
+      </UltilityContextProvider_1>
+    </ModalContextProvider>
+  );
+}
 export const CheckoutPageContext = createContext();
-export default function CheckoutPage() {
+function CheckoutPage() {
+  const { convenience_1 } = useContext(UltilityContext_1);
   const authStore = useAuthStore.getState();
-
   const [loading, setLoading] = useState(false);
 
   const [cartItemList, setCartItemList] = useState(null);
@@ -42,8 +58,20 @@ export default function CheckoutPage() {
   const [cashoutAmount, setCashoutAmount] = useState(null);
   const [userAddress, setUserAddress] = useState(null);
   const [anonymousUserAddress, setAnonymousUserAddress] = useState(initAddress);
+  const [email, setEmail] = useState('boygioi85@gmail.com');
   const [paymentMethod, setPaymentMethod] = useState('cod');
   const [formError, setFormError] = useState(initFormError);
+  const [submitLoading, setSubmitLoading] = useState(false);
+
+  const cartId = useCartStore((s) => s.cartId);
+  const getUserInfo = async () => {
+    try {
+      const result = await userApi.getAccountInfo();
+      if (email.trim().length === 0) {
+        setEmail(result.data.accountInfo.email);
+      }
+    } catch (error) {}
+  };
   const getAndUpdateCartTransactionData = async () => {
     try {
       setLoading(true);
@@ -62,6 +90,9 @@ export default function CheckoutPage() {
       setDefaultAmount(response.data.defaultAmount);
       setCashoutAmount(response.data.cashoutAmount);
     } catch (error) {
+      if (error.authError) {
+        convenience_1();
+      }
       console.log(error);
       toast.error('Có lỗi khi lấy dữ liệu thanh toán');
     } finally {
@@ -69,6 +100,9 @@ export default function CheckoutPage() {
     }
   };
   useEffect(() => {
+    if (authStore.accessToken) {
+      getUserInfo();
+    }
     getAndUpdateCartTransactionData();
   }, []);
 
@@ -102,6 +136,7 @@ export default function CheckoutPage() {
         address_ward_code: t.province_detail.wardCode,
         address_ward_name: t.province_detail.wardName,
         address_detail: t.address_detail,
+        reference_address: t.addressId,
       };
       // console.log('UA: ', userAddress);
     }
@@ -131,19 +166,35 @@ export default function CheckoutPage() {
       payment_default_price: defaultAmount,
       payment_cashout_price: cashoutAmount,
     };
+    const redirectUrl = window.location.origin + '/order';
     return {
+      email,
       addressInfo,
       cartItemList: _cartItemList,
       paymentDetail,
+      redirectUrl,
     };
   };
   const handleSubmit = async () => {
     try {
+      setSubmitLoading(true);
       const formData = formFormData();
-      const result = await transactionApi.beginTransaction(formData);
+      let result;
+      if (authStore.accessToken) {
+        result = await transactionApi.beginTransaction(formData);
+      } else {
+        formData.cartId = cartId;
+        result = await anonymousTransactionApi.beginTransaction(formData);
+      }
+      window.location.href = result.data.checkoutUrl;
     } catch (error) {
+      if (error.authError) {
+        convenience_1();
+      }
       console.log(error);
       toast.error('Có lỗi khi khởi tạo giao dịch');
+    } finally {
+      setSubmitLoading(false);
     }
   };
 
@@ -153,7 +204,7 @@ export default function CheckoutPage() {
       <div className="overflow-scroll h-screen grid grid-cols-[6fr_4fr] p-25 gap-10 text-[14px] text-(--color-preset-gray) font-medium leading-5 bg-[#f5f5f5]">
         {loading && <SpinnerOverlay />}
         <TopLayout />
-        <div className="flex flex-col gap-10 mt-5">
+        <div className="flex flex-col gap-6 mt-5">
           {authStore.accessToken ? (
             <UserAddressBlock
               setAddress={setUserAddress}
@@ -167,7 +218,19 @@ export default function CheckoutPage() {
               setFormError={setFormError}
             />
           )}
-
+          <div className={reuseableStyle.block}>
+            <span className={reuseableStyle.blockTitle}>
+              <Mail />
+              Email thanh toán
+            </span>
+            <input
+              className="input-standard-1"
+              value={email}
+              placeholder={'Nhập email thanh toán'}
+              required
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
           <ItemListBlock cartItemList={cartItemList} />
         </div>
         <div className="flex flex-col gap-10 mt-5">
@@ -180,6 +243,7 @@ export default function CheckoutPage() {
             defaultAmount={defaultAmount}
             cashoutAmount={cashoutAmount}
             onCashoutSubmit={handleSubmit}
+            submitLoading={submitLoading}
           />
         </div>
       </div>
@@ -221,6 +285,20 @@ function PaymentMethodBlock({ paymentMethod, setPaymentMethod }) {
           <RadioGroupItem value="cod" className={'cursor-pointer w-5! h-5!'} />
           <img src={codPNG} className="w-9 h-9 p-" />
           <span> Thanh toán khi nhận hàng (COD)</span>
+        </div>
+        <div
+          className={
+            'cursor-pointer flex items-center gap-2 border border-[#bdc7d4] rounded-[4px] p-2 ' +
+            (paymentMethod === 'payos' && ' border-black')
+          }
+          onClick={() => setPaymentMethod('payos')}
+        >
+          <RadioGroupItem
+            value="payos"
+            className={'cursor-pointer w-5! h-5!'}
+          />
+          <img src={payosPNG} className="w-9 h-9 p-" />
+          <span> Cổng thanh toán PayOS</span>
         </div>
         <div
           className={

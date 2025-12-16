@@ -30,7 +30,8 @@ import { Toaster } from 'sonner';
 import ProductDetailPage from './pages/ProductDetailPage';
 import SearchPage from './pages/SearchPage';
 import DetailedCategoryPage from './pages/DetailedCategoryPage';
-import CheckoutPage from './pages/CheckoutPage/CheckoutPage';
+import CheckoutPageWrapper from './pages/CheckoutPage/CheckoutPage';
+import OrderPageWrapper from './pages/OrderResultPage';
 const router = createBrowserRouter([
   {
     path: '/',
@@ -110,7 +111,11 @@ const router = createBrowserRouter([
   },
   {
     path: 'checkout',
-    element: <CheckoutPage />,
+    element: <CheckoutPageWrapper />,
+  },
+  {
+    path: 'order',
+    element: <OrderPageWrapper />,
   },
   {
     path: '*',

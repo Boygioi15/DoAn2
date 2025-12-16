@@ -6,18 +6,39 @@ import axios from 'axios';
 import crypto from 'crypto';
 import { CreatePaymentLinkRequest, PaymentLinkItem, PayOS } from '@payos/node';
 import mongoose from 'mongoose';
+import { TransactionService } from './transaction.service';
 const momo_endpoint = 'https://test-payment.momo.vn/v2/gateway/api/create';
-const momo_notifyURL =
-  'https://b3115c426f48.ngrok-free.app/transaction/callback/momo';
+const ngrok_url = 'https://cfcbe1b6612c.ngrok-free.app';
+const momo_notifyURL = `${ngrok_url}/transaction/callback/momo`;
+const payos_notifyURL = `${ngrok_url}/transaction/callback/payos`;
 
 @Injectable()
 export class PaymentGatewayService {
-  constructor(private readonly cartService: CartService) {
-    // this.payOS = payOSInstance;
+  private readonly payOSInstance: PayOS;
+  constructor(
+    private readonly cartService: CartService,
+    private readonly transactionService: TransactionService,
+  ) {
+    const clientID = process.env.PAYOS_CLIENTID,
+      apiKey = process.env.PAYOS_API_KEY,
+      checksumKey = process.env.PAYOS_CHECKSUM_KEY;
+    this.payOSInstance = new PayOS({
+      clientId: clientID,
+      apiKey: apiKey,
+      checksumKey: checksumKey,
+    });
+    try {
+      this.payOSInstance.webhooks.confirm(payos_notifyURL);
+    } catch (error) {
+      console.log('Web hook payos không hoạt động');
+      console.log(error);
+    }
   }
   async createPaymentLink_MOMO(
-    transactionData: any,
-    redirectUrl: any,
+    orderCode: string,
+    orderId: string,
+    cashoutAmount: number,
+    redirectUrl: string,
   ): Promise<any> {
     const secretKey = process.env.MOMO_SECRET_KEY;
     const accessKey = process.env.MOMO_ACCESS_KEY;
@@ -25,28 +46,25 @@ export class PaymentGatewayService {
     if (!secretKey || !accessKey || !partnerCode) {
       throw new InternalServerErrorException('Không load được file .env');
     }
-    console.log('S: ', secretKey);
-    console.log('A: ', accessKey);
-    console.log('PC: ', partnerCode);
-    console.log('Conf: ', momoConfig);
+    // console.log('S: ', secretKey);
+    // console.log('A: ', accessKey);
+    // console.log('PC: ', partnerCode);
+    // console.log('Conf: ', momoConfig);
 
-    const requestId = Number(new mongoose.Types.ObjectId());
-    const orderId = Number(new mongoose.Types.ObjectId());
-    console.log('RID: ', requestId);
-    console.log('OID: ', orderId);
+    console.log('OID: ', orderCode);
     const rawSignature =
       `accessKey=${accessKey}` +
-      `&amount=${50000}` +
-      `&extraData=nothing` +
+      `&amount=${cashoutAmount}` +
+      `&extraData=${orderId}` +
       `&ipnUrl=${momo_notifyURL}` +
-      `&orderId=${orderId}` +
-      `&orderInfo=${momoConfig.orderInfo}` + // MUST MATCH EXACTLY
+      `&orderId=${orderCode}` +
+      `&orderInfo=${momoConfig.orderInfo}` +
       `&partnerCode=${partnerCode}` +
       `&redirectUrl=${redirectUrl}` +
-      `&requestId=${requestId}` +
+      `&requestId=${orderCode}` +
       `&requestType=${momoConfig.requestType}`;
 
-    console.log(rawSignature);
+    // console.log(rawSignature);
     // Create signature
 
     const signature = crypto
@@ -57,9 +75,9 @@ export class PaymentGatewayService {
       partnerCode: partnerCode,
       partnerName: 'Xây dựng sàn thương mại điện tử bán quần áo',
       storeId: 'QShop',
-      requestId: requestId,
-      amount: 50000,
-      orderId: orderId,
+      requestId: orderCode,
+      amount: cashoutAmount,
+      orderId: orderCode,
       orderInfo: momoConfig.orderInfo,
       redirectUrl: redirectUrl,
       ipnUrl: momo_notifyURL,
@@ -67,7 +85,7 @@ export class PaymentGatewayService {
       requestType: momoConfig.requestType,
       autoCapture: momoConfig.autoCapture,
       signature,
-      extraData: 'nothing',
+      extraData: orderId,
     });
 
     // Axios request with error handling
@@ -83,39 +101,40 @@ export class PaymentGatewayService {
     return result;
   }
   async createPaymentLink_PayOS(
-    transactionData: any,
+    orderCode: number,
+    orderId: string,
+    cashoutAmount: number,
     returnURL: string,
   ): Promise<any> {
-    const clientID = process.env.PAYOS_CLIENTID,
-      apiKey = process.env.PAYOS_API_KEY,
-      checksumKey = process.env.PAYOS_CHECKSUM_KEY;
-    const payOSInstance = new PayOS({
-      clientId: clientID,
-      apiKey: apiKey,
-      checksumKey: checksumKey,
-    });
-    console.log('payOSInstance', payOSInstance);
+    // console.log('payOSInstance', payOSInstance);
 
-    const requestId = Math.floor(Math.random() * 1000000000);
-    const orderId = 1000000000 + Math.floor(Math.random() * 8000000000);
-    console.log('RID: ', requestId);
-    console.log('OID: ', orderId);
+    // console.log('OCode: ', orderCode);
 
-    const itemList: PaymentLinkItem[] = [
-      { name: 'Mì ly', quantity: 3, price: 50000 },
-    ];
-    console.log('Payment data: ', itemList);
+    // console.log('Payment data: ', itemList);
     const paymentData: CreatePaymentLinkRequest = {
-      orderCode: orderId,
-      amount: 50000,
-      items: itemList,
-      description: 'Thanh toán đơn hàng',
+      orderCode: orderCode,
+      amount: cashoutAmount,
+      description: `${orderId}`,
       returnUrl: returnURL,
       cancelUrl: returnURL,
     };
 
-    const paymentLink = await payOSInstance.paymentRequests.create(paymentData);
-    console.log(paymentLink);
+    const paymentLink =
+      await this.payOSInstance.paymentRequests.create(paymentData);
+    // console.log(paymentLink);
     return paymentLink;
+  }
+  async cancelOrder_PayOS(orderCode: number) {
+    return await this.payOSInstance.paymentRequests.cancel(orderCode);
+  }
+  async handlePayOSCallback(req: any) {
+    try {
+      const webhookData = await this.payOSInstance.webhooks.verify(req.body);
+
+      const orderId = webhookData.description.split(' ')[1];
+      await this.transactionService.updateOrderState(orderId, 'success');
+    } catch (error) {
+      console.error('Webhook không hợp lệ:', error);
+    }
   }
 }

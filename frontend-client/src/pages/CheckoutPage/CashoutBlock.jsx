@@ -1,4 +1,6 @@
 import { Separator } from '@/components/ui/separator';
+import { Spinner } from '@/components/ui/spinner';
+import SpinnerOverlay from '@/reusable_components/SpinnerOverlay';
 import { formatMoney } from '@/util';
 import { ChevronRight, ClipboardCheck, Ticket } from 'lucide-react';
 
@@ -6,6 +8,7 @@ export default function CashoutBlock({
   defaultAmount,
   cashoutAmount,
   onCashoutSubmit,
+  submitLoading,
 }) {
   return (
     <div className={reuseableStyle.block}>
@@ -40,9 +43,13 @@ export default function CashoutBlock({
         </span>
       </div>
       <button
-        className="button-standard-1 bg-[#da291c]! text-[14px]! font-bold! mt-4"
+        className={
+          'button-standard-1 bg-[#da291c]! text-[14px]! font-bold! mt-4 relative flex items-center justify-center gap-4'
+        }
         onClick={onCashoutSubmit}
+        disabled={submitLoading}
       >
+        {submitLoading && <Spinner />}
         THANH TOÁN
       </button>
     </div>

@@ -112,7 +112,7 @@ export default function AnonymousAddressBlock({
     if (!phoneRegex.test(address.contact_phone)) {
       formError.push('Định dạng SĐT không hợp lệ!');
     }
-    console.log('Form error: ', formError);
+    // console.log('Form error: ', formError);
     setFormError((prev) => ({
       ...prev,
       AnonymousAddressBlockError: formError,

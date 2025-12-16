@@ -16,6 +16,8 @@ import { FrontendSettingModule } from './frontend-setting/frontend-setting.modul
 import { CartModule } from './cart/cart.module';
 import { TransactionModule } from './transaction/transaction.module';
 import { EmailModule } from './email/email.module';
+import { CronModule } from './cron/cron.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -24,6 +26,7 @@ import { EmailModule } from './email/email.module';
       process.env.MONGODB_URI ||
         'mongodb://user:pass@localhost:27019/database?directConnection=true&authSource=admin',
     ),
+    ScheduleModule.forRoot(),
     DatabaseModule,
     HttpModule.register({
       timeout: Number(process.env.HTTP_TimeOut ?? 5000),
@@ -38,6 +41,7 @@ import { EmailModule } from './email/email.module';
     CartModule,
     TransactionModule,
     EmailModule,
+    CronModule,
   ],
   controllers: [AppController],
   providers: [

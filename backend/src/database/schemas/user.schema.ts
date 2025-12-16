@@ -24,6 +24,9 @@ export class User extends Document {
 
   @Prop()
   password: string;
+
+  @Prop({ default: null })
+  hasPendingOrder: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

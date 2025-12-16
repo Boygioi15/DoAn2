@@ -1,4 +1,10 @@
-import { IsBoolean, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class CartItemFe {
   @IsString() @IsNotEmpty() cartItemId: string;
@@ -33,4 +39,6 @@ export class AddressInfoFe {
   @IsNotEmpty() address_ward_code: number;
   @IsNotEmpty() address_ward_name: string;
   @IsNotEmpty() address_detail: string;
+
+  @IsOptional() reference_address: string;
 }

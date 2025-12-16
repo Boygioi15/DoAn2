@@ -10,6 +10,11 @@ export const transactionApi = {
       formData
     );
   },
+  cancelOrder: async (orderId) => {
+    return await axiosClient_Backend.post('/transaction/callback/browser', {
+      orderId: orderId,
+    });
+  },
 };
 export const anonymousTransactionApi = {
   getTransactionDetailAndUpdateCart: async (cartId) => {
@@ -20,12 +25,10 @@ export const anonymousTransactionApi = {
       }
     );
   },
-  beginTransaction: async (cartId, formData) => {
-    return await axiosClient_Backend.post('/transaction/confirm-transaction', {
-      cartItemList: formData.cartItemList,
-      detailPayment: formData.detailPayment,
-      addressInfo: formData.addressInfo,
-      cartId,
-    });
+  beginTransaction: async (formData) => {
+    return await axiosClient_Backend.post(
+      '/anonymous-transaction/confirm-transaction',
+      formData
+    );
   },
 };

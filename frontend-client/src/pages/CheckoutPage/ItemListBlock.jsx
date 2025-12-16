@@ -65,7 +65,6 @@ export default function ItemListBlock({ cartItemList }) {
 function ItemBlock({ item }) {
   const { getAndUpdateCartTransactionData } = useContext(CheckoutPageContext);
   const updateCartItemQuantity = useCartStore((s) => s.updateCartItemQuantity);
-  const updateCartItemSelected = useCartStore((s) => s.updateCartItemSelected);
   const deleteCartItem = useCartStore((s) => s.deleteCartItem);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const invalidState = item.invalidState;
@@ -79,6 +78,7 @@ function ItemBlock({ item }) {
           await updateCartItemQuantity(item.cartItemId, item.quantity - 1);
         } else {
           setShowDeleteDialog(true);
+          return;
         }
       }
       await getAndUpdateCartTransactionData();

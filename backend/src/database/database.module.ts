@@ -50,10 +50,18 @@ import {
   CartItemSchema,
   CartSchema,
 } from './schemas/cart.schema';
+import {
+  Order,
+  OrderDetail,
+  orderDetailSchema,
+  orderSchema,
+} from './schemas/transaction.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
+      { name: Order.name, schema: orderSchema },
+      { name: OrderDetail.name, schema: orderDetailSchema },
       { name: Cart.name, schema: CartSchema },
       { name: CartItem.name, schema: CartItemSchema },
       { name: Product.name, schema: ProductSchema },

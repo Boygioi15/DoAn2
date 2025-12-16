@@ -10,12 +10,12 @@ import {
   UploadedFiles,
   Query,
 } from '@nestjs/common';
-import { ProductService } from './product.service';
+import { ProductService } from './services/product.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
-import { ProductQueryService } from './product-query.service';
-import { ProductDeleteService } from './product-delete.service';
+import { ProductQueryService } from './services/product-query.service';
+import { ProductDeleteService } from './services/product-delete.service';
 
 @Controller('product')
 export class ProductController {
