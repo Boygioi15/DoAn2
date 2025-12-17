@@ -6,34 +6,29 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { routeNameMap } from "@/constants";
+import { cn } from "@/lib/utils";
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
-export default function Breadcrumbs() {
+export default function Breadcrumbs({ className }) {
   //context
   const location = useLocation();
   const pathname = location.pathname;
   const pathParts = pathname.split("/").filter(Boolean);
 
-  // Skip breadcrumbs on /auth pages
-  if (pathname.startsWith("/auth")) return null;
-
+  console.log(pathname);
   // Build breadcrumb items dynamically, not handling param case yet!
   const crumbs = pathParts.map((part, index) => {
     const to = "/" + pathParts.slice(0, index + 1).join("/");
-    const label =
-      routeNameMap[part] ||
-      decodeURIComponent(part)
-        .replace(/-/g, " ")
-        .replace(/\b\w/g, (c) => c.toUpperCase());
+    const label = routeNameMap[part] || "Define tên route giùm cái";
     const isLast = index === pathParts.length - 1;
 
     return (
       <React.Fragment key={to}>
         <BreadcrumbItem key={to}>
           {!isLast ? (
-            <BreadcrumbLink asChild>
-              <Link to={to}>{label}</Link>
+            <BreadcrumbLink asChild href={to}>
+              {label}
             </BreadcrumbLink>
           ) : (
             <span className="text-muted-foreground">
@@ -46,15 +41,11 @@ export default function Breadcrumbs() {
     );
   });
 
-  if (crumbs.length === 0) return null;
-
   return (
-    <Breadcrumb>
+    <Breadcrumb className={className}>
       <BreadcrumbList>
         <BreadcrumbItem>
-          <BreadcrumbLink asChild>
-            <Link to="/">Trang chủ</Link>
-          </BreadcrumbLink>
+          <BreadcrumbLink href="/">Trang chủ</BreadcrumbLink>
         </BreadcrumbItem>
         {pathParts.length > 0 && <BreadcrumbSeparator />}
         {crumbs}

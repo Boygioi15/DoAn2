@@ -30,8 +30,8 @@ import {
   PaginationItem,
   PaginationLink,
 } from "@/components/ui/pagination";
-import BriefProductCard from "@/reuseables/BriefProductCard";
-import ComboBoxWithSearch from "@/reuseables/ComboboxWithSearch";
+import BriefProductCard from "@/reusable-component/BriefProductCard";
+import ComboBoxWithSearch from "@/reusable-component/ComboboxWithSearch";
 import { DialogTrigger } from "@radix-ui/react-dialog";
 import {
   ChevronLeftIcon,

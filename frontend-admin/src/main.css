@@ -4,35 +4,26 @@
 @custom-variant dark (&:is(.dark *));
 
 * {
-  font-family: Montserrat;
   box-sizing: border-box;
-}
-body {
-  line-height: 13.8px;
-  font-weight: 400;
-  padding: 0px;
-  margin: 0px;
-
-  width: 100%;
-  height: 100%;
-  position: relative;
+  list-style: 20px;
+  line-height: 16px;
 }
 h1 {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
 }
 h2 {
   font-size: 18px;
-  font-weight: 600;
-}
-h3 {
-  font-size: 17px;
   font-weight: 500;
 }
-h6 {
-  font-size: 14px;
-  font-weight: 400;
-  color: gray;
+h3 {
+  font-size: 16px;
+  font-weight: 500;
+}
+.lucide {
+  width: 20px !important;
+  height: 20px !important;
+  stroke-width: 1.5px;
 }
 .search-input {
   padding: 8px 10px;
@@ -80,6 +71,7 @@ h6 {
   min-height: 300px;
   max-height: 300px;
 }
+
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -193,5 +185,38 @@ h6 {
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Base Shadcn variables (assuming you have these) */
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    /* Semantic Status Colors (Re-usable) */
+    --success: 142.1 76.2% 36.3%; /* Green */
+    --success-foreground: 355.7 100% 97.3%;
+
+    --warning: 38 92% 50%; /* Yellow/Orange */
+    --warning-foreground: 48 96% 89%;
+
+    --destructive: 0 84.2% 60.2%; /* Red */
+    --destructive-foreground: 210 40% 98%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+  }
+}
+
+/* Utility classes for status badges */
+@layer components {
+  .badge-success {
+    @apply bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 hover:bg-green-100/80;
+  }
+  .badge-destructive {
+    @apply bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 hover:bg-red-100/80;
   }
 }

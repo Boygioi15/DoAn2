@@ -1,7 +1,5 @@
-import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import UserManagementPage from "./pages/UserManagementPage";
 import RootLayout from "./layouts/RootLayout/RootLayout";
 import "./main.css";
 import "./others/local_copy_of_google_font.css";
@@ -10,6 +8,7 @@ import ProductManagementPage from "./pages/ProductManagementPage";
 import TestUploadPage from "./pages/Test/TestUpload";
 import CategoryPage from "./pages/CategoryPage/CategoryPage";
 import EditProductPage from "./pages/ProductPages/EditProductPage";
+import CustomerManagementPage from "./pages/UserManagementPage/CustomerManagementPage";
 
 const router = createBrowserRouter([
   {
@@ -17,8 +16,8 @@ const router = createBrowserRouter([
     path: "/",
     children: [
       {
-        element: <UserManagementPage />,
-        path: "user",
+        element: <CustomerManagementPage />,
+        path: "customer",
       },
       {
         element: <AddNewProductPage />,

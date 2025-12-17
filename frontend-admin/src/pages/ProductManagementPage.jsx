@@ -36,8 +36,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { InputWithStartAddOn } from "@/reuseables/Input";
-import { SelectWithStartAddOn } from "@/reuseables/Select";
+import { InputWithStartAddOn } from "@/reusable-component/Input";
+import { SelectWithStartAddOn } from "@/reusable-component/Select";
 import { formatMoney } from "@/utils";
 import {
   ArchiveIcon,
@@ -49,14 +49,6 @@ import {
 import { useEffect, useId, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-
-const reusableStyle = {
-  block:
-    "flex flex-col p-[12px] pt-[12px] gap-2 rounded-[8px] bg-[white] w-full h-auto shadow-lg",
-  summaryBlock: "flex flex-col gap-6 w-full bg-blue-50 rounded-[4px] p-4",
-  errorBorder:
-    " border border-red-200 drop-shadow-[0_0_8px_rgba(255,0,0,0.05)]",
-};
 
 const itemLimit = 1000;
 const currentItem = 50;
@@ -562,3 +554,10 @@ function TableView({ currentTableSelection, filter, sortBy }) {
     </div>
   );
 }
+const reusableStyle = {
+  block:
+    "flex flex-col p-[12px] pt-[12px] gap-2 rounded-[8px] bg-[white] w-full h-auto shadow-lg",
+  summaryBlock: "flex flex-col gap-6 w-full bg-blue-50 rounded-[4px] p-4",
+  errorBorder:
+    " border border-red-200 drop-shadow-[0_0_8px_rgba(255,0,0,0.05)]",
+};
