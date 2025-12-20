@@ -27,8 +27,8 @@ export const SelectWithStartAddOn = ({
             <SelectValue placeholder={placeholder} />
           </SelectTrigger>
           <SelectContent>
-            {selectValueList.map((selectValue) => (
-              <SelectItem value={selectValue}>{selectValue}</SelectItem>
+            {selectValueList.map((select) => (
+              <SelectItem value={select.value}>{select.display}</SelectItem>
             ))}
           </SelectContent>
         </Select>

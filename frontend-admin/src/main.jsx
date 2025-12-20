@@ -3,12 +3,14 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import RootLayout from "./layouts/RootLayout/RootLayout";
 import "./main.css";
 import "./others/local_copy_of_google_font.css";
-import AddNewProductPage from "./pages/ProductPages/AddNewProductPage";
-import ProductManagementPage from "./pages/ProductManagementPage";
+import AddNewProductPage1 from "./pages/ProductPages/AddNewProductPage";
+import AddNewProductPage2 from "./pages/AddNewProductPage/AddNewProductPage";
+
+import ProductManagementPage from "./pages/ProductManagementPage/ProductManagementPage";
 import TestUploadPage from "./pages/Test/TestUpload";
-import CategoryPage from "./pages/CategoryPage/CategoryPage";
+import CategoryManagementPage from "./pages/CategoryManagementPage/CategoryManagementPage";
 import EditProductPage from "./pages/ProductPages/EditProductPage";
-import CustomerManagementPage from "./pages/UserManagementPage/CustomerManagementPage";
+import UserManagementPage from "./pages/UserManagementPage/UserManagementPage";
 
 const router = createBrowserRouter([
   {
@@ -16,12 +18,16 @@ const router = createBrowserRouter([
     path: "/",
     children: [
       {
-        element: <CustomerManagementPage />,
-        path: "customer",
+        element: <UserManagementPage />,
+        path: "user",
       },
       {
-        element: <AddNewProductPage />,
+        element: <AddNewProductPage1 />,
         path: "add-product",
+      },
+      {
+        element: <AddNewProductPage2 />,
+        path: "add-product-2",
       },
       {
         element: <EditProductPage />,
@@ -32,7 +38,7 @@ const router = createBrowserRouter([
         path: "product-management",
       },
       {
-        element: <CategoryPage />,
+        element: <CategoryManagementPage />,
         path: "category-management",
       },
       {

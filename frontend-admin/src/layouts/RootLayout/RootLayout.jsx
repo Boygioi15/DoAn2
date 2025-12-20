@@ -5,8 +5,13 @@ import { Toaster } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import Breadcrumbs from "@/reusable-component/Breadcrumb";
 import AvatarBlock from "@/reusable-component/AvatarBlock";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
+import { routeNameMap } from "@/constants";
 export default function RootLayout() {
+  const location = useLocation();
+  const pathname = location.pathname;
+  const pathParts = pathname.split("/").filter(Boolean);
+  const screenName = routeNameMap[pathParts[pathParts.length - 1]];
   return (
     <Suspense>
       <SidebarProvider className="bg-gray-100 ">
@@ -16,11 +21,11 @@ export default function RootLayout() {
           <div className="flex gap-4 items-center justify-between ">
             <div className="flex flex-col gap-1">
               <Breadcrumbs className={"mb-2"} />
-              <h1>Quản lý khách hàng</h1>
+              <h1>{screenName}</h1>
             </div>
             <AvatarBlock />
           </div>
-          <main className="w-full h-screen">
+          <main className="w-full h-fit min-h-screen">
             <Outlet />
           </main>
         </div>

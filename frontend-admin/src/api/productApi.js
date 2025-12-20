@@ -8,7 +8,7 @@ export const productApi = {
       },
     });
   },
-  getAllProduct: async (query) => {
+  getProductList: async (query) => {
     return await axiosClient_Backend.get(`/product/admin?${query}`);
   },
   getProductDetail_EditProduct: async (productId) => {

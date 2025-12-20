@@ -184,7 +184,10 @@ export class ProductService {
       ...element,
       productId,
     }));
-    const response = await this.productPropertyModel.insertMany(deStringed);
+    const response = await this.productPropertyModel.create({
+      productId,
+      propertyList: deStringed,
+    });
     console.log('Product property created: ', response);
     return response;
   }
@@ -315,6 +318,10 @@ export class ProductService {
     });
     let allColors = Array.from(_allColors);
     let allSizes = Array.from(_allSizes);
+    let categoryName = await this.categoryService.getCategoryDetail(
+      product.productId,
+    );
+
     const newProduct = await this.productModel.findOneAndUpdate(
       { productId },
       {
@@ -322,9 +329,11 @@ export class ProductService {
         totalStock,
         allColors,
         allSizes,
+        categoryName,
       },
       { new: true },
     );
+
     return newProduct;
   }
   generateSKU(length = 10) {

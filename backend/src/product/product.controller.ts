@@ -47,20 +47,22 @@ export class ProductController {
     return product;
   }
   @Get('admin')
-  async getAllProducts_ItemManagement(@Query() q) {
+  async getProductList_Admin(@Query() q) {
     const productList = await this.productQueryService.getAllProduct({
       role: 'ADMIN',
       filters: {
-        priceMin: q.priceMin,
-        priceMax: q.priceMax,
+        queryProductName: q.queryProductName,
+        queryCategoryName: q.queryCategoryName,
+        queryProductSku: q.queryProductSku,
+        productTab: q.productTab,
+        stockState: q.stockState,
         categoryId: q.categoryId,
-        search: q.query,
       },
       pagination: {
         from: q.from || 1,
-        size: q.size || 24,
+        size: q.size || 10,
       },
-      sortBy: q.sort,
+      sortBy: q.sortBy,
     });
     return productList;
   }

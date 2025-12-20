@@ -1,5 +1,3 @@
-import categoryApi from "@/api/categoryApi";
-import { productApi } from "@/api/productApi";
 import { TreeView } from "@/components/tree-view";
 import {
   AlertDialog,
@@ -12,6 +10,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -30,151 +29,28 @@ import {
   PaginationItem,
   PaginationLink,
 } from "@/components/ui/pagination";
+import useCategoryManagement from "@/hooks/useCategoryManagement";
 import BriefProductCard from "@/reusable-component/BriefProductCard";
 import ComboBoxWithSearch from "@/reusable-component/ComboboxWithSearch";
 import { DialogTrigger } from "@radix-ui/react-dialog";
 import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
+  ChevronLeft,
+  ChevronRight,
   Edit,
-  FilePlusCorner,
-  FileXCorner,
+  Filter,
+  PackageOpen,
   Plus,
   Search,
   Trash,
-  UserIcon,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
-const reusableStyle = {
-  inputBlock:
-    "flex flex-col p-[12px] pt-[20px] gap-[20px] rounded-[4px] bg-[white] w-full h-screen",
-};
+
 const pageSize = 24;
-export default function CategoryPage() {
-  const [allCategory, setAllCategory] = useState(null);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-
-  const [selectedCategoryId, setSelectedCategoryId] = useState("");
-  const [productList, setProductList] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalItem, setTotalItem] = useState(0);
-  const getAllCategory = async () => {
-    try {
-      const response = await categoryApi.getAllCategory();
-      setAllCategory(response.data);
-    } catch (error) {
-      toast.error("Có lỗi khi lấy dữ liệu ngành hàng");
-    }
-  };
-  const getAllProductOfCategory = async () => {
-    try {
-      const response = await productApi.getAllProduct(
-        `categoryId=${selectedCategoryId}`
-      );
-      setProductList(response.data.data);
-      setTotalItem(response.data.total);
-    } catch (error) {
-      toast.error("Có lỗi khi lấy dữ liệu sản phẩm");
-    }
-  };
-  useEffect(() => {
-    if (selectedCategoryId !== "") {
-      getAllProductOfCategory();
-    }
-  }, [selectedCategoryId]);
-  useEffect(() => {
-    getAllCategory();
-  }, []);
-  const buildCategoryTree = () => {
-    if (!allCategory) {
-      return;
-    }
-    function BuildRecursiveChildren(allCategory, currentCategory) {
-      const allChildren = allCategory.filter(
-        (category) => category.parentId === currentCategory._id
-      );
-      // console.log("CP: ", currentCategory);
-      // console.log("CC: ", allChildren);
-      if (allChildren.length === 0) {
-        return;
-      }
-
-      currentCategory.children = allChildren;
-      currentCategory.children.forEach((children) =>
-        BuildRecursiveChildren(allCategory, children)
-      );
-    }
-    const cleanedData = allCategory.map((category) => ({
-      name: category.categoryName,
-      _id: category.categoryId,
-      id: category.categoryId,
-      parentId: category.parentId,
-    }));
-    //first tier
-    const categoryTree = cleanedData.filter((category) => !category.parentId);
-    categoryTree.map((children) =>
-      BuildRecursiveChildren(cleanedData, children)
-    );
-    return categoryTree;
-  };
-
-  const categoryTree = useMemo(() => {
-    const result = buildCategoryTree();
-    return result;
-  }, [allCategory]);
-  // console.log("C:", categoryTree);
-
-  async function handleCreateCategory(categoryData) {
-    if (categoryData.parentId === "!") categoryData.parentId = null;
-    const data = {
-      categoryName: categoryData.categoryName,
-      parentId: categoryData.parentId,
-    };
-    try {
-      const response = await categoryApi.createNewCategory(data);
-      setAllCategory(response.data);
-      toast.success("Tạo mới ngành hàng thành công");
-      setIsCreateDialogOpen(false);
-    } catch (error) {
-      toast.error("Có lỗi khi tạo mới ngành hàng");
-    }
-  }
-  async function handleUpdateCategory(categoryId, categoryData) {
-    console.log("I:", categoryId);
-    console.log("D:", categoryData);
-    if (categoryData.parentId === "!") {
-      categoryData.parentId = null;
-    }
-    const data = {
-      categoryName: categoryData.categoryName,
-      parentId: categoryData.parentId,
-    };
-    try {
-      const response = await categoryApi.updateCategory(categoryId, data);
-      setAllCategory(response.data);
-      setIsUpdateDialogOpen(false);
-      toast.success("Cập nhật ngành hàng thành công");
-    } catch (error) {
-      toast.error("Có lỗi khi cập nhật ngành hàng");
-    }
-  }
-  async function handleDeleteCategory(categoryId) {
-    try {
-      const response = await categoryApi.deleteCategory(categoryId);
-      setAllCategory(response.data);
-      setIsDeleteDialogOpen(false);
-      toast.success("Xóa ngành hàng thành công");
-    } catch (error) {
-      toast.error("Có lỗi khi xóa ngành hàng");
-    }
-  }
+export default function CategoryManagementPage() {
+  const categoryHook = useCategoryManagement();
   return (
     <div className="page-layout">
-      <h1>Quản lý ngành hàng</h1>
-      {categoryTree && (
+      {categoryHook.categoryTree && (
         <div className="grid grid-cols-[40%_60%] gap-4 ">
           <div
             className={
@@ -188,7 +64,7 @@ export default function CategoryPage() {
                 <div className="relative grow">
                   <div className="text-muted-foreground pointer-events-none absolute inset-y-0 left-0 flex items-center justify-center pl-3 peer-disabled:opacity-50">
                     <Search className="size-4" />
-                    <span className="sr-only">Search</span>
+                    <span className="sr-only">Tìm kiếm</span>
                   </div>
                   <Input
                     type="text"
@@ -197,7 +73,7 @@ export default function CategoryPage() {
                   />
                 </div>
                 <Dialog
-                  open={isCreateDialogOpen}
+                  open={categoryHook.isCreateDialogOpen}
                   onOpenChange={(open) => {
                     setIsCreateDialogOpen(open);
                   }}
@@ -211,13 +87,13 @@ export default function CategoryPage() {
                     </Button>
                   </DialogTrigger>
                   <CreateNewCategoryForm
-                    allCategories={allCategory}
-                    handleAddCategory={handleCreateCategory}
+                    allCategories={categoryHook.categoryList}
+                    handleAddCategory={categoryHook.handleCreateCategory}
                   />
                 </Dialog>
 
                 <Dialog
-                  open={isUpdateDialogOpen}
+                  open={categoryHook.isUpdateDialogOpen}
                   onOpenChange={(open) => {
                     setIsUpdateDialogOpen(open);
                   }}
@@ -231,13 +107,13 @@ export default function CategoryPage() {
                     </Button>
                   </DialogTrigger>
                   <UpdateCategoryForm
-                    allCategories={allCategory}
-                    handleUpdateCategory={handleUpdateCategory}
+                    allCategories={categoryHook.categoryList}
+                    handleUpdateCategory={categoryHook.handleUpdateCategory}
                   />
                 </Dialog>
 
                 <Dialog
-                  open={isDeleteDialogOpen}
+                  open={categoryHook.isDeleteDialogOpen}
                   onOpenChange={(open) => {
                     setIsDeleteDialogOpen(open);
                   }}
@@ -251,8 +127,8 @@ export default function CategoryPage() {
                     </Button>
                   </DialogTrigger>
                   <DeleteCategoryForm
-                    allCategories={allCategory}
-                    handleDeleteCategory={handleDeleteCategory}
+                    allCategories={categoryHook.categoryList}
+                    handleDeleteCategory={categoryHook.handleDeleteCategory}
                   />
                 </Dialog>
               </div>
@@ -260,11 +136,11 @@ export default function CategoryPage() {
 
             <div className="border border-border pt-2 rounded-s text-[14px] ">
               <TreeView
-                data={categoryTree}
+                data={categoryHook.categoryTree}
                 expandAll
                 onSelectChange={(item) => {
                   if (!item.children) {
-                    setSelectedCategoryId(item._id);
+                    categoryHook.setSelectedCategoryId(item.id);
                   }
                 }}
               />
@@ -272,68 +148,134 @@ export default function CategoryPage() {
           </div>
 
           <div
-            className={reusableStyle.inputBlock + " overflow-y-scroll h-full"}
+            className={`${reusableStyle.inputBlock} flex flex-col h-full overflow-hidden`}
           >
-            <h2>
-              Các sản phẩm đi kèm{" "}
-              {productList.length === 0 && " - Hiện không có sản phẩm"}{" "}
-            </h2>
-            {selectedCategoryId !== "" && (
-              <h3>
-                Ngành hàng -{" "}
-                {allCategory.find(
-                  (category) => category.categoryId === selectedCategoryId
-                ).categoryName || ""}
-              </h3>
-            )}
-            {productList.length > 0 && (
-              <div className="flex w-full justify-between items-center">
-                <p
-                  className="text-muted-foreground text-sm whitespace-nowrap"
-                  aria-live="polite"
-                >
-                  Tổng số sản phẩm: {totalItem}
-                </p>
-                <Pagination className={"w-auto! m-0!"}>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationLink
-                        href="#"
-                        aria-label="Go to previous page"
-                        size="icon"
-                      >
-                        <ChevronLeftIcon className="size-4" />
-                      </PaginationLink>
-                    </PaginationItem>
-                    <PaginationItem>
-                      <PaginationLink href="#" isActive>
-                        1
-                      </PaginationLink>
-                    </PaginationItem>
-                    <PaginationItem>
-                      <PaginationLink href="#">2</PaginationLink>
-                    </PaginationItem>
-                    <PaginationItem>
-                      <PaginationLink href="#">3</PaginationLink>
-                    </PaginationItem>
-                    <PaginationItem>
-                      <PaginationLink
-                        href="#"
-                        aria-label="Go to next page"
-                        size="icon"
-                      >
-                        <ChevronRightIcon className="size-4" />
-                      </PaginationLink>
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
+            {/* --- Header Section --- */}
+            <div className="flex flex-col gap-4 pb-4 border-b mb-4 shrink-0">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h2 className="text-lg font-semibold flex items-center gap-2">
+                    Sản phẩm thuộc danh mục
+                    {categoryHook.productList?.length > 0 && (
+                      <Badge variant="secondary" className="rounded-full px-2">
+                        {categoryHook.productList.length}
+                      </Badge>
+                    )}
+                  </h2>
+                  {categoryHook.selectedCategory ? (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Đang xem:{" "}
+                      <span className="font-medium text-foreground">
+                        {categoryHook.selectedCategory.categoryName}
+                      </span>
+                    </p>
+                  ) : (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Chưa chọn danh mục
+                    </p>
+                  )}
+                </div>
               </div>
-            )}
-            <div className="grid grid-cols-4 gap-2">
-              {productList &&
-                productList.map((product) => (
-                  <BriefProductCard briefProduct={product} />
-                ))}
+
+              {/* --- Toolbar (Search & Filter) --- */}
+              {categoryHook.productList &&
+                categoryHook.productList.length > 0 && (
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="relative w-full max-w-sm">
+                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        type="search"
+                        placeholder="Tìm sản phẩm trong danh mục này..."
+                        className="pl-8 h-9 bg-muted/30"
+                      />
+                    </div>
+
+                    {/* Compact Pagination */}
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        disabled={categoryHook.from === 1}
+                        onClick={() => {
+                          const cFrom = categoryHook.from;
+                          categoryHook.getAllProductOfCategory(
+                            categoryHook.selectedCategoryId,
+                            cFrom - 1
+                          );
+                          categoryHook.setFrom(cFrom - 1);
+                        }}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <span className="text-sm font-medium min-w-[3rem] text-center">
+                        {categoryHook.from} /{" "}
+                        {Math.ceil(
+                          categoryHook.productListMetadata.totalItem /
+                            categoryHook.size
+                        )}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        disabled={
+                          categoryHook.from ===
+                          Math.ceil(
+                            categoryHook.productListMetadata.totalItem /
+                              categoryHook.size
+                          )
+                        }
+                        onClick={() => {
+                          const cFrom = categoryHook.from;
+                          categoryHook.getAllProductOfCategory(
+                            categoryHook.selectedCategoryId,
+                            cFrom + 1
+                          );
+                          categoryHook.setFrom(cFrom + 1);
+                        }}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+            </div>
+
+            {/* --- Content Section --- */}
+            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+              {/* Case 1: No Category Selected */}
+              {!categoryHook.selectedCategory && (
+                <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-50">
+                  <Filter className="w-12 h-12 mb-2" />
+                  <p>Vui lòng chọn một ngành hàng bên trái</p>
+                </div>
+              )}
+
+              {/* Case 2: Category Selected but Empty */}
+              {categoryHook.selectedCategory &&
+                categoryHook.productList?.length === 0 && (
+                  <div className="h-full flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg bg-muted/10">
+                    <div className="bg-muted/30 p-4 rounded-full mb-3">
+                      <PackageOpen className="w-8 h-8 text-muted-foreground" />
+                    </div>
+                    <h3 className="font-medium text-lg">Chưa có sản phẩm</h3>
+                    <p className="text-sm text-muted-foreground max-w-xs mt-1 mb-4">
+                      Ngành hàng này hiện chưa có sản phẩm nào được liên kết.
+                    </p>
+                    <Button variant="outline">Thêm sản phẩm ngay</Button>
+                  </div>
+                )}
+
+              {/* Case 3: Has Products */}
+              {categoryHook.productList &&
+                categoryHook.productList.length > 0 && (
+                  <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-4">
+                    {categoryHook.productList.map((product) => (
+                      <BriefProductCard briefProduct={product} />
+                    ))}
+                  </div>
+                )}
             </div>
           </div>
         </div>
@@ -646,3 +588,8 @@ function DeleteCategoryForm({ allCategories, handleDeleteCategory }) {
     </DialogContent>
   );
 }
+
+const reusableStyle = {
+  inputBlock:
+    "flex flex-col p-[12px] pt-[20px] gap-[20px] rounded-[4px] bg-[white] w-full h-screen",
+};

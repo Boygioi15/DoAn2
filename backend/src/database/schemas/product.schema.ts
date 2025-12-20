@@ -124,11 +124,16 @@ export class ProductProperty {
   @Prop()
   productId: string;
 
-  @Prop()
-  name: string;
-
-  @Prop()
-  value: string;
+  @Prop({
+    type: [
+      {
+        name: String,
+        value: String,
+      },
+    ],
+    default: [],
+  })
+  propertyList: { name: string; value: string }[];
 }
 @Schema({ timestamps: true, collection: 'product_detail_description' })
 export class ProductDescription {

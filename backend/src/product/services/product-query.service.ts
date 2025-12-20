@@ -55,8 +55,117 @@ export class ProductQueryService {
   ) {}
 
   //filter
-  async buildQueryPipeline(
-    role: string,
+  async buildAdminQueryPipeline(
+    filter: {
+      queryProductName: string;
+      queryCategoryName: string;
+      queryProductSku: string;
+      productTab: string;
+      stockState: string;
+      categoryId: string;
+    },
+    pagination: {
+      from: number;
+      size: number;
+    },
+    sortBy: string,
+  ) {
+    const {
+      queryProductName,
+      queryCategoryName,
+      queryProductSku,
+      productTab,
+      stockState,
+      categoryId,
+    } = filter;
+    const { from, size } = pagination;
+    // console.log('F: ', filters);
+    // console.log('P: ', pagination);
+    const queryPipeline: any = [];
+
+    const matchStage: any = {};
+    if (queryProductName) {
+      matchStage.name = {
+        $regex: queryProductName.trim(),
+        $options: 'i',
+      };
+    }
+    if (queryCategoryName) {
+      matchStage.categoryName = {
+        $regex: queryCategoryName.trim(),
+        $options: 'i',
+      };
+    }
+    if (queryProductSku) {
+      matchStage.sku = {
+        $regex: queryProductSku.trim(),
+        $options: 'i',
+      };
+    }
+    if (productTab) {
+      if (productTab === 'published') {
+        matchStage.isPublished = true;
+        matchStage.isDrafted = false;
+        matchStage.isDeleted = false;
+      } else if (productTab === 'not-published') {
+        matchStage.isPublished = false;
+        matchStage.isDrafted = false;
+        matchStage.isDeleted = false;
+      } else if (productTab === 'draft') {
+        matchStage.isPublished = false;
+        matchStage.isDrafted = true;
+        matchStage.isDeleted = false;
+      } else if (productTab === 'deleted') {
+        matchStage.isDeleted = true;
+      }
+    }
+    if (stockState) {
+      if (stockState === '1') {
+        matchStage.totalStock = { $eq: 0 };
+      } else if (stockState === '0') {
+        matchStage.totalStock = { $gt: 0 };
+      }
+    }
+    if (categoryId) {
+      matchStage.categoryId = categoryId;
+    }
+    //sort
+    const sortObj: any = {};
+
+    if (sortBy === 'newest') sortObj.createdAt = -1;
+    if (sortBy === 'alphabetical-az') sortObj.name = -1;
+    if (sortBy === 'alphabetical-za') sortObj.name = 1;
+
+    //pagination:
+    const skip = (Number(from) - 1) * size;
+
+    if (Object.keys(matchStage).length > 0) {
+      queryPipeline.push({ $match: matchStage });
+    }
+    if (Object.keys(sortObj).length > 0) {
+      queryPipeline.push({
+        $facet: {
+          productList: [
+            { $sort: sortObj },
+            { $skip: skip },
+            { $limit: Number(size) },
+          ],
+          total: [{ $count: 'count' }],
+        },
+      });
+    } else {
+      queryPipeline.push({
+        $facet: {
+          productList: [{ $skip: skip }, { $limit: Number(size) }],
+          total: [{ $count: 'count' }],
+        },
+      });
+    }
+    queryPipeline.push({ $match: {} });
+    return queryPipeline;
+  }
+
+  async buildClientQueryPipeline(
     filters: {
       search?: string;
       categoryIdList?: string;
@@ -76,8 +185,8 @@ export class ProductQueryService {
     const { categoryIdList, colorList, sizeList, priceMin, priceMax, search } =
       filters;
     const { from, size } = pagination;
-    console.log('F: ', filters);
-    console.log('P: ', pagination);
+    // console.log('F: ', filters);
+    // console.log('P: ', pagination);
     const queryPipeline: any = [];
     if (search) {
       queryPipeline.push({
@@ -85,21 +194,20 @@ export class ProductQueryService {
           index: 'search_index',
           text: {
             query: search,
-            path: 'name',
+            path: ['name', 'categoryName'],
           },
         },
       });
     }
-    if (role === 'CLIENT') {
-      queryPipeline.push({
-        $match: {
-          isDeleted: false,
-          isPublished: true,
-          isDrafted: false,
-          totalStock: { $gt: 0 },
-        },
-      });
-    }
+    queryPipeline.push({
+      $match: {
+        isDeleted: false,
+        isPublished: true,
+        isDrafted: false,
+        totalStock: { $gt: 0 },
+      },
+    });
+
     if (categoryIdList) {
       queryPipeline.push({
         $match: {
@@ -304,6 +412,7 @@ export class ProductQueryService {
         pagination,
       });
     }
+    // console.log('FI: ', filters.categoryId);
     let catId = filters.categoryId;
     const catDetail = await this.categoryService.getCategoryDetail(catId);
     if (!catDetail) {
@@ -346,25 +455,42 @@ export class ProductQueryService {
   async getAllProduct({ role, filters, sortBy, pagination }) {
     //filter => sort => pagination
 
-    const queryPipeline: any = await this.buildQueryPipeline(
-      role,
-      filters,
-      pagination,
-      sortBy,
-    );
-    console.log('Query object: ', queryPipeline);
+    let queryPipeline: any;
+    if (role === 'CLIENT') {
+      queryPipeline = await this.buildClientQueryPipeline(
+        filters,
+        pagination,
+        sortBy,
+      );
+    } else if (role === 'ADMIN') {
+      queryPipeline = await this.buildAdminQueryPipeline(
+        filters,
+        pagination,
+        sortBy,
+      );
+    }
+
+    console.log('Query pipeline: ', queryPipeline);
 
     //console.log('P: ', pagination);
     let result: any = await this.productModel.aggregate(queryPipeline);
 
     // .sort(sortObj),
-    console.log('Result: ', result);
     const productList = result[0].productList;
+
+    //admin
+    // console.log('Result: ', result[0]);
+    let totalItemAdmin = 0;
+    if (role === 'ADMIN' && result[0].productList.length > 0) {
+      totalItemAdmin = result[0].total[0].count;
+    }
     // console.log('T: ', totalItem);
     // console.log('PL: ', productList);
     const metadata1 = result[0].stage1ComputedResults;
     const metadata2 = result[0].stage2ComputedResults;
     // const metadata1 = result[0].stage1ComputedResults;
+
+    ////JOIN MORE DATA
     if (role === 'ADMIN') {
       const productListPromises = productList.map(async (product) => {
         const { minPrice, maxPrice } =
@@ -386,8 +512,8 @@ export class ProductQueryService {
       });
       let _productList = await Promise.all(productListPromises);
       return {
-        data: _productList,
-        metadata: { ...metadata1[0], ...metadata2 },
+        productList: _productList,
+        metadata: { totalItem: totalItemAdmin },
       };
     } else {
       //all color & sizes
@@ -436,7 +562,7 @@ export class ProductQueryService {
     const category = await this.categoryService.getCategoryDetail(categoryId);
     if (!category) {
       throw new InternalServerErrorException(
-        'Không tồn tại danh mục tương ứng',
+        'Không tồn tại danh mục tương ứng ' + categoryId.toString(),
       );
     }
     return category.categoryName;
@@ -577,9 +703,9 @@ export class ProductQueryService {
   }
   async getProductPropertyList(product: ProductDocument) {
     const { productId } = product;
-    const data = await this.productPropertyModel
-      .find({ productId: productId })
-      .lean();
+    const data = await this.productPropertyModel.findOne({
+      productId: productId,
+    });
     // console.log('Property list: ', data);
     return data;
   }
@@ -599,7 +725,7 @@ export class ProductQueryService {
       throw new InternalServerErrorException('Product not found!');
     }
     const propertyListDb = await this.getProductPropertyList(product);
-    const propertyList = propertyListDb.map((property) => ({
+    const propertyList = propertyListDb?.propertyList.map((property) => ({
       name: property.name,
       value: property.value,
     }));
@@ -639,7 +765,7 @@ export class ProductQueryService {
     }
     const categoryName = category.categoryName;
     const propertyListDb = await this.getProductPropertyList(product);
-    const propertyList = propertyListDb.map((property) => ({
+    const propertyList = propertyListDb?.propertyList.map((property) => ({
       name: property.name,
       value: property.value,
     }));

@@ -16,12 +16,14 @@ import {
   XIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
 export default function UploadComponent({
   maxSize = 10 * 1024 * 1024,
   accept = "image/*",
   className,
   onImageChange,
   uploadComponentId,
+  initialImageUrl = null, // 👈 1. Add this prop
 }) {
   const [coverImage, setCoverImage] = useState({
     id: null,
@@ -29,10 +31,22 @@ export default function UploadComponent({
     preview: null,
   });
 
-  const [imageLoading, setImageLoading] = useState(true);
+  const [imageLoading, setImageLoading] = useState(false); // Changed default to false
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState(null);
+
+  // 👇 2. Add this useEffect to handle the pre-loaded URL
+  useEffect(() => {
+    if (initialImageUrl) {
+      setCoverImage({
+        id: "preloaded",
+        file: null, // No file object exists for a URL
+        preview: initialImageUrl,
+      });
+      setImageLoading(true); // Set loading to true so the <img> onLoad can turn it off
+    }
+  }, [initialImageUrl]);
 
   const [
     { isDragging, errors },
@@ -233,6 +247,7 @@ export default function UploadComponent({
         )}
       </div>
 
+      {/* Error Alerts remain the same... */}
       {errors.length > 0 && (
         <Alert variant="destructive" appearance="light" className="mt-5">
           <AlertIcon>

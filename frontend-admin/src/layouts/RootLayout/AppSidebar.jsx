@@ -22,7 +22,7 @@ import { Book, Box, Pen, Pencil, UserCircle2 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 const sidebarItems = [
-  { title: "Quản lý khách hàng", url: "/customer", icon: UserCircle2 },
+  { title: "Quản lý khách hàng", url: "/user", icon: UserCircle2 },
   {
     group: "Sản phẩm",
     children: [

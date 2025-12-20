@@ -1,18 +1,49 @@
-export function buildCategoryNameRecursively(category, allCategories) {
-  if (!allCategories) {
+export function buildCategoryTree(categoryList) {
+  if (!categoryList) {
+    return;
+  }
+  function BuildRecursiveChildren(categoryList, currentCategory) {
+    const allChildren = categoryList.filter(
+      (category) => category.parentId === currentCategory._id
+    );
+    // console.log("CP: ", currentCategory);
+    // console.log("CC: ", allChildren);
+    if (allChildren.length === 0) {
+      return;
+    }
+
+    currentCategory.children = allChildren;
+    currentCategory.children.forEach((children) =>
+      BuildRecursiveChildren(categoryList, children)
+    );
+  }
+  const cleanedData = categoryList.map((category) => ({
+    name: category.categoryName,
+    _id: category.categoryId,
+    id: category.categoryId,
+    parentId: category.parentId,
+  }));
+  //first tier
+  const categoryTree = cleanedData.filter((category) => !category.parentId);
+  categoryTree.map((children) => BuildRecursiveChildren(cleanedData, children));
+  return categoryTree;
+}
+
+export function buildCategoryNameRecursively(category, categoryList) {
+  if (!categoryList) {
     return;
   }
   if (!category.parentId) {
     return category.categoryName;
   }
-  const parent = allCategories.find(
+  const parent = categoryList.find(
     (element) => element.categoryId === category.parentId
   );
   if (!parent) {
     return category.categoryName;
   }
   return (
-    buildCategoryNameRecursively(parent, allCategories) +
+    buildCategoryNameRecursively(parent, categoryList) +
     " > " +
     category.categoryName
   );
@@ -53,4 +84,7 @@ export function generatePageNumberArray(totalPage, currentPage, pageSlot) {
   }
   // console.log(pageNumberArray);
   return pageNumberArray;
+}
+export function buildQueryStringFromObject(queryString) {
+  return new URLSearchParams(queryString).toString();
 }

@@ -1,10 +1,9 @@
-// hooks/useCustomer.js
 import { useState, useEffect, useCallback, useMemo } from "react";
 import userApi from "@/api/userApi"; // Keeping your existing API import
 import { toast } from "sonner";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
-export const useCustomer = () => {
+export const useCustomerManagement = () => {
   const [searchParam, setSearchParam] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -15,8 +14,9 @@ export const useCustomer = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   // Pagination & Filter State
-  const from = useMemo(() => searchParam.get("from")) || 1;
-  const size = useMemo(() => Number(searchParam.get("size"))) || 10;
+  const from = useMemo(() => searchParam.get("from"), [searchParam]) || 1;
+  const size =
+    useMemo(() => Number(searchParam.get("size")), [searchParam]) || 10;
   const queryName = useMemo(() => searchParam.get("queryName")) || "";
   const queryEmail = useMemo(() => searchParam.get("queryEmail")) || "";
   const queryPhone = useMemo(() => searchParam.get("queryPhone")) || "";

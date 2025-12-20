@@ -94,7 +94,7 @@ export const InputWithStartAddOn = ({
           placeholder={placeholder}
           className="-ms-px rounded-l-none shadow-none"
           value={inputValue}
-          onChange={onInputValueChange}
+          onInput={onInputValueChange}
         />
       </div>
     </div>

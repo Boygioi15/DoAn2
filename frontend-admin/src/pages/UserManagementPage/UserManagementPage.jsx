@@ -1,5 +1,5 @@
 import React, { createContext, useState } from "react";
-import { useCustomer } from "@/hooks/useCustomer";
+import { useCustomerManagement } from "@/hooks/useCustomerManagement";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { FileSpreadsheet } from "lucide-react"; // Changed icon to Spreadsheet for Excel
@@ -21,11 +21,11 @@ import { CustomerDetailPanel } from "./components/CustomerDetailPanel";
 import { InputWithStartAddOn } from "@/reusable-component/Input";
 import { SelectWithStartAddOn } from "@/reusable-component/Select";
 import CustomerSearchToolbar from "./components/CustomerSearchToolbar";
-import CustomerPagination from "../../reusable-component/PaginationRow";
+import CustomerPagination from "@/reusable-component/PaginationRow";
 
 const customerLocalContext = createContext();
 
-export default function CustomerManagementPage() {
+export default function UserManagementPage() {
   const {
     filteredCustomerList,
     metadata,
@@ -53,7 +53,7 @@ export default function CustomerManagementPage() {
     handleUnbanUser,
 
     getUserDetail,
-  } = useCustomer();
+  } = useCustomerManagement();
   return (
     <div className={reusableStyle.page}>
       <div className={reusableStyle.block}>

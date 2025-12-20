@@ -80,7 +80,7 @@ export class ProductDeleteService {
   async restoreProduct(productId: string) {
     const result = await this.productModel.findOneAndUpdate(
       { productId },
-      { isDeleted: false },
+      { isDeleted: false, isPublished: false },
     );
     // console.log(result);
     return result;
