@@ -119,6 +119,9 @@ export class ChatService {
 
       // Process each tool call
       for (const toolCall of assistantMessage.tool_calls) {
+        // Type guard for function tool calls
+        if (toolCall.type !== 'function') continue;
+
         const functionName = toolCall.function.name;
         const functionArgs = JSON.parse(toolCall.function.arguments);
 
@@ -132,7 +135,7 @@ export class ChatService {
             toolResult = await this.getProductDetail(functionArgs.productId);
           }
         } catch (error) {
-          toolResult = { error: error.message };
+          toolResult = { error: (error as Error).message };
         }
 
         // Add tool result to messages
@@ -175,20 +178,22 @@ export class ChatService {
     sortBy?: string;
   }) {
     try {
-      const { productList, metadata } =
-        await this.productQueryService.getAllProductWrapper({
-          role: 'CLIENT',
-          filters: {
-            search: args.query,
-            priceMin: args.priceMin,
-            priceMax: args.priceMax,
-          },
-          pagination: {
-            from: 1,
-            size: 6, // Limit to 6 products for chat context
-          },
-          sortBy: args.sortBy || 'newest',
-        });
+      const result = await this.productQueryService.getAllProductWrapper({
+        role: 'CLIENT',
+        filters: {
+          search: args.query,
+          priceMin: args.priceMin,
+          priceMax: args.priceMax,
+        },
+        pagination: {
+          from: 1,
+          size: 6, // Limit to 6 products for chat context
+        },
+        sortBy: args.sortBy || 'newest',
+      });
+
+      const productList = result.productList || [];
+      const metadata = result.metadata;
 
       // Format products for the AI to understand
       const formattedProducts = productList.map((p: any) => ({

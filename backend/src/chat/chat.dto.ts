@@ -1,6 +1,6 @@
 export class ChatMessageDto {
   message: string;
-  conversationHistory?: { role: 'user' | 'assistant' | 'tool'; content: string }[];
+  conversationHistory?: { role: 'user' | 'assistant'; content: string }[];
 }
 
 export class ChatResponseDto {
