@@ -20,12 +20,14 @@ import {
   ArrowDownToLine,
   CircleUserRound,
   Headset,
+  Image,
   MessageCircle,
   Mic,
   User,
 } from 'lucide-react';
 import { CartWrapper } from './CartComponent';
 import { SpeechToTextDialog } from '@/components/SpeechToTextDialog';
+import { ImageSearchDialog } from '@/components/ImageSearchDialog';
 
 export default function RootLayout({ children }) {
   return (
@@ -78,10 +80,16 @@ export function TopLayout() {
 
   const [search, setSearch] = useState('');
   const [isSpeechToTextOpen, setIsSpeechToTextOpen] = useState(false);
+  const [isImageSearchOpen, setIsImageSearchOpen] = useState(false);
 
   const handleSpeechTranscript = (transcript) => {
     setSearch(transcript);
     navigate(`/search?query=${encodeURIComponent(transcript)}`);
+  };
+
+  const handleImageSearchResults = (results) => {
+    // Navigate to search results page with image search results
+    navigate('/search', { state: { imageSearchResults: results } });
   };
 
   return (
@@ -90,6 +98,11 @@ export function TopLayout() {
         open={isSpeechToTextOpen}
         onOpenChange={setIsSpeechToTextOpen}
         onTranscript={handleSpeechTranscript}
+      />
+      <ImageSearchDialog
+        open={isImageSearchOpen}
+        onOpenChange={setIsImageSearchOpen}
+        onSearchResults={handleImageSearchResults}
       />
       <TopLayout_TopBanner />
       <TopLayout_MessageRotator />
@@ -118,6 +131,14 @@ export function TopLayout() {
               title="Tìm kiếm bằng giọng nói"
             >
               <Mic style={{ width: '20px', height: '20px' }} />
+            </Button>
+            <Button
+              variant={'ghost'}
+              size={'icon'}
+              onClick={() => setIsImageSearchOpen(true)}
+              title="Tìm kiếm bằng hình ảnh"
+            >
+              <Image style={{ width: '20px', height: '20px' }} />
             </Button>
           </div>
           {!loggedIn ? (
