@@ -39,6 +39,7 @@ export class FrontendSettingController {
   async updateHomepageBanner(
     @UploadedFiles() bannerFile: Express.Multer.File[],
   ) {
+    console.log('Banner file: ', bannerFile);
     return await this.frontendSettingService.updateHomepageBanner(bannerFile);
   }
   @Post('toplayout-rotator-message')

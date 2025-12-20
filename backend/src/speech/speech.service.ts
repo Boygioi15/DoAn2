@@ -22,9 +22,7 @@ export class SpeechService {
   /**
    * Convert speech audio to text using OpenAI Whisper API
    */
-  async speechToText(
-    dto: SpeechToTextDto,
-  ): Promise<SpeechToTextResponseDto> {
+  async speechToText(dto: SpeechToTextDto): Promise<SpeechToTextResponseDto> {
     let tempFilePath: string | null = null;
 
     try {
@@ -69,9 +67,9 @@ export class SpeechService {
       // Call OpenAI Whisper API
       const transcription = await this.openai.audio.transcriptions.create({
         file: fs.createReadStream(tempFilePath),
-        model: 'whisper-1',
+        model: 'gpt-4o-transcribe',
         language: languageCode, // 'vi' for Vietnamese
-        response_format: 'verbose_json', // Get more details including confidence
+        response_format: 'json', // Get more details including confidence
       });
 
       // Clean up temp file
@@ -112,6 +110,4 @@ export class SpeechService {
       );
     }
   }
-
 }
-
