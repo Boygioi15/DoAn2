@@ -21,9 +21,12 @@ import {
   CircleUserRound,
   Headset,
   MessageCircle,
+  Mic,
   User,
 } from 'lucide-react';
 import { CartWrapper } from './CartComponent';
+import { SpeechToTextDialog } from '@/components/SpeechToTextDialog';
+
 export default function RootLayout({ children }) {
   return (
     <ModalContextProvider>
@@ -74,8 +77,20 @@ export function TopLayout() {
   loggedIn = !!authStore.refreshToken;
 
   const [search, setSearch] = useState('');
+  const [isSpeechToTextOpen, setIsSpeechToTextOpen] = useState(false);
+
+  const handleSpeechTranscript = (transcript) => {
+    setSearch(transcript);
+    navigate(`/search?query=${encodeURIComponent(transcript)}`);
+  };
+
   return (
     <div className="TopLayout">
+      <SpeechToTextDialog
+        open={isSpeechToTextOpen}
+        onOpenChange={setIsSpeechToTextOpen}
+        onTranscript={handleSpeechTranscript}
+      />
       <TopLayout_TopBanner />
       <TopLayout_MessageRotator />
       <div className="TopLayout_Toolbar">
@@ -95,6 +110,15 @@ export function TopLayout() {
                 }
               }}
             />
+            <Button
+              variant={'ghost'}
+              size={'icon'}
+              className="ml-2"
+              onClick={() => setIsSpeechToTextOpen(true)}
+              title="Tìm kiếm bằng giọng nói"
+            >
+              <Mic style={{ width: '20px', height: '20px' }} />
+            </Button>
           </div>
           {!loggedIn ? (
             <Button
