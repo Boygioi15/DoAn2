@@ -703,7 +703,7 @@ export class ProductQueryService {
   }
   async getProductPropertyList(product: ProductDocument) {
     const { productId } = product;
-    const data = await this.productPropertyModel.findOne({
+    const data = await this.productPropertyModel.find({
       productId: productId,
     });
     // console.log('Property list: ', data);
@@ -724,11 +724,7 @@ export class ProductQueryService {
     if (!product) {
       throw new InternalServerErrorException('Product not found!');
     }
-    const propertyListDb = await this.getProductPropertyList(product);
-    const propertyList = propertyListDb?.propertyList.map((property) => ({
-      name: property.name,
-      value: property.value,
-    }));
+    const propertyList = await this.getProductPropertyList(product);
     const descriptionDb = await this.getProductDescription(product);
     const description = descriptionDb?.description;
     const options = await this.getAllProductOptions(product);
@@ -764,11 +760,7 @@ export class ProductQueryService {
       throw new InternalServerErrorException('Không có category tương ứng!');
     }
     const categoryName = category.categoryName;
-    const propertyListDb = await this.getProductPropertyList(product);
-    const propertyList = propertyListDb?.propertyList.map((property) => ({
-      name: property.name,
-      value: property.value,
-    }));
+    const propertyList = await this.getProductPropertyList(product);
     const descriptionDb = await this.getProductDescription(product);
     const description = descriptionDb?.description;
     let allProductVariants = await this.getAllVariantsOfProduct(product);

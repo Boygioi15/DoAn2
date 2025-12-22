@@ -1,4 +1,9 @@
+import categoryApi from "@/api/categoryApi";
+import { productApi } from "@/api/productApi";
+import { slugifyOption } from "@/constants";
 import { useEffect, useMemo, useRef, useState } from "react";
+import slugify from "slugify";
+import { toast } from "sonner";
 import { v4 } from "uuid";
 
 const variant1Default = {
@@ -30,25 +35,27 @@ export default function useAddProduct() {
   const [allCategories, setAllCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [thumbnailFile, setThumbnailFile] = useState(null);
-  const [productProperties, setProductProperties] = useState([
+  const [propertyList, setProductPropertyList] = useState([
     { name: "", value: "" },
   ]);
   const [productDescription, setProductDescription] = useState("");
   const [variant1, setVariant1] = useState(variant1Default);
   const [variant2, setVariant2] = useState(variant2Default);
-  const [variantDetail, setVariantDetail] = useState([]);
+  const [variantDetailList, setVariantDetailList] = useState([]);
 
+  const [sizeList, setSizeList] = useState([]);
   const [formErrors, setFormErrors] = useState({
     basicInfoError: [],
-    propertiesError: [],
+    propertyListError: [],
     descriptionError: [],
     variant1Error: [],
     variant2Error: [],
-    variantTableError: [],
+    sizeListError: [],
+    variantDetailListError: [],
   });
 
   const addNewProperty = () => {
-    setProductProperties((prev) => [...prev, { name: "", value: "" }]);
+    setProductPropertyList((prev) => [...prev, { name: "", value: "" }]);
   };
   //basic info block
   const getAllCategory = async () => {
@@ -71,8 +78,33 @@ export default function useAddProduct() {
     return leaf;
   }, [allCategories]);
 
-  //variant table
-  useEffect(() => {
+  //variant detail
+  const [allPrice, setAllPrice] = useState("");
+  const [allStock, setAllStock] = useState("");
+  const [allSellerSku, setAllSellerSku] = useState("");
+
+  const handleSubmitApplyAllToolbar = () => {
+    const newVariantDetailList = variantDetailList.map((variant, index) => {
+      const newVariant = { ...variant };
+      if (allPrice.trim() !== "") {
+        newVariant.sellingPrice = allPrice;
+      }
+      if (allStock.trim() !== "") {
+        newVariant.stock = allStock;
+      }
+      if (allSellerSku.trim() !== "") {
+        newVariant.sellerSku = allSellerSku + `-${index + 1}`;
+      }
+      return newVariant;
+    });
+    setVariantDetailList(newVariantDetailList);
+  };
+  const handleRefreshApplyAllToolbar = () => {
+    setAllPrice("");
+    setAllStock("");
+    setAllSellerSku("");
+  };
+  const generateVariantDetailFromVariant = () => {
     if (!variant1 && !variant2) {
       const specialCase = [
         {
@@ -83,21 +115,21 @@ export default function useAddProduct() {
           isOpenToSale: true,
         },
       ];
-      setVariantDetail(specialCase);
+      setVariantDetailList(specialCase);
       return;
     }
-    const oldDataRow = variantDetail;
+    const oldDataRow = variantDetailList;
     const newDataRow = [];
     const v1Exist = variant1 && variant1.valueList.length > 1;
     const v2Exist = variant2 && variant2.valueList.length > 1;
     //generating new data
+    // console.log("V1: ", variant1);
     if (v1Exist) {
       //loop through and create daata
       //preprocess variant value list
       let variant1ValueList = variant1.valueList;
-      variant1ValueList = variant1ValueList.slice(
-        0,
-        variant1ValueList.length - 1
+      variant1ValueList = variant1ValueList.filter(
+        (value) => value.name.trim().length > 0
       );
       if (!v2Exist) {
         for (let i = 0; i < variant1ValueList.length; i++) {
@@ -117,9 +149,8 @@ export default function useAddProduct() {
         }
       } else {
         let variant2ValueList = variant2.valueList;
-        variant2ValueList = variant2ValueList.slice(
-          0,
-          variant2ValueList.length - 1
+        variant2ValueList = variant2ValueList.filter(
+          (value) => value.name.trim().length > 0
         );
         for (let i = 0; i < variant1ValueList.length; i++) {
           for (let j = 0; j < variant2ValueList.length; j++) {
@@ -183,47 +214,46 @@ export default function useAddProduct() {
     // console.log("A3");
     // console.log("O:", oldDataRow);
     // console.log("N: ", newDataRow);
-    setVariantDetail(newDataRow);
+    setVariantDetailList(newDataRow);
+  };
+  useEffect(() => {
+    generateVariantDetailFromVariant();
   }, [variant1, variant2]);
 
-  //tracker - ui state
-  const basicInfoRef = useRef(null);
-  const propertiesRef = useRef(null);
-  const descriptionRef = useRef(null);
-  const variantsRef = useRef(null);
+  //size list
+  const [useSize1, setUseSize1] = useState(true);
+  const [useSize2, setUseSize2] = useState(true);
+  const [useSize3, setUseSize3] = useState(true);
+  const [useSize4, setUseSize4] = useState(true);
+  const [useSize5, setUseSize5] = useState(true);
 
-  const [currentStep, setCurrentStep] = useState(0);
-
-  useEffect(() => {
-    const sections = [
-      basicInfoRef.current,
-      propertiesRef.current,
-      descriptionRef.current,
-      variantsRef.current,
-    ];
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const index = sections.indexOf(entry.target);
-            if (index !== -1) setCurrentStep(index + 1);
-          }
+  const generateNewSizeListDataFromVariant = (newVariant2) => {
+    const oldSizeList = [...sizeList];
+    const newSizeList = [];
+    newVariant2.valueList.forEach((value) => {
+      if (value.name.trim().length > 0)
+        newSizeList.push({
+          name: value.name,
+          fit: {
+            height: { min: "", max: "" },
+            weight: { min: "", max: "" },
+            bust: { min: "", max: "" },
+            waist: { min: "", max: "" },
+            hip: { min: "", max: "" },
+          },
         });
-      },
-      {
-        threshold: 0.3, // 30% visible triggers activation
-        rootMargin: "-10% 0px -40% 0px", // feels natural like Shopee/Lazada
+    });
+    //help filler;
+    oldSizeList.forEach((oldSize) => {
+      for (let i = 0; i < newSizeList.length; i++) {
+        if (oldSize.name === newSizeList[i].name) {
+          newSizeList[i] = oldSize;
+          break;
+        }
       }
-    );
-
-    sections.forEach((sec) => sec && observer.observe(sec));
-
-    return () => observer.disconnect();
-  }, []);
-
-  //tip
-  const [tipState, setTipState] = useState(0);
+    });
+    setSizeList(newSizeList);
+  };
 
   //error
   const basicFirstRun = useRef(true);
@@ -252,34 +282,48 @@ export default function useAddProduct() {
     }
     setFormErrors((prev) => ({ ...prev, basicInfoError: newErrorList }));
   }, [productName, selectedCategory, thumbnailFile]);
+  useEffect(() => {
+    if (descriptionFirstRun.current) {
+      descriptionFirstRun.current = false;
+      return;
+    }
 
+    const newErrorList = [];
+    // if (productDescription.length < 20) {
+    //   console.log("PD: ", productDescription);
+    //   newErrorList.push("Mô tả sản phẩm quá ngắn!");
+    // }
+    //console.log(newErrorList);
+    setFormErrors((prev) => ({ ...prev, descriptionError: newErrorList }));
+  }, [productDescription]);
   //properties
   useEffect(() => {
     if (propertiesFirstRun.current) {
-      // console.log("A");
       propertiesFirstRun.current = false;
       return;
     }
+
     //at least 3 properties & no blank, no same name
     const newErrorList = [];
-    // if (productProperties.length < 1) {
+    // if (propertyList.length < 1) {
     //   newErrorList.push("Phải có ít nhất 1 thuộc tính sản phẩm");
     // }
-    // productProperties.some((element) => {
-    //   if (element.name.trim() === "" || element.value.trim() === "") {
-    //     newErrorList.push("Không được để trống dòng thuộc tính");
-    //     return true; // stops iteration early
-    //   }
-    // });
-    const names = productProperties.map((property) => property.name);
+    propertyList.some((element) => {
+      if (element.name.trim() === "" || element.value.trim() === "") {
+        newErrorList.push("Không được để trống dòng thuộc tính");
+        return true; // stops iteration early
+      }
+    });
+    const names = propertyList.map((property) => property.name);
     const sNames = new Set(names);
     if (names.length !== sNames.size) {
       console.log("S: ", sNames);
       console.log("N: ", names);
       newErrorList.push("Các thuộc tính không được trùng tên với nhau");
     }
-    setFormErrors((prev) => ({ ...prev, propertiesError: newErrorList }));
-  }, [productProperties]);
+    setFormErrors((prev) => ({ ...prev, propertyListError: newErrorList }));
+  }, [propertyList]);
+
   useEffect(() => {
     if (!variant1) return;
     if (variant1FirstRun.current) {
@@ -346,25 +390,14 @@ export default function useAddProduct() {
     }
     setFormErrors((prev) => ({ ...prev, variant2Error: newErrorList }));
   }, [variant2]);
-  useEffect(() => {
-    if (descriptionFirstRun.current) {
-      descriptionFirstRun.current = false;
-      return;
-    }
-    const newErrorList = [];
-    if (productDescription.length < 20) {
-      newErrorList.push("Mô tả sản phẩm quá ngắn!");
-    }
-    //console.log(newErrorList);
-    setFormErrors((prev) => ({ ...prev, descriptionError: newErrorList }));
-  }, [productDescription]);
+
   useEffect(() => {
     if (variantTableFirstRun.current) {
       variantTableFirstRun.current = false;
       return;
     }
     const newErrorList = [];
-    for (const dataRow of variantDetail) {
+    for (const dataRow of variantDetailList) {
       if (
         dataRow.sellingPrice.trim() === "" ||
         dataRow.sellerSku.trim() === "" ||
@@ -375,21 +408,24 @@ export default function useAddProduct() {
       }
     }
     const sellerSkuSet = new Set();
-    for (const dataRow of variantDetail) {
+    for (const dataRow of variantDetailList) {
       if (sellerSkuSet.has(dataRow.sellerSku)) {
         newErrorList.push("Không được trùng tên seller sku");
         break;
       }
       sellerSkuSet.add(dataRow.sellerSku);
     }
-    setFormErrors((prev) => ({ ...prev, variantTableError: newErrorList }));
-  }, [variantDetail]);
+    setFormErrors((prev) => ({
+      ...prev,
+      variantDetailListError: newErrorList,
+    }));
+  }, [variantDetailList]);
   const hasError = useMemo(() => {
     // console.log(formErrors);
     if (
       formErrors.basicInfoError.length > 0 ||
       formErrors.descriptionError.length > 0 ||
-      formErrors.propertiesError.length > 0 ||
+      formErrors.propertyListError.length > 0 ||
       formErrors.variant1Error.length > 0
     ) {
       return true;
@@ -403,6 +439,7 @@ export default function useAddProduct() {
     try {
       const response = await productApi.createNewProduct(formData);
     } catch (error) {
+      console.log(error);
       toast.error("Có lỗi khi thêm mới sản phẩm");
     }
   };
@@ -421,13 +458,57 @@ export default function useAddProduct() {
     formData.append("categoryId", selectedCategory);
     formData.append("thumbnailFile", thumbnailFile);
 
-    let propertyList = productProperties.filter(
+    let tosendPropertyList = propertyList.filter(
       (property) => property.name !== ""
     );
-    propertyList = JSON.stringify(productProperties);
-    formData.append("propertyList", propertyList);
-
+    formData.append("propertyList", JSON.stringify(tosendPropertyList));
     formData.append("description", productDescription);
+
+    let toSendSizeList = sizeList.map((size) => {
+      const toSendSize = {
+        name: size.name,
+        fit: {},
+      };
+
+      if (useSize1 && size.fit.weight) {
+        toSendSize.fit.weight = {
+          min: size.fit.weight.min,
+          max: size.fit.weight.max,
+        };
+      }
+
+      if (useSize2 && size.fit.height) {
+        toSendSize.fit.height = {
+          min: size.fit.height.min,
+          max: size.fit.height.max,
+        };
+      }
+
+      if (useSize3 && size.fit.bust) {
+        toSendSize.fit.bust = {
+          min: size.fit.bust.min,
+          max: size.fit.bust.max,
+        };
+      }
+
+      if (useSize4 && size.fit.waist) {
+        toSendSize.fit.waist = {
+          min: size.fit.waist.min,
+          max: size.fit.waist.max,
+        };
+      }
+
+      if (useSize5 && size.fit.hip) {
+        toSendSize.fit.hip = {
+          min: size.fit.hip.min,
+          max: size.fit.hip.max,
+        };
+      }
+
+      return toSendSize;
+    });
+
+    formData.append("sizeList", JSON.stringify(toSendSizeList));
 
     //variants & img
     //variantData
@@ -475,13 +556,95 @@ export default function useAddProduct() {
       formData.append("variant2Data", JSON.stringify(_v2));
     }
     // console.log("V1: ", variant1);
-    formData.append("variantTableData", JSON.stringify(variantDetail));
+    formData.append("variantTableData", JSON.stringify(variantDetailList));
     formData.forEach((v, k) => {
       console.log(k, v);
     });
     return formData;
   };
-
+  const handleLoadSampleData = async () => {
+    setProductName("Áo polo dài tay nam test");
+    setProductDescription("<p>Thử sản phẩm</p>");
+    setSelectedCategory("c98e2fe4-7ba5-4881-a313-421134145b63");
+    setProductPropertyList([
+      { name: "Chống nắng", value: "Có" },
+      { name: "Chống mưa", value: "Có" },
+      { name: "Chất liệu", value: "30% trắng 70% xanh" },
+    ]);
+    setVariant1({
+      index: 0,
+      name: "Màu sắc",
+      valueList: [
+        {
+          name: "Xanh",
+          img: [],
+          tempId: v4(),
+        },
+        {
+          name: "Đỏ",
+          img: [],
+          tempId: v4(),
+        },
+      ],
+    });
+    setVariant2({
+      index: 1,
+      name: "Kích cỡ",
+      valueList: [
+        {
+          name: "S",
+          img: [],
+          tempId: v4(),
+        },
+        {
+          name: "M",
+          img: [],
+          tempId: v4(),
+        },
+        {
+          name: "L",
+          img: [],
+          tempId: v4(),
+        },
+      ],
+    });
+    generateVariantDetailFromVariant();
+    setSizeList([
+      {
+        name: "S",
+        fit: {
+          height: { min: 150, max: 158 },
+          weight: { min: 42, max: 48 },
+          bust: { min: 78, max: 84 },
+          waist: { min: 58, max: 64 },
+          hip: { min: 82, max: 88 },
+        },
+      },
+      {
+        name: "M",
+        fit: {
+          height: { min: 158, max: 165 },
+          weight: { min: 48, max: 55 },
+          bust: { min: 84, max: 90 },
+          waist: { min: 64, max: 70 },
+          hip: { min: 88, max: 94 },
+        },
+      },
+      {
+        name: "L",
+        fit: {
+          height: { min: 165, max: 172 },
+          weight: { min: 55, max: 62 },
+          bust: { min: 90, max: 96 },
+          waist: { min: 70, max: 76 },
+          hip: { min: 94, max: 100 },
+        },
+      },
+    ]);
+    setAllPrice("499000");
+    setAllStock("20");
+    setAllSellerSku("ao-polo-nam-test");
+  };
   return {
     // ---------- Basic product data ----------
     productName,
@@ -496,8 +659,8 @@ export default function useAddProduct() {
     setProductDescription,
 
     // ---------- Properties ----------
-    productProperties,
-    setProductProperties,
+    propertyList,
+    setProductPropertyList,
     addNewProperty,
 
     // ---------- Variants ----------
@@ -505,26 +668,42 @@ export default function useAddProduct() {
     setVariant1,
     variant2,
     setVariant2,
-    variantDetail,
-    setVariantDetail,
+    variantDetailList,
+    setVariantDetailList,
+
+    //sizes
+    sizeList,
+    setSizeList,
+
+    useSize1,
+    useSize2,
+    useSize3,
+    useSize4,
+    useSize5,
+    setUseSize1,
+    setUseSize2,
+    setUseSize3,
+    setUseSize4,
+    setUseSize5,
+    generateNewSizeListDataFromVariant,
+
+    allPrice,
+    setAllPrice,
+    allStock,
+    setAllStock,
+    allSellerSku,
+    setAllSellerSku,
+    handleRefreshApplyAllToolbar,
+    handleSubmitApplyAllToolbar,
 
     // ---------- Validation ----------
     formErrors,
+    setFormErrors,
     hasError,
-
-    // ---------- UI refs (scroll / tracking) ----------
-    basicInfoRef,
-    propertiesRef,
-    descriptionRef,
-    variantsRef,
-
-    // ---------- Step / tips ----------
-    currentStep,
-    tipState,
-    setTipState,
 
     // ---------- Submit actions ----------
     handlePublishSubmit,
     handleDraftSubmit,
+    handleLoadSampleData,
   };
 }

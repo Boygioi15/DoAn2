@@ -20,6 +20,9 @@ h3 {
   font-size: 16px;
   font-weight: 500;
 }
+h6 {
+  line-height: 20px;
+}
 .lucide {
   width: 20px !important;
   height: 20px !important;

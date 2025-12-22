@@ -1,0 +1,203 @@
+import { useContext } from "react";
+import { AddNewProductPageContext } from "../AddNewProductPage";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+
+import { Button } from "@/components/ui/button";
+
+export default function VariantDetailBlock() {
+  const addProductContext = useContext(AddNewProductPageContext);
+  //how many variant?
+  let total = 0;
+  const v1Exist =
+    addProductContext.variant1 &&
+    addProductContext.variant1.valueList.length > 1;
+  const v2Exist =
+    addProductContext.variant2 &&
+    addProductContext.variant2.valueList.length > 1;
+  if (v1Exist) total++;
+  if (v2Exist) total++;
+
+  const setNewvariantDetailList_Temp = (newvariantDetail, index) => {
+    const newList = [...addProductContext.variantDetailList];
+    newList[index] = newvariantDetail;
+    addProductContext.setVariantDetailList(newList);
+  };
+
+  return (
+    <div className={`${reusableStyle.inputBlock}`}>
+      <h2>Chi tiết biến thể</h2>
+      <h6>
+        Nhập chi tiết giá bán, số lượng kho hàng và các thông tin khác cho biến
+        thể
+      </h6>
+      <h2>Giá bán & Kho hàng </h2>
+      {addProductContext.variantDetailList.length > 0 ? (
+        <div className="space-y-2">
+          {total > 0 ? (
+            <section className="flex gap-2 *:>m-w-[100px]">
+              <Input
+                placeholder="Giá"
+                value={addProductContext.allPrice}
+                id={"all-price"}
+                onChange={(e) => addProductContext.setAllPrice(e.target.value)}
+              />
+              <Input
+                placeholder="Kho hàng"
+                id={"all-stock"}
+                value={addProductContext.allStock}
+                onChange={(e) => addProductContext.setAllStock(e.target.value)}
+              />
+              <Input
+                id={"all-seller-sku"}
+                placeholder="SellerSku"
+                value={addProductContext.allSellerSku}
+                onChange={(e) =>
+                  addProductContext.setAllSellerSku(e.target.value)
+                }
+              />
+              <Button
+                id={"apply-all-submit"}
+                onClick={addProductContext.handleSubmitApplyAllToolbar}
+              >
+                Áp dụng cho tất cả
+              </Button>
+              <Button
+                onClick={addProductContext.handleRefreshApplyAllToolbar}
+                variant={"outline"}
+              >
+                Làm mới
+              </Button>
+            </section>
+          ) : (
+            <h6>Trường hợp không có biến thể</h6>
+          )}
+          <Table>
+            <TableHeader>
+              <TableRow>
+                {v1Exist && (
+                  <TableHead className="w-[100px]">
+                    {addProductContext.variant1.name}
+                  </TableHead>
+                )}
+                {v2Exist && (
+                  <TableHead className="w-[100px]">
+                    {addProductContext.variant2.name}
+                  </TableHead>
+                )}
+                <TableHead>Giá</TableHead>
+                <TableHead>Kho hàng</TableHead>
+                <TableHead>SellerSku</TableHead>
+                <TableHead className="w-0">Mở bán</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {addProductContext.variantDetailList.map((row, index) => (
+                <TableRow
+                  key={index}
+                  className={!row.isOpenToSale && "bg-gray-100"}
+                >
+                  {row.v1_name && (
+                    <TableCell>
+                      <Label>{row.v1_name}</Label>
+                    </TableCell>
+                  )}
+                  {row.v2_name && (
+                    <TableCell>
+                      <Label>{row.v2_name}</Label>
+                    </TableCell>
+                  )}
+                  <TableCell>
+                    <Input
+                      value={row.sellingPrice}
+                      onChange={(e) => {
+                        setNewvariantDetailList_Temp(
+                          {
+                            ...row,
+                            sellingPrice: e.target.value,
+                          },
+                          index
+                        );
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Input
+                      value={row.stock}
+                      onChange={(e) => {
+                        setNewvariantDetailList_Temp(
+                          {
+                            ...row,
+                            stock: e.target.value,
+                          },
+                          index
+                        );
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Input
+                      value={row.sellerSku}
+                      onChange={(e) => {
+                        setNewvariantDetailList_Temp(
+                          {
+                            ...row,
+                            sellerSku: e.target.value,
+                          },
+                          index
+                        );
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Switch
+                      disabled={!row.isInUse}
+                      checked={row.isOpenToSale}
+                      onCheckedChange={(e) => {
+                        setNewvariantDetailList_Temp(
+                          {
+                            ...row,
+                            isOpenToSale: e,
+                          },
+                          index
+                        );
+                      }}
+                    />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          {addProductContext.formErrors.variantDetailListError.length > 0 && (
+            <ul style={{ marginBottom: "-4px" }} className="ul-error">
+              {addProductContext.formErrors.variantDetailListError.map(
+                (element, idx) => (
+                  <li key={idx}>{element}</li>
+                )
+              )}
+            </ul>
+          )}
+        </div>
+      ) : (
+        <h6>Hãy tạo hoàn chỉnh biến thể trước!</h6>
+      )}
+    </div>
+  );
+}
+
+const reusableStyle = {
+  inputBlock:
+    "flex flex-col p-[16px] pt-[20px] gap-[20px] rounded-[8px] bg-[white] w-full h-auto shadow-lg",
+  variantBlock: "bg-gray-50 rounded-[4px] flex flex-col gap-6 p-4",
+  errorBorder:
+    " border border-red-200 drop-shadow-[0_0_8px_rgba(255,0,0,0.05)]",
+};

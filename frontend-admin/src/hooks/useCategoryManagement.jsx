@@ -84,6 +84,7 @@ export default function useCategoryManagement() {
       parentId: categoryData.parentId,
     };
     try {
+      console.log("AD: ", data);
       const response = await categoryApi.createNewCategory(data);
       setCategoryList(response.data);
       toast.success("Tạo mới ngành hàng thành công");

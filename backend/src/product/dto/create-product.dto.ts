@@ -3,6 +3,7 @@ export class CreateProductDto {
   categoryId: string;
 
   propertyList: string;
+  sizeList: string;
   description: string;
 
   variant1Data: string;
@@ -13,7 +14,11 @@ export class CreateProductDto {
   //after pushing file
   display_thumbnail_image: string;
 }
-class ProductProperty {
+export class ProductSizeDto {
+  name: string;
+  fit: Record<string, { min: number; max: number }>;
+}
+export class ProductPropertyDto {
   name: string;
   value: string;
 }

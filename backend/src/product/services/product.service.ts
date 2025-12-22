@@ -3,7 +3,11 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { CreateProductDto } from '../dto/create-product.dto';
+import {
+  CreateProductDto,
+  ProductPropertyDto,
+  ProductSizeDto,
+} from '../dto/create-product.dto';
 import slugify from 'slugify';
 import { InjectModel } from '@nestjs/mongoose';
 import {
@@ -15,6 +19,8 @@ import {
   ProductDocument,
   ProductProperty,
   ProductPropertyDocument,
+  ProductSize,
+  ProductSizeDocument,
   ProductVariant,
   ProductVariantDocument,
   VariantOption,
@@ -40,6 +46,8 @@ export class ProductService {
     @InjectModel(Product_Option.name)
     private readonly productOptionModel: Model<Product_OptionDocument>,
 
+    @InjectModel(ProductSize.name)
+    private readonly productSizeModel: Model<ProductSizeDocument>,
     @InjectModel(ProductProperty.name)
     private readonly productPropertyModel: Model<ProductPropertyDocument>,
     @InjectModel(ProductDescription.name)
@@ -70,7 +78,7 @@ export class ProductService {
     }
     this.createProductDescription(productId, createProductDto);
     this.createProductProperty(productId, createProductDto);
-
+    this.createProductSize(productId, createProductDto);
     const { totalVariant } = createProductDto;
     if (totalVariant === '1') {
     } else if (totalVariant === '2') {
@@ -173,21 +181,67 @@ export class ProductService {
     console.log('Product description created: ', _newDescription);
     return _newDescription;
   }
+  async createProductSize(
+    productId: string,
+    createProductDto: CreateProductDto,
+  ) {
+    const { sizeList } = createProductDto;
+    const _sizeList: ProductSizeDto[] = JSON.parse(sizeList);
+    const tobeInserted = _sizeList.map((size: ProductSizeDto) => {
+      const sizeRow: any = {};
+      sizeRow.productId = productId;
+      sizeRow.name = size.name;
+      sizeRow.fit = {};
+      if (size.fit.height) {
+        sizeRow.fit.height = {
+          min: size.fit.height.min,
+          max: size.fit.height.max,
+        };
+      }
+      if (size.fit.weight) {
+        sizeRow.fit.weight = {
+          min: size.fit.weight.min,
+          max: size.fit.weight.max,
+        };
+      }
+      if (size.fit.bust) {
+        sizeRow.fit.bust = {
+          min: size.fit.bust.min,
+          max: size.fit.bust.max,
+        };
+      }
+      if (size.fit.waist) {
+        sizeRow.fit.waist = {
+          min: size.fit.waist.min,
+          max: size.fit.waist.max,
+        };
+      }
+      if (size.fit.hip) {
+        sizeRow.fit.hip = {
+          min: size.fit.hip.min,
+          max: size.fit.hip.max,
+        };
+      }
+
+      return sizeRow;
+    });
+
+    const response = await this.productSizeModel.insertMany(tobeInserted);
+    console.log('Product size created: ', response);
+    return response;
+  }
   async createProductProperty(
     productId: string,
     createProductDto: CreateProductDto,
   ) {
     const { propertyList } = createProductDto;
-    let deStringed = JSON.parse(propertyList);
-    if (deStringed.length === 0) return;
-    deStringed = deStringed.map((element) => ({
-      ...element,
+    const _propertyList: ProductPropertyDto[] = JSON.parse(propertyList);
+    const tobeInserted: ProductProperty[] = _propertyList.map((property) => ({
       productId,
+      name: property.name,
+      value: property.value,
     }));
-    const response = await this.productPropertyModel.create({
-      productId,
-      propertyList: deStringed,
-    });
+    const response = await this.productPropertyModel.insertMany(tobeInserted);
     console.log('Product property created: ', response);
     return response;
   }

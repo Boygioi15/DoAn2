@@ -9,6 +9,7 @@ import {
   UseInterceptors,
   UploadedFiles,
   Query,
+  Request,
 } from '@nestjs/common';
 import { ProductService } from './services/product.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -30,6 +31,7 @@ export class ProductController {
     @UploadedFiles() files: Array<Express.Multer.File>,
     @Body() createProductDto: CreateProductDto,
   ) {
+    console.log('CPD: ', createProductDto);
     // console.log('F: ', files);
     return this.productService.createNewProduct(createProductDto, files);
   }

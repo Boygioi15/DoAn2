@@ -15,6 +15,8 @@ import {
   ProductDocument,
   ProductProperty,
   ProductPropertyDocument,
+  ProductSize,
+  ProductSizeDocument,
   ProductVariant,
   ProductVariantDocument,
   VariantOption,
@@ -36,7 +38,8 @@ export class ProductDeleteService {
     private readonly variantOptionModel: Model<VariantOptionDocument>,
     @InjectModel(Product_Option.name)
     private readonly productOptionModel: Model<Product_OptionDocument>,
-
+    @InjectModel(ProductSize.name)
+    private readonly productSizeModel: Model<ProductSizeDocument>,
     @InjectModel(ProductProperty.name)
     private readonly productPropertyModel: Model<ProductPropertyDocument>,
     @InjectModel(ProductDescription.name)
@@ -91,6 +94,7 @@ export class ProductDeleteService {
     await this.productVariantModel.deleteMany();
     await this.variantOptionModel.deleteMany();
     await this.productPropertyModel.deleteMany();
+    await this.productSizeModel.deleteMany();
     await this.productDescriptionModel.deleteMany();
   }
 }

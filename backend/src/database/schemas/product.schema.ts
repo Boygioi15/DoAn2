@@ -7,6 +7,8 @@ export type VariantOptionDocument = HydratedDocument<VariantOption>;
 export type Product_OptionDocument = HydratedDocument<Product_Option>;
 
 export type ProductPropertyDocument = HydratedDocument<ProductProperty>;
+export type ProductSizeDocument = HydratedDocument<ProductSize>;
+
 export type ProductDescriptionDocument = HydratedDocument<ProductDescription>;
 @Schema({ timestamps: true, collection: 'product' })
 export class Product {
@@ -119,23 +121,17 @@ export class Product_Option {
 }
 
 //product detail
-@Schema({ timestamps: true, collection: 'product_detail_property' })
+@Schema({ timestamps: true, collection: 'product_property' })
 export class ProductProperty {
   @Prop()
   productId: string;
 
-  @Prop({
-    type: [
-      {
-        name: String,
-        value: String,
-      },
-    ],
-    default: [],
-  })
-  propertyList: { name: string; value: string }[];
+  @Prop()
+  name: string;
+  @Prop()
+  value: string;
 }
-@Schema({ timestamps: true, collection: 'product_detail_description' })
+@Schema({ timestamps: true, collection: 'product_description' })
 export class ProductDescription {
   @Prop()
   productId: string;
@@ -143,11 +139,31 @@ export class ProductDescription {
   @Prop()
   description: string;
 }
+@Schema({ timestamps: true, collection: 'product_size' })
+export class ProductSize {
+  @Prop()
+  productId: string;
+
+  @Prop()
+  name: string;
+
+  @Prop({
+    type: {
+      height: { min: Number, max: Number },
+      weight: { min: Number, max: Number },
+      bust: { min: Number, max: Number },
+      waist: { min: Number, max: Number },
+      hip: { min: Number, max: Number },
+    },
+  })
+  fit: Record<string, { min: number; max: number }>;
+}
 export const ProductSchema = SchemaFactory.createForClass(Product);
 export const ProductVariantSchema =
   SchemaFactory.createForClass(ProductVariant);
 export const VariantOptionSchema = SchemaFactory.createForClass(VariantOption);
 export const ProductOptionSchema = SchemaFactory.createForClass(Product_Option);
+export const ProductSizeSchema = SchemaFactory.createForClass(ProductSize);
 export const ProductPropertySchema =
   SchemaFactory.createForClass(ProductProperty);
 export const ProductDescriptionSchema =

@@ -75,11 +75,11 @@ export default function CategoryManagementPage() {
                 <Dialog
                   open={categoryHook.isCreateDialogOpen}
                   onOpenChange={(open) => {
-                    setIsCreateDialogOpen(open);
+                    categoryHook.setIsCreateDialogOpen(open);
                   }}
                 >
                   <DialogTrigger
-                    onClick={() => setIsCreateDialogOpen(true)}
+                    onClick={() => categoryHook.setIsCreateDialogOpen(true)}
                     asChild
                   >
                     <Button variant={"outline"}>
@@ -95,11 +95,11 @@ export default function CategoryManagementPage() {
                 <Dialog
                   open={categoryHook.isUpdateDialogOpen}
                   onOpenChange={(open) => {
-                    setIsUpdateDialogOpen(open);
+                    categoryHook.setIsUpdateDialogOpen(open);
                   }}
                 >
                   <DialogTrigger
-                    onClick={() => setIsUpdateDialogOpen(true)}
+                    onClick={() => categoryHook.setIsUpdateDialogOpen(true)}
                     asChild
                   >
                     <Button variant={"outline"}>
@@ -119,7 +119,7 @@ export default function CategoryManagementPage() {
                   }}
                 >
                   <DialogTrigger
-                    onClick={() => setIsDeleteDialogOpen(true)}
+                    onClick={() => categoryHook.setIsDeleteDialogOpen(true)}
                     asChild
                   >
                     <Button variant={"outline"}>

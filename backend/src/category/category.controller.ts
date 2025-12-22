@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   Query,
+  Request,
 } from '@nestjs/common';
 import { CategoryService } from './category.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
@@ -45,7 +46,7 @@ export class CategoryController {
   }
   @Post('/')
   async createNewCategory(@Body() newCategory: CreateCategoryDto) {
-    // console.log(newCategory);
+    // console.log('NC: ', newCategory);
     const _new = await this.categoryService.createNewCategory(newCategory);
     return this.getAllCategories();
   }

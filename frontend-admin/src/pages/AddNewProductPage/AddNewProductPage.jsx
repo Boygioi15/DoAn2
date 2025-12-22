@@ -38,33 +38,56 @@ import { toast } from "sonner";
 import { v4 } from "uuid";
 import BasicInfoBlock from "./components/BasicInfoBlock";
 import useAddProduct from "@/hooks/useAddProduct";
-
-const variant1Default = {
-  index: 0,
-  name: "Màu sắc",
-  valueList: [
-    {
-      name: "",
-      img: [],
-      tempId: v4(),
-    },
-  ],
-};
-const variant2Default = {
-  index: 1,
-  name: "Kích thước",
-  valueList: [
-    {
-      name: "",
-      img: [],
-      tempId: v4(),
-    },
-  ],
-};
+import DescriptionBlock from "./components/DescriptionBlock";
+import PropertyBlock from "./components/PropertyBlock";
+import VariantDetailBlock from "./components/VariantDetailBlock";
+import SizeBlock from "./components/SizeBlock";
+import VariantListBlock from "./components/VariantBlock";
 
 export const AddNewProductPageContext = createContext();
 export default function AddNewProductPage() {
   const addProductHook = useAddProduct();
+
+  //tracker
+  const basicInfoRef = useRef(null);
+  const propertiesRef = useRef(null);
+  const descriptionRef = useRef(null);
+  const variantsRef = useRef(null);
+  const sizeRef = useRef(null);
+  const variantDetailRef = useRef(null);
+
+  const [currentStep, setCurrentStep] = useState(0);
+
+  useEffect(() => {
+    const sections = [
+      basicInfoRef.current,
+      propertiesRef.current,
+      descriptionRef.current,
+      variantsRef.current,
+      sizeRef.current,
+      variantDetailRef.current,
+    ];
+
+    const observer = new IntersectionObserver((entries) => {
+      const visible = entries.filter((e) => e.isIntersecting);
+      if (!visible.length) return;
+
+      const winner = visible.reduce((a, b) =>
+        a.boundingClientRect.top < b.boundingClientRect.top ? a : b
+      );
+
+      const index = sections.indexOf(winner.target);
+      if (index !== -1) setCurrentStep(index + 1);
+    });
+
+    sections.forEach((sec) => sec && observer.observe(sec));
+
+    return () => observer.disconnect();
+  }, []);
+
+  //tip
+  const [tipState, setTipState] = useState(0);
+
   return (
     <AddNewProductPageContext.Provider value={addProductHook}>
       <div className="page-layout">
@@ -72,11 +95,64 @@ export default function AddNewProductPage() {
         {/*Content*/}
         <div className="grid grid-cols-[75%_25%] gap-4">
           <div className="flex flex-col gap-6">
-            <BasicInfoBlock />
+            <div ref={basicInfoRef} onClick={() => setTipState(1)}>
+              <BasicInfoBlock />
+            </div>
+            <div ref={descriptionRef} onClick={() => setTipState(2)}>
+              <DescriptionBlock />
+            </div>
+            <div ref={propertiesRef} onClick={() => setTipState(3)}>
+              <PropertyBlock />
+            </div>
+            <div ref={variantsRef} onClick={() => setTipState(4)}>
+              <VariantListBlock />
+            </div>
+            <div ref={sizeRef} onClick={() => setTipState(5)}>
+              <SizeBlock />
+            </div>
+            <div ref={variantDetailRef} onClick={() => setTipState(6)}>
+              <VariantDetailBlock />
+            </div>
+            <div
+              className={`${reusableStyle.inputBlock} flex flex-row justify-between  sticky bottom-0 bg-gray-50 shadow-3xl! -ml-1`}
+            >
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={addProductHook.handleLoadSampleData}
+                >
+                  Load giá trị mẫu
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={addProductHook.handleRefreshData}
+                >
+                  Làm mới trang
+                </Button>
+              </div>
+              <div className="flex flex-row gap-2">
+                <Button variant={"ghost"}>Hủy bỏ</Button>
+                <Button
+                  variant={"outline"}
+                  className={"border-blue-500"}
+                  onClick={addProductHook.handleDraftSubmit}
+                >
+                  Lưu bản nháp
+                </Button>
+                <Button
+                  className={"bg-blue-500"}
+                  id={"submit-button"}
+                  onClick={addProductHook.handlePublishSubmit}
+                >
+                  Gửi đi
+                </Button>
+              </div>
+            </div>
           </div>
+
           <div className="flex flex-col gap-6 sticky top-5 h-fit">
-            <ProgressTracker currentStep={addProductHook.currentStep} />
-            <TipBlock state={addProductHook.tipState} />
+            <ProgressTracker currentStep={currentStep} />
+            <TipBlock state={tipState} />
             <ErrorBlock hasError={addProductHook.hasError} />
           </div>
         </div>
@@ -84,481 +160,13 @@ export default function AddNewProductPage() {
     </AddNewProductPageContext.Provider>
   );
 }
-function DescriptionBlock({ description, setDescription, errors }) {
-  return (
-    <div
-      id="descripton"
-      className={
-        reusableStyle.inputBlock +
-        (errors.length > 0 && reusableStyle.errorBorder)
-      }
-    >
-      <h2>Mô tả sản phẩm</h2>
-      <ReactQuill
-        theme="snow"
-        value={description}
-        onChange={setDescription}
-        className="flex flex-col min-h-[400px] max-h-[400px] overflow-clip pb-45px"
-      />
-      {errors.length > 0 && (
-        <ul
-          style={{ marginTop: "-50px", marginBottom: "-4px" }}
-          className="ul-error"
-        >
-          {errors.map((element, idx) => (
-            <li key={idx}>{element}</li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-function PropertiesBlock({
-  properties,
-  setProperties,
-  onAddNewProperty,
-  errors,
-}) {
-  return (
-    <div
-      className={
-        reusableStyle.inputBlock +
-        (errors.length > 0 && reusableStyle.errorBorder)
-      }
-    >
-      <h2>Đặc tính sản phẩm</h2>
-      <div className="flex flex-col gap-5">
-        {properties.map((productProperty, index) => (
-          <div key={index} className="flex flex-row gap-3 items-center">
-            <Input
-              id={`property-i-${index}`}
-              className="w-[40%]"
-              placeholder={"Tên thuộc tính"}
-              value={productProperty.name}
-              onChange={(e) => {
-                const newList = [...properties];
-                newList[index].name = e.target.value;
-                setProperties(newList);
-              }}
-            />
-            <span>:</span>
-            <Input
-              id={`property-v-${index}`}
-              placeholder={"Giá trị"}
-              value={productProperty.value}
-              onChange={(e) => {
-                //check if there is any product property with matching name?
-                const newList = [...properties];
-                newList[index].value = e.target.value;
-                setProperties(newList);
-              }}
-            />
-            <Button
-              onClick={() => {
-                setProperties((prev) => prev.filter((_, i) => i !== index));
-              }}
-              variant={"destructive"}
-              disabled={properties.length <= 1}
-            >
-              <Trash2Icon />
-            </Button>
-          </div>
-        ))}
-      </div>
-      <Button
-        onClick={onAddNewProperty}
-        variant="outline"
-        id={"add-new-property"}
-      >
-        Thêm thuộc tính mới
-      </Button>
-      {errors.length > 0 && (
-        <ul style={{ marginBottom: "-4px" }} className="ul-error">
-          {errors.map((element, idx) => (
-            <li key={idx}>{element}</li>
-          ))}
-        </ul>
-      )}
-      <div className="flex flex-row gap-5"></div>
-    </div>
-  );
-}
-function VariantAndSellingBlock({
-  variant1,
-  variant2,
-  setVariant1,
-  setVariant2,
-  variantSellingPoint,
-  setVariantSellingPoint,
-  v1Errors,
-  v2Errors,
-  vTableErrors,
-}) {
-  let total = 0;
-  const v1Exist = variant1 && variant1.valueList.length > 1;
-  const v2Exist = variant2 && variant2.valueList.length > 1;
-  if (v1Exist) total++;
-  if (v2Exist) total++;
-  const createNewVariant = () => {
-    const newVariant = {
-      index: total,
-      name: "",
-      valueList: [
-        {
-          name: "",
-          img: [],
-          tempId: v4(),
-        },
-      ],
-    };
-    if (total === 0) {
-      setVariant1(newVariant);
-    }
-    if (total === 1) {
-      setVariant2(newVariant);
-    }
-    return;
-  };
-  const [allPrice, setAllPrice] = useState("");
-  const [allStock, setAllStock] = useState("");
-  const [allSellerSku, setAllSellerSku] = useState("");
-
-  const setNewVariantSellingPoint_Temp = (newVariantSellingPoint, index) => {
-    const newList = [...variantSellingPoint];
-    newList[index] = newVariantSellingPoint;
-    setVariantSellingPoint(newList);
-  };
-  const handleSubmitApplyAllToolbar = () => {
-    const newVariantSellingPoint = variantSellingPoint.map((variant, index) => {
-      const newVariant = { ...variant };
-      if (allPrice.trim() !== "") {
-        newVariant.sellingPrice = allPrice;
-      }
-      if (allStock.trim() !== "") {
-        newVariant.stock = allStock;
-      }
-      if (allSellerSku.trim() !== "") {
-        newVariant.sellerSku = allSellerSku + `-${index + 1}`;
-      }
-      return newVariant;
-    });
-    setVariantSellingPoint(newVariantSellingPoint);
-  };
-  const handleRefreshApplyAllToolbar = () => {
-    setAllPrice("");
-    setAllStock("");
-    setAllSellerSku("");
-  };
-  return (
-    <div className={`${reusableStyle.inputBlock}`}>
-      <h2>Giá bán, kho hàng và biến thể</h2>
-      <h6>
-        Tạo biến thể nếu sản phẩm có hơn một tùy chọn, ví dụ như về kích thước
-        hay màu sắc.
-      </h6>
-      {variant1 && (
-        <VariantBlock
-          variant={variant1}
-          setVariant={setVariant1}
-          errors={v1Errors}
-        />
-      )}
-      {variant2 && (
-        <VariantBlock
-          variant={variant2}
-          setVariant={setVariant2}
-          errors={v2Errors}
-        />
-      )}
-      {/* {total < 2 && (
-        <Button
-          variant={"outline"}
-          className="w-fit"
-          onClick={createNewVariant}
-        >
-          + Thêm biến thể mới{` (${total}/2)`}
-        </Button>
-      )} */}
-      <h2>Giá bán & Kho hàng </h2>
-      {variantSellingPoint.length > 0 ? (
-        <div className="space-y-2">
-          {total > 0 ? (
-            <section className="flex gap-2 *:>m-w-[100px]">
-              <Input
-                placeholder="Giá"
-                value={allPrice}
-                id={"all-price"}
-                onChange={(e) => setAllPrice(e.target.value)}
-              />
-              <Input
-                placeholder="Kho hàng"
-                id={"all-stock"}
-                value={allStock}
-                onChange={(e) => setAllStock(e.target.value)}
-              />
-              <Input
-                id={"all-seller-sku"}
-                placeholder="SellerSku"
-                value={allSellerSku}
-                onChange={(e) => setAllSellerSku(e.target.value)}
-              />
-              <Button
-                id={"apply-all-submit"}
-                onClick={handleSubmitApplyAllToolbar}
-              >
-                Áp dụng cho tất cả
-              </Button>
-              <Button
-                onClick={handleRefreshApplyAllToolbar}
-                variant={"outline"}
-              >
-                Làm mới
-              </Button>
-            </section>
-          ) : (
-            <h6>Trường hợp không có biến thể</h6>
-          )}
-          <Table>
-            <TableHeader>
-              <TableRow>
-                {v1Exist && (
-                  <TableHead className="w-[100px]">{variant1.name}</TableHead>
-                )}
-                {v2Exist && (
-                  <TableHead className="w-[100px]">{variant2.name}</TableHead>
-                )}
-                <TableHead>Giá</TableHead>
-                <TableHead>Kho hàng</TableHead>
-                <TableHead>SellerSku</TableHead>
-                <TableHead className="w-0">Được sử dụng</TableHead>
-                <TableHead className="w-0">Mở bán</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {variantSellingPoint.map((row, index) => (
-                <TableRow key={index} className={!row.isInUse && "bg-gray-100"}>
-                  {row.v1_name && (
-                    <TableCell>
-                      <Label>{row.v1_name}</Label>
-                    </TableCell>
-                  )}
-                  {row.v2_name && (
-                    <TableCell>
-                      <Label>{row.v2_name}</Label>
-                    </TableCell>
-                  )}
-                  <TableCell>
-                    <Input
-                      value={row.sellingPrice}
-                      onChange={(e) => {
-                        setNewVariantSellingPoint_Temp(
-                          {
-                            ...row,
-                            sellingPrice: e.target.value,
-                          },
-                          index
-                        );
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      value={row.stock}
-                      onChange={(e) => {
-                        setNewVariantSellingPoint_Temp(
-                          {
-                            ...row,
-                            stock: e.target.value,
-                          },
-                          index
-                        );
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      value={row.sellerSku}
-                      onChange={(e) => {
-                        setNewVariantSellingPoint_Temp(
-                          {
-                            ...row,
-                            sellerSku: e.target.value,
-                          },
-                          index
-                        );
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Switch
-                      checked={row.isInUse}
-                      onCheckedChange={(e) => {
-                        setNewVariantSellingPoint_Temp(
-                          {
-                            ...row,
-                            isInUse: e,
-                          },
-                          index
-                        );
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Switch
-                      disabled={!row.isInUse}
-                      checked={row.isOpenToSale}
-                      onCheckedChange={(e) => {
-                        setNewVariantSellingPoint_Temp(
-                          {
-                            ...row,
-                            isOpenToSale: e,
-                          },
-                          index
-                        );
-                      }}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          {vTableErrors.length > 0 && (
-            <ul style={{ marginBottom: "-4px" }} className="ul-error">
-              {vTableErrors.map((element, idx) => (
-                <li key={idx}>{element}</li>
-              ))}
-            </ul>
-          )}
-        </div>
-      ) : (
-        <h6>Hãy tạo hoàn chỉnh biến thể trước!</h6>
-      )}
-    </div>
-  );
-}
-function VariantBlock({ variant, setVariant, errors }) {
-  return (
-    <div className={reusableStyle.variantBlock}>
-      <div className="flex justify-between items-center">
-        <h2>Biến thể {variant.index + 1}</h2>
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button variant={"ghost"} disabled>
-              <Trash />
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent className={"max-w-[300px]"}>
-            <AlertDialogHeader>
-              <AlertDialogTitle>
-                Bạn có chắc chắn muốn xóa biến thể này?
-              </AlertDialogTitle>
-              <AlertDialogDescription>
-                Thao tác này là không thể khôi phục được!
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Hủy bỏ</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => {
-                  setVariant(null);
-                }}
-              >
-                Xác nhận
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
-
-      <InputBlock_Input
-        label="Tên biến thể"
-        isRequired={true}
-        placeholder={"Nhập tên biến thể"}
-        inputValue={variant.name}
-        onInputValueChange={(e) =>
-          setVariant((prev) => ({
-            ...prev,
-            name: e.target.value,
-          }))
-        }
-        containerClassname={"max-w-[70%]"}
-        disabled
-      />
-      <div className="flex flex-col gap-4 max-w-[100%]">
-        <Label>Danh sách biến thể</Label>
-        {variant.valueList.map((variantValue, index) => (
-          <div
-            key={index}
-            className="flex gap-4 p-2 pl-4  bg-white shadow-sm rounded-lg items-center justify-between"
-            id={`option-value-${variant.index}-${index}`}
-          >
-            <Input
-              placeholder="Nhập biến thể mới"
-              className={"max-w-[30%]"}
-              value={variantValue.name}
-              onChange={(e) => {
-                const newValueList = variant.valueList;
-                if (index === newValueList.length - 1) {
-                  newValueList.push({ name: "", img: [], tempId: v4() });
-                }
-                newValueList[index].name = e.target.value;
-                setVariant({ ...variant, valueList: newValueList });
-              }}
-            />
-            {/* gallery*/}
-            {variantValue.name.length > 0 && variant.index === 0 && (
-              <FileUploadCompact
-                onFilesChange={(files) => {
-                  const newValueList = variant.valueList;
-                  const currentValue = newValueList[index];
-                  currentValue.img = files;
-                  setVariant((prev) => ({ ...prev, valueList: newValueList }));
-                }}
-                maxFiles={6}
-                className={"grow"}
-              />
-            )}
-            {variantValue.name.length > 0 && (
-              <div className="flex">
-                <Button
-                  variant={"ghost"}
-                  onClick={() => {
-                    let newValueList = [...variant.valueList];
-                    newValueList = newValueList.filter(
-                      (value, _index) => _index !== index
-                    );
-                    setVariant({ ...variant, valueList: newValueList });
-                  }}
-                >
-                  <Trash2Icon />
-                </Button>
-                <Button variant={"ghost"}>
-                  <Menu />
-                </Button>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-      {errors.length > 0 && (
-        <ul
-          style={{ marginTop: "0px", marginBottom: "-4px" }}
-          className="ul-error"
-        >
-          {errors.map((element, idx) => (
-            <li key={idx}>{element}</li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-
 const steps = [
   "Thông tin cơ bản",
-  "Thuộc tính",
   "Mô tả",
-  "Phân loại & Giá bán",
+  "Thuộc tính",
+  "Biến thể sản phẩm",
+  "Bảng kích thước",
+  "Chi tiết biến thể",
 ];
 
 const ProgressTracker = ({ currentStep }) => {
@@ -609,17 +217,25 @@ const TipBlock = ({ state }) => {
     content =
       "Phần Mô tả sản phẩm cung cấp những thông tin hữu ích về sản phẩm để giúp khách hàng quyết định mua sắm";
   } else if (state === 2) {
-    title = "Đặc tính sản phẩm";
-    content =
-      "Đặc tính sản phẩm càng đầy đủ càng tăng khả năng chọn mua của khách hàng tiềm năng. Hãy cung cấp cả đặc tính chính (key attributes) và đặc tính phụ để tăng hiển thị và chốt đơn";
-  } else if (state === 3) {
     title = "Mô tả sản phẩm";
     content =
       "Vui lòng tải lên hình ảnh, điền tên sản phẩm và chọn đúng ngành hàng trước khi đăng tải sản phẩm.";
-  } else if (state === 4) {
-    title = "Giá bán, Kho hàng và Biến thể";
+  } else if (state === 3) {
+    title = "Đặc tính sản phẩm";
     content =
-      "Vui lòng tải lên hình ảnh, điền tên sản phẩm và chọn đúng ngành hàng trước khi đăng tải sản phẩm.";
+      "Đặc tính sản phẩm càng đầy đủ càng tăng khả năng chọn mua của khách hàng tiềm năng. Hãy cung cấp cả đặc tính chính (key attributes) và đặc tính phụ để tăng hiển thị và chốt đơn";
+  } else if (state === 4) {
+    title = "Biến thể sản phẩm";
+    content =
+      "Tạo biến thể sản phẩm của bạn, bắt buộc phải có màu sắc và kích cỡ";
+  } else if (state === 5) {
+    title = "Bảng kích cỡ";
+    content =
+      "Bảng kích cỡ sẽ giúp khách hàng biết được mình phù hợp với kích cỡ nào, từ đó kích thích việc mua hàng";
+  } else if (state === 6) {
+    title = "Chi tiết biến thể";
+    content =
+      "Nhập chi tiết về giá bán, số lượng trong kho và sku cho từng biến thể";
   }
   return (
     <div className={reusableStyle.inputBlock}>
