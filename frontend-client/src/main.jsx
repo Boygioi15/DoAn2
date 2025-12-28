@@ -32,6 +32,8 @@ import SearchPage from './pages/SearchPage';
 import DetailedCategoryPage from './pages/DetailedCategoryPage';
 import CheckoutPageWrapper from './pages/CheckoutPage/CheckoutPage';
 import OrderPageWrapper from './pages/OrderResultPage';
+import SuggestionPage from './pages/ProfilePages/AccountInfoPage/SuggestionPage.jsx';
+
 const router = createBrowserRouter([
   {
     path: '/',
@@ -49,6 +51,10 @@ const router = createBrowserRouter([
           {
             path: 'account-info',
             element: <AccountInfoPage />,
+          },
+          {
+            path: 'suggestion',
+            element: <SuggestionPage />,
           },
           {
             path: 'change-password',

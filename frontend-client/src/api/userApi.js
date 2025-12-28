@@ -27,5 +27,8 @@ const userApi = {
       `/user/address/set-default/${addressId}`
     );
   },
+  submitSuggestion: async (formData) => {
+    return await axiosClient_Backend.post('/user/suggestion', formData);
+  },
 };
 export default userApi;
