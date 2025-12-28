@@ -30,6 +30,8 @@ import {
   ProductProperty,
   ProductPropertySchema,
   ProductSchema,
+  ProductSizeGuidance,
+  ProductSizeSchema,
   ProductVariant,
   ProductVariantSchema,
   VariantOption,
@@ -68,7 +70,7 @@ import {
       { name: ProductVariant.name, schema: ProductVariantSchema },
       { name: VariantOption.name, schema: VariantOptionSchema },
       { name: Product_Option.name, schema: ProductOptionSchema },
-
+      { name: ProductSizeGuidance.name, schema: ProductSizeSchema },
       { name: ProductProperty.name, schema: ProductPropertySchema },
       { name: ProductDescription.name, schema: ProductDescriptionSchema },
 

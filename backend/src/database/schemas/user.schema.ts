@@ -27,6 +27,9 @@ export class User extends Document {
 
   @Prop({ default: null })
   hasPendingOrder: string;
+
+  @Prop({ default: false })
+  isBanned: false;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

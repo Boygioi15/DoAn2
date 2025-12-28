@@ -25,9 +25,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { slugifyOption } from "@/constants";
-import ComboBoxWithSearch from "@/reuseables/ComboboxWithSearch";
-import { InputBlock_Input } from "@/reuseables/Input";
-import UploadComponent from "@/reuseables/UploadComponentEdit";
+import ComboBoxWithSearch from "@/reusable-component/ComboboxWithSearch";
+import { InputBlock_Input } from "@/reusable-component/Input";
+import UploadComponent from "@/reusable-component/UploadComponentEdit";
 import { buildCategoryNameRecursively } from "@/utils";
 import { Menu, Trash, Trash2Icon } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";

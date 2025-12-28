@@ -1,7 +1,6 @@
 const fs = require("fs");
 const path = require("path");
 const axios = require("axios");
-const { saveProductData } = require("./productSaver");
 const chrome = require("selenium-webdriver/chrome");
 const { loadJson, saveJson } = require("./jsonWorking");
 const slugify = require("slugify");
@@ -20,20 +19,7 @@ const slugifyOption = {
 
 let options = new chrome.Options();
 
-// options.addArguments("--blink-settings=imagesEnabled=false");
-// options.addArguments("--disable-gpu");
-// options.addArguments("--disable-extensions");
-// options.addArguments("--disable-dev-shm-usage");
-// options.addArguments("--disable-blink-features=AutomationControlled");
-// options.addArguments("--no-sandbox");
-// options.addArguments("--disable-background-networking");
-// options.addArguments("--disable-default-apps");
-// options.addArguments("--disable-sync");
-// options.addArguments("--disable-translate");
-// options.addArguments("--disable-features=site-per-process");
-
 async function main() {
-  // json loading
   const products = loadJson("../results/products.json");
   const productsArray = Object.values(products); // [ {}, {}, ... ]
   //load via frontend
@@ -44,17 +30,20 @@ async function main() {
   //load via JSON
 
   for (let [index, product] of productsArray.entries()) {
+    console.log("PROGRESS: ", index, "/", productsArray.length);
     try {
       await addProductToAdminViaJSON(product);
       product.done = true; // FIXED
-      console.log("PROGRESS: ", index, "/", productsArray.length);
-    } catch (error) {}
+    } catch (error) {
+      console.log("FAILED AT ", product.sku);
+      console.log(error);
+    }
   }
   saveJson(PRODUCT_JSON_PATH, products);
 }
 
 async function addProductToAdminViaFrontend(driver, product) {
-  await driver.get("http://localhost:5173/add-product");
+  await driver.get("http://localhost:5173/edit-product");
 
   // Fill text fields
   await driver
@@ -112,19 +101,11 @@ async function addProductToAdminViaJSON(product) {
   }
   console.log("Working on: ", product);
   const formData = await formFormDataJSON(product);
-  try {
-    const response = await axios.post(
-      "http://localhost:3000/product",
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      }
-    );
-  } catch (error) {
-    console.log(error);
-  }
+  const response = await axios.post("http://localhost:3000/product", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
 }
 async function formFormDataJSON(product) {
   const formData = new FormData();
@@ -151,6 +132,7 @@ async function formFormDataJSON(product) {
   propertyList = JSON.stringify(propertyList);
   formData.append("propertyList", propertyList);
   formData.append("description", product.description);
+  formData.append("sizeGuidance", JSON.stringify(product.sizeGuidance));
   formData.append("totalVariant", 2);
 
   const variant1Data = {

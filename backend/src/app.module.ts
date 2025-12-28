@@ -20,6 +20,7 @@ import { CronModule } from './cron/cron.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { SpeechModule } from './speech/speech.module';
 import { ChatModule } from './chat/chat.module';
+import { OrderModule } from './order/order.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { ChatModule } from './chat/chat.module';
     CronModule,
     SpeechModule,
     ChatModule,
+    OrderModule,
   ],
   controllers: [AppController],
   providers: [

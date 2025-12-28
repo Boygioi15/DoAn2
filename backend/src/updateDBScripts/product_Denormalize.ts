@@ -18,6 +18,7 @@ async function run() {
     const productOptionColl = db.collection('product_option');
     const variantOptionColl = db.collection('variant_option');
     const variantColl = db.collection('product_variant');
+    const categoryColl = db.collection('category');
 
     // // Optional: ensure helpful indexes exist for speed
     // await productOptionColl.createIndex({ productId: 1 });
@@ -153,6 +154,11 @@ async function run() {
       const allSizes = [...sizeSet];
 
       // Update the product doc
+      let categoryName = 'corrupted';
+      let cat = await categoryColl.findOne({ categoryId: product.categoryId });
+      if (cat) {
+        categoryName = cat.categoryName;
+      }
       await productsColl.updateOne(
         { productId },
         {
@@ -161,6 +167,7 @@ async function run() {
             totalStock,
             allColors,
             allSizes,
+            categoryName,
           },
         },
       );

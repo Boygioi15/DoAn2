@@ -62,7 +62,7 @@ const sortSizeList = (sizeList) => {
   return sorted;
 };
 
-export default function DetailedCategoryPage() {
+export default function DetailedCategoryManagementPage() {
   const [searchParam, setSearchParam] = useSearchParams();
   const { category1Id, category2Id, category3Id } = useParams();
 

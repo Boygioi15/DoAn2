@@ -77,7 +77,7 @@ export class CartService {
     //product check
     const productInfo =
       await this.productQueryService.getProductDetail_Admin(productId);
-    const variantInfo = productInfo.variantSellingPoint.find(
+    const variantInfo = productInfo.variantDetailList.find(
       (variant) => variant.variantId === variantId,
     );
     if (!variantInfo) {
@@ -86,7 +86,7 @@ export class CartService {
       );
     }
     if (
-      !productInfo.isPublised ||
+      !productInfo.isPublished ||
       productInfo.isDrafted ||
       productInfo.isDeleted ||
       !variantInfo.isOpenToSale
@@ -377,7 +377,7 @@ export class CartService {
           cartItem.variantId,
         );
       if (
-        !product.isPublised ||
+        !product.isPublished ||
         product.isDrafted ||
         product.isDeleted ||
         !variant.isOpenToSale
