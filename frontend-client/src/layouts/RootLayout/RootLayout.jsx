@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { CartWrapper } from './CartComponent';
 import { SpeechToTextDialog } from '@/components/SpeechToTextDialog';
+import { ChatBot } from '@/components/ChatBot';
 import { ImageSearchDialog } from '@/components/ImageSearchDialog';
 
 export default function RootLayout({ children }) {
@@ -38,18 +39,8 @@ export default function RootLayout({ children }) {
           <Breadcrumbs />
           {children}
           <Outlet />
-          <div className="fixed bottom-10 right-7 flex flex-col gap-5">
-            <Button
-              className={
-                'rounded-full w-[60px] h-[60px] bg-(--color-preset-gray) hover:bg-(--color-preset-gray) cursor-pointer'
-              }
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            >
-              <MessageCircle
-                className="w-[28px]! h-[28px]! text-white"
-                fill="white"
-              />
-            </Button>
+          <div className="fixed bottom-10 right-7 flex flex-col gap-5 z-50">
+            <ChatBot />
             <Button
               className={
                 'rounded-full w-[60px] h-[60px] bg-[#edf1f5] hover:bg-[#edf1f5] cursor-pointer'
