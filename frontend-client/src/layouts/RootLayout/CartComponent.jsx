@@ -142,7 +142,7 @@ export function CartWrapper() {
 }
 function CartSheet({ cartItemList, cashoutPrice, setSheetOpen }) {
   const navigate = useNavigate();
-
+  const getCartData = useCartStore((s) => s.getCartData);
   const allowedToPurchase = useCartStore((s) => s.allowedToPurchase);
   const updateCartSelected = useCartStore((s) => s.updateCartSelected);
   const allSelected = useCartStore((s) => s.allSelected);
@@ -155,6 +155,7 @@ function CartSheet({ cartItemList, cashoutPrice, setSheetOpen }) {
       await updateCartSelected(!allSelected);
       await getCartData();
     } catch (error) {
+      console.log(error);
       toast.error('Có lỗi khi cập nhật giỏ hàng');
     } finally {
       setLoading(false);

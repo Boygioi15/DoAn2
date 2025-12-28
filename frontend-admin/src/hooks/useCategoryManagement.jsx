@@ -14,7 +14,8 @@ export default function useCategoryManagement() {
     [searchParam]
   );
   const setSelectedCategoryId = (categoryId) => {
-    console.log("CID: ", categoryId);
+    console.log(categoryId);
+    // console.log("CID: ", categoryId);
     const newSearchParam = new URLSearchParams(searchParam);
     newSearchParam.set("categoryId", categoryId);
     setSearchParam(newSearchParam);
@@ -84,11 +85,11 @@ export default function useCategoryManagement() {
       parentId: categoryData.parentId,
     };
     try {
-      console.log("AD: ", data);
+      // console.log("AD: ", data);
       const response = await categoryApi.createNewCategory(data);
       setCategoryList(response.data);
       toast.success("Tạo mới ngành hàng thành công");
-      setIsCreateDialogOpen(false);
+      // setIsCreateDialogOpen(false);
     } catch (error) {
       toast.error("Có lỗi khi tạo mới ngành hàng");
     }

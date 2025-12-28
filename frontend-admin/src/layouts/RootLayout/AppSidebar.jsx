@@ -8,6 +8,11 @@ import {
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
@@ -18,7 +23,18 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { Book, Box, Pen, Pencil, UserCircle2 } from "lucide-react";
+import {
+  Book,
+  Box,
+  ChevronDown,
+  Dock,
+  MonitorCheck,
+  Pen,
+  Pencil,
+  UserCircle2,
+  Wallet,
+  WalletCards,
+} from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 const sidebarItems = [
@@ -32,7 +48,22 @@ const sidebarItems = [
         url: "/category-management",
         icon: Box,
       },
-      { title: "Thêm sản phẩm mới", url: "/add-product", icon: Pencil },
+      { title: "Thêm sản phẩm mới", url: "/edit-product", icon: Pencil },
+    ],
+  },
+  {
+    group: "Đơn hàng",
+    children: [
+      {
+        title: "Quản lý đơn hàng",
+        url: "/order-management",
+        icon: Dock,
+      },
+      {
+        title: "Tạo đơn trực tiếp",
+        url: "/direct-order-create",
+        icon: MonitorCheck,
+      },
     ],
   },
 ];
@@ -48,46 +79,36 @@ export default function AppSideBar() {
         </SidebarHeader>
         {sidebarItems.map((item1, index) =>
           item1.group ? (
-            <Accordion
-              type="single"
-              collapsible
-              className="w-full py-2"
-              defaultValue="item-1"
-            >
-              <AccordionItem
+            <Collapsible key={index} defaultOpen className="w-full py-2">
+              <CollapsibleTrigger
                 key={index}
-                value={`item-${index + 1}`}
                 defaultOpen
+                className={
+                  "flex w-full justify-between rounded-sm items-center px-2 py-2 mb-2 hover:bg-gray-100 cursor-pointer text-[16px]! font-medium [&[data-state=open]>svg]:rotate-180"
+                }
               >
-                <AccordionTrigger
-                  className={
-                    "px-2 py-2 mb-2 hover:bg-gray-100 cursor-pointer text-[14px]!"
-                  }
-                >
-                  {item1.group}
-                </AccordionTrigger>
-                <AccordionContent>
-                  {item1.children?.map((item2) => (
-                    <AccordionItem key={item2.title} asChild>
-                      <Button
-                        variant={
-                          pathname === item2.url ? "ghost-selected" : "ghost"
-                        }
-                        onClick={() => navigate(item2.url)}
-                        className={
-                          "w-full flex gap-2 justify-start pl-2! border-none"
-                        }
-                      >
-                        {item2.icon && (
-                          <item2.icon style={{ width: 18, height: 18 }} />
-                        )}
-                        <span>{item2.title}</span>
-                      </Button>
-                    </AccordionItem>
-                  ))}
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
+                {item1.group}
+                <ChevronDown className="transition-transform duration-200" />
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                {item1.children?.map((item2) => (
+                  <Button
+                    variant={
+                      pathname === item2.url ? "ghost-selected" : "ghost"
+                    }
+                    onClick={() => navigate(item2.url)}
+                    className={
+                      "w-full flex gap-2 justify-start pl-2! border-none"
+                    }
+                  >
+                    {item2.icon && (
+                      <item2.icon style={{ width: 18, height: 18 }} />
+                    )}
+                    <span>{item2.title}</span>
+                  </Button>
+                ))}
+              </CollapsibleContent>
+            </Collapsible>
           ) : (
             <SidebarMenuItem key={item1.title}>
               <Button

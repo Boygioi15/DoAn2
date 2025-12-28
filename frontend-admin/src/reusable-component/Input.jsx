@@ -1,8 +1,25 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MinusIcon, PlusIcon } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { ChevronDownIcon, MinusIcon, PlusIcon } from "lucide-react";
 import { Group, NumberField } from "react-aria-components";
+import { useState } from "react";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export function InputBlock_Input({
   inputId,
@@ -85,17 +102,89 @@ export const InputWithStartAddOn = ({
 }) => {
   return (
     <div className="w-full space-y-2">
-      <div className="flex rounded-md shadow-xs">
+      <div className="flex w-full rounded-md shadow-xs">
         <span className="border-input bg-gray-100 inline-flex items-center rounded-l-none border px-3 text-sm min-w-fit">
           {addOnlabel}
         </span>
         <Input
           type="text"
           placeholder={placeholder}
-          className="-ms-px rounded-l-none shadow-none"
+          className="-ms-px rounded-l-none shadow-none min-w-0!"
           value={inputValue}
           onInput={onInputValueChange}
         />
+      </div>
+    </div>
+  );
+};
+export const DateSelectWithStartAddOn = ({
+  addOnLabel,
+  placeholder,
+  inputValue,
+  onInputValueChange,
+}) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <div class="w-full max-w-full min-w-0 space-y-2">
+      <div className="flex rounded-md shadow-xs">
+        <span className="border-input bg-gray-100 inline-flex items-center rounded-l-none border px-3 text-sm min-w-fit">
+          {addOnLabel}
+        </span>
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              id="date"
+              className="flex-1 justify-between font-normal rounded-none min-w-0!"
+            >
+              {inputValue
+                ? format(inputValue, "dd/MM/yyyy", { locale: vi })
+                : placeholder}
+              <ChevronDownIcon />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+            <Calendar
+              mode="single"
+              locale={vi}
+              selected={inputValue}
+              onSelect={(date) => {
+                onInputValueChange(date);
+                setOpen(false);
+              }}
+            />
+          </PopoverContent>
+        </Popover>
+      </div>
+    </div>
+  );
+};
+export const SelectWithStartAddOn = ({
+  addOnlabel,
+  defaultValue,
+  placeholder,
+  selectValue,
+  selectValueList,
+  onSelectValueChange,
+}) => {
+  return (
+    <div className="w-full space-y-2">
+      <div className="flex rounded-md shadow-xs">
+        <span className="border-input bg-gray-100 inline-flex items-center rounded-l-none border px-3 text-sm min-w-fit">
+          {addOnlabel}
+        </span>
+        <Select value={selectValue} onValueChange={onSelectValueChange}>
+          <SelectTrigger
+            className={"-ms-px rounded-l-none rounded-r-[4px] grow shadow-none"}
+          >
+            <SelectValue placeholder={placeholder} />
+          </SelectTrigger>
+          <SelectContent>
+            {selectValueList.map((select) => (
+              <SelectItem value={select.value}>{select.display}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
     </div>
   );

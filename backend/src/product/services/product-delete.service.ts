@@ -3,7 +3,7 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { CreateProductDto } from '../dto/create-product.dto';
+import { CreateProductDto } from '../dto/product.dto';
 import slugify from 'slugify';
 import { InjectModel } from '@nestjs/mongoose';
 import {
@@ -15,8 +15,8 @@ import {
   ProductDocument,
   ProductProperty,
   ProductPropertyDocument,
-  ProductSize,
-  ProductSizeDocument,
+  ProductSizeGuidance,
+  ProductSizeGuidanceDocument,
   ProductVariant,
   ProductVariantDocument,
   VariantOption,
@@ -38,40 +38,51 @@ export class ProductDeleteService {
     private readonly variantOptionModel: Model<VariantOptionDocument>,
     @InjectModel(Product_Option.name)
     private readonly productOptionModel: Model<Product_OptionDocument>,
-    @InjectModel(ProductSize.name)
-    private readonly productSizeModel: Model<ProductSizeDocument>,
+    @InjectModel(ProductSizeGuidance.name)
+    private readonly productSizeGuidanceModel: Model<ProductSizeGuidanceDocument>,
     @InjectModel(ProductProperty.name)
     private readonly productPropertyModel: Model<ProductPropertyDocument>,
     @InjectModel(ProductDescription.name)
     private readonly productDescriptionModel: Model<ProductDescriptionDocument>,
   ) {}
-  async deleteProductData(productId: string) {
+  async deleteProductData(
+    productId: string,
+    deleteVariantData: boolean = true,
+  ) {
     //to be deleted:
+
     //basic info
-    let p1, p2, p3, p4, p5, p6;
+    let p1, p2, p3, p4, p5, p6, p7;
     p1 = this.productModel.findOneAndDelete({ productId });
     //property
     p2 = this.productPropertyModel.deleteMany({ productId });
-
     //description
     p3 = this.productDescriptionModel.findOneAndDelete({ productId });
-    //variant
-    //all links
-    const allLinks = await this.productOptionModel.find({ productId });
-    const allVariants = allLinks.map((link) => link.variantId);
-    const allOptions = allLinks.map((link) => link.optionId);
-    //option
-    p4 = this.productVariantModel.deleteMany({
-      variantId: { $in: allVariants },
-    });
-    p5 = this.variantOptionModel.deleteMany({
-      optionId: { $in: allOptions },
-    });
-    p6 = this.productOptionModel.deleteMany({ productId });
-    await Promise.all([p1, p2, p3, p4, p5, p6]);
+    //size guidance
+    p4 = this.productSizeGuidanceModel.deleteMany({ productId });
+
+    if (deleteVariantData) {
+      //all links
+      const allLinks = await this.productOptionModel.find({ productId });
+      const allVariants = allLinks.map((link) => link.variantId);
+      const allOptions = allLinks.map((link) => link.optionId);
+      //option
+      p5 = this.productVariantModel.deleteMany({
+        variantId: { $in: allVariants },
+      });
+      //variant
+      p6 = this.variantOptionModel.deleteMany({
+        optionId: { $in: allOptions },
+      });
+      p7 = this.productOptionModel.deleteMany({ productId });
+      await Promise.all([p1, p2, p3, p4, p5, p6, p7]);
+    } else {
+      await Promise.all([p1, p2, p3, p4]);
+    }
+
     console.log('Delete item ', productId, ' successfully');
     return true;
-    //variantoption
+    //variant option
   }
   async softDeleteProduct(productId: string) {
     const result = await this.productModel.findOneAndUpdate(
@@ -94,7 +105,7 @@ export class ProductDeleteService {
     await this.productVariantModel.deleteMany();
     await this.variantOptionModel.deleteMany();
     await this.productPropertyModel.deleteMany();
-    await this.productSizeModel.deleteMany();
+    await this.productSizeGuidanceModel.deleteMany();
     await this.productDescriptionModel.deleteMany();
   }
 }

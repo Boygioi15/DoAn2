@@ -18,7 +18,7 @@ export const routeNameMap = {
   user: "Quản lý người dùng",
   "product-management": "Quản lý sản phẩm",
   "category-management": "Quản lý ngành hàng",
-  "add-product": "Thêm sản phẩm",
+  "edit-product": "Thêm sản phẩm",
   "edit-product": "Chỉnh sửa sản phẩm",
 };
 export const slugifyOption = {

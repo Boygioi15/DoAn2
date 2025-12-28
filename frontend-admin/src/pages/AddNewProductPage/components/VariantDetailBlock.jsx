@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { AddNewProductPageContext } from "../AddNewProductPage";
+import { EditProductPageContext } from "../EditProductPage";
 import {
   Table,
   TableBody,
@@ -15,7 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 
 export default function VariantDetailBlock() {
-  const addProductContext = useContext(AddNewProductPageContext);
+  const addProductContext = useContext(EditProductPageContext);
   //how many variant?
   let total = 0;
   const v1Exist =
@@ -26,6 +26,8 @@ export default function VariantDetailBlock() {
     addProductContext.variant2.valueList.length > 1;
   if (v1Exist) total++;
   if (v2Exist) total++;
+  // console.log("V1: ", addProductContext.variant1, v1Exist);
+  // console.log("V2: ", addProductContext.variant2, v2Exist);
 
   const setNewvariantDetailList_Temp = (newvariantDetail, index) => {
     const newList = [...addProductContext.variantDetailList];
@@ -35,7 +37,16 @@ export default function VariantDetailBlock() {
 
   return (
     <div className={`${reusableStyle.inputBlock}`}>
-      <h2>Chi tiết biến thể</h2>
+      <div className="flex flex-row justify-between items-center ">
+        <h2>Chi tiết biến thể</h2>
+        {addProductContext.edit &&
+          addProductContext.initialProductData &&
+          !addProductContext.initialProductData.isDrafted && (
+            <h6 className="text-muted-foreground">
+              Chế độ cập nhật - Không sửa sku
+            </h6>
+          )}
+      </div>
       <h6>
         Nhập chi tiết giá bán, số lượng kho hàng và các thông tin khác cho biến
         thể
@@ -58,6 +69,12 @@ export default function VariantDetailBlock() {
                 onChange={(e) => addProductContext.setAllStock(e.target.value)}
               />
               <Input
+                className={
+                  addProductContext.edit &&
+                  addProductContext.initialProductData &&
+                  !addProductContext.initialProductData.isDrafted &&
+                  " opacity-20 pointer-events-none"
+                }
                 id={"all-seller-sku"}
                 placeholder="SellerSku"
                 value={addProductContext.allSellerSku}
@@ -118,12 +135,12 @@ export default function VariantDetailBlock() {
                   )}
                   <TableCell>
                     <Input
-                      value={row.sellingPrice}
+                      value={row.price}
                       onChange={(e) => {
                         setNewvariantDetailList_Temp(
                           {
                             ...row,
-                            sellingPrice: e.target.value,
+                            price: e.target.value,
                           },
                           index
                         );
@@ -144,14 +161,21 @@ export default function VariantDetailBlock() {
                       }}
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell
+                    className={
+                      addProductContext.edit &&
+                      addProductContext.initialProductData &&
+                      !addProductContext.initialProductData.isDrafted &&
+                      " opacity-20 pointer-events-none"
+                    }
+                  >
                     <Input
-                      value={row.sellerSku}
+                      value={row.seller_sku}
                       onChange={(e) => {
                         setNewvariantDetailList_Temp(
                           {
                             ...row,
-                            sellerSku: e.target.value,
+                            seller_sku: e.target.value,
                           },
                           index
                         );

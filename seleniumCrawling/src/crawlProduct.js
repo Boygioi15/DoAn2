@@ -2,9 +2,9 @@ const fs = require("fs");
 const path = require("path");
 const axios = require("axios");
 const { Builder, until, By } = require("selenium-webdriver");
-const { saveProductData } = require("./productSaver");
+const { saveProductData } = require("./saver");
 const chrome = require("selenium-webdriver/chrome");
-const { loadJson } = require("./jsonWorking");
+const { loadJson, saveJson } = require("./jsonWorking");
 const baseFolder = "../results/images";
 const slugify = require("slugify");
 
@@ -31,43 +31,9 @@ options.addArguments("--disable-sync");
 options.addArguments("--disable-translate");
 options.addArguments("--disable-features=site-per-process");
 
-const XLSX = require("xlsx");
-async function readFromExcel() {
-  const urlPath = path.join("..", "url.xlsx");
-
-  // Correct method for reading from file
-  const workbook = XLSX.readFile(urlPath);
-
-  const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-  const raw_data = XLSX.utils.sheet_to_json(worksheet);
-  for (const dataRow of raw_data) {
-    const response = await axios.get(
-      `http://localhost:3000/category/by-name?categoryName=${dataRow.Cat}`
-    );
-    dataRow.catId = response.data.categoryId;
-  }
-  console.log("Excel data: ", raw_data);
-  return raw_data;
-}
-function writeDoneToRow(rowNumber) {
-  const urlPath = path.join("..", "url.xlsx");
-
-  // 1️⃣ Read workbook
-  const workbook = XLSX.readFile(urlPath);
-
-  // 2️⃣ Get first sheet
-  const sheet = workbook.Sheets["Sheet1"];
-  // 3️⃣ Construct cell address (C + rowNumber)
-  const cellPos = XLSX.utils.encode_cell({ r: rowNumber + 1, c: 2 });
-  sheet[cellPos] = { v: "DONE" };
-  // 6️⃣ Write back to file
-  XLSX.writeFile(workbook, urlPath);
-  console.log(`✅ Wrote "DONE" to row ${rowNumber}`);
-}
-
 // Example usage: write "DONE" to row 5, column C
 async function main() {
-  const dataRows = await readFromExcel();
+  const dataRows = loadJson("../results/urlList.json");
 
   if (dataRows.length === 0) {
     console.log("No URLs found in url.xlsx");
@@ -81,29 +47,35 @@ async function main() {
     .setChromeOptions(options)
     .build();
   for (let [index, dataRow] of dataRows.entries()) {
+    console.log("PROGRESS: ", index, "/", dataRows.length);
+    if (index === 300) {
+      console.log("REACHING 300 index, threshold - terminated!");
+      return;
+    }
     try {
       console.log(`Opening: `, dataRow);
-      if (dataRow.Status) {
+      if (dataRow.status) {
         console.log("Skip row ", index);
         continue;
       }
-      await driver.get(dataRow.URL);
+      await driver.get(dataRow.productUrl);
       await clickColorsAndDownload(driver, baseFolder);
       // After finishing crawling product details:
       let productJson = await crawlProductData(driver);
       productJson = {
         ...productJson,
-        categoryId: dataRow.catId,
-        url: dataRow.URL,
+        categoryId: dataRow.categoryId,
+        productUrl: dataRow.productUrl,
       };
       console.log("PJ: ", productJson);
       // Save to file
+      dataRow.status = true;
+      saveJson("../results/urlList.json", dataRows);
       saveProductData(productJson);
-      writeDoneToRow(index);
+      await driver.sleep(2000);
     } catch (error) {
       console.log(error);
     } finally {
-      await driver.sleep(2000);
     }
   }
   await driver.quit();
@@ -202,6 +174,7 @@ async function crawlProductData(driver) {
   const basic = await crawlProductBasicInfo(driver);
   const colorList = await crawlColorList(driver);
   const sizeList = await crawlSizeList(driver);
+  const sizeGuidance = await crawlSizeGuidance(driver);
   const detail = await crawlDescriptionAndProperty(driver);
   const breadcrumb = await crawlBreadcrumb(driver);
 
@@ -212,6 +185,7 @@ async function crawlProductData(driver) {
     saledPrice: basic.saledPrice,
     description: detail.description,
     property: detail.property,
+    sizeGuidance,
     colorList,
     sizeList,
     breadcrumb,
@@ -323,6 +297,92 @@ async function crawlDescriptionAndProperty(driver) {
 
   return { description, property };
 }
+
+const HEADER_FIELD_MAP = {
+  "Chiều cao": "height",
+  "Cân nặng": "weight",
+  "Rộng ngực": "bust",
+  "Rộng eo": "waist",
+  "Rộng mông": "hip",
+};
+function parseRange(text) {
+  const match = text.replace(/\s/g, "").match(/(\d+)-(\d+)/);
+  if (!match) return null;
+
+  return {
+    min: Number(match[1]),
+    max: Number(match[2]),
+  };
+}
+async function crawlSizeGuidance(driver) {
+  // 1️⃣ Wait until size guide appears
+  console.log("0");
+  const sizeGuideDiv = await driver.wait(
+    until.elementLocated(By.css(".product__size-guide")),
+    5000
+  );
+  console.log("1");
+  // 2️⃣ Click via JS (bypasses overlay / text-node issue)
+  await driver.executeScript("arguments[0].click();", sizeGuideDiv);
+  console.log("2");
+  // 3️⃣ Small delay for modal / popup animation
+  await driver.sleep(500);
+
+  console.log("✅ Size guide opened");
+
+  // next steps will go here
+
+  const table = await driver.wait(
+    until.elementLocated(By.css(".sizeguide__table.active table")),
+    5000
+  );
+
+  // 2️⃣ Read headers
+  const headerCells = await table.findElements(By.css("thead tr td"));
+  console.log("3");
+  const columnFieldMap = {}; // index -> fieldName
+
+  for (let i = 0; i < headerCells.length; i++) {
+    const headerText = (await headerCells[i].getText()).trim();
+
+    for (const [label, field] of Object.entries(HEADER_FIELD_MAP)) {
+      if (headerText.includes(label)) {
+        columnFieldMap[i] = field;
+      }
+    }
+  }
+  console.log("4");
+  // 3️⃣ Read rows
+  const rows = await table.findElements(By.css("tbody tr"));
+  const results = [];
+
+  for (const row of rows) {
+    const cells = await row.findElements(By.css("td"));
+
+    const name = (await cells[0].getText()).trim();
+    const fit = {};
+
+    for (let i = 1; i < cells.length; i++) {
+      const field = columnFieldMap[i];
+      if (!field) continue; // column not mapped → skip
+
+      const rawText = (await cells[i].getText()).trim();
+      const range = parseRange(rawText);
+
+      if (range) {
+        fit[field] = range;
+      }
+    }
+
+    results.push({
+      name,
+      fit,
+    });
+  }
+
+  // console.log("📏 Size guide parsed:\n", JSON.stringify(results, null, 2));
+  return results;
+}
 async function crawlBreadcrumb(driver) {
   const crumbs = await driver.findElements(By.css(".breadcrumbs__item"));
   const breadcrumb = [];
@@ -333,6 +393,6 @@ async function crawlBreadcrumb(driver) {
 
   return breadcrumb;
 }
-//writeDoneToRow(1);
+// writeDoneToRow(1);
 //readFromExcel();
 main();

@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const axios = require("axios");
 const { Builder, until, By } = require("selenium-webdriver");
-const { saveProductData } = require("./productSaver");
+const { saveProductData, saveCategoryData } = require("./saver");
 const chrome = require("selenium-webdriver/chrome");
 const { loadJson } = require("./jsonWorking");
 const baseFolder = "../results/images";
@@ -46,6 +46,7 @@ async function main() {
 
   console.log("Loaded URLs:", dataRows);
 
+  const data = {};
   let driver = await new Builder()
     .forBrowser("chrome")
     .setChromeOptions(options)
@@ -112,31 +113,28 @@ async function main() {
           .map((a) => a.getAttribute("href"))
           .filter(Boolean);
       });
-
       console.log("Total products found:", productUrls.length);
+
+      saveCategoryData({
+        rowIndex: index,
+        categoryId: dataRow.categoryId,
+        totalProductFound: totalProduct,
+        totalProductReal: totalProduct,
+        productUrLList: productUrls,
+      });
+      writeDoneToRow(index);
       // console.log(productUrls.slice(0, 5));
-      await writeCategoryProgressExcel(
-        index + 2,
-        totalProduct,
-        productUrls.length
-      );
-      await populateProductDataExcel(
-        startRowForProduct,
-        productUrls,
-        dataRow.categoryId
-      );
-      startRowForProduct += productUrls.length;
-      // After finishing crawling product details:
-      // let productJson = await crawlProductData(driver);
-      // productJson = {
-      //   ...productJson,
-      //   categoryId: dataRow.catId,
-      //   url: dataRow.URL,
-      // };
-      // console.log("PJ: ", productJson);
-      // // Save to file
-      // saveProductData(productJson);
-      // writeDoneToRow(index);
+      // await writeCategoryProgressExcel(
+      //   index + 2,
+      //   totalProduct,
+      //   productUrls.length
+      // );
+      // await populateProductDataExcel(
+      //   startRowForProduct,
+      //   productUrls,
+      //   dataRow.categoryId
+      // );
+      // startRowForProduct += productUrls.length;
     } catch (error) {
       console.log(error);
     } finally {
@@ -146,43 +144,24 @@ async function main() {
   await driver.quit();
 }
 main();
-function writeCategoryProgressExcel(
-  row,
-  totalProductGathered,
-  totalProductFound
-) {
-  const excelPath = path.join(__dirname, "..", "url.xlsx");
+function writeDoneToRow(rowNumber) {
+  const urlPath = path.join("..", "url.xlsx");
 
   // 1️⃣ Read workbook
-  const workbook = XLSX.readFile(excelPath);
+  const workbook = XLSX.readFile(urlPath);
 
-  // 2️⃣ Get CategoryList sheet
-  const sheetName = "CategoryList";
-  const sheet = workbook.Sheets[sheetName];
-
-  if (!sheet) {
-    throw new Error(`Sheet "${sheetName}" not found`);
-  }
-
-  // 4️⃣ Write progress
-  sheet[`C${row}`] = { t: "n", v: totalProductFound };
-  sheet[`D${row}`] = { t: "n", v: totalProductGathered };
-
-  // 5️⃣ Auto status
-  const status = "DONE";
-  sheet[`E${row}`] = { t: "s", v: status };
-
-  // 6️⃣ Write back
-  XLSX.writeFile(workbook, excelPath);
-
-  console.log(
-    `📊 Category row ${row}: ${totalProductGathered}/${totalProductFound} → ${status}`
-  );
+  // 2️⃣ Get first sheet
+  const sheet = workbook.Sheets["CategoryList"];
+  // 3️⃣ Construct cell address (C + rowNumber)
+  const cellPos = XLSX.utils.encode_cell({ r: rowNumber + 1, c: 2 });
+  sheet[cellPos] = { v: "DONE" };
+  // 6️⃣ Write back to file
+  XLSX.writeFile(workbook, urlPath);
+  console.log(`✅ Wrote "DONE" to row ${rowNumber}`);
 }
-
 function populateProductDataExcel(startRow, productUrls, categoryId) {
   const urlPath = path.join(__dirname, "..", "url.xlsx");
-
+  const baseUrl = "https://canifa.com";
   // 1️⃣ Read workbook
   const workbook = XLSX.readFile(urlPath);
 
@@ -199,7 +178,7 @@ function populateProductDataExcel(startRow, productUrls, categoryId) {
 
   // 4️⃣ Write each product URL
   productUrls.forEach((url) => {
-    sheet[`A${currentRow}`] = { t: "s", v: url }; // productUrl
+    sheet[`A${currentRow}`] = { t: "s", v: `${baseUrl}${url}` }; // productUrl
     sheet[`B${currentRow}`] = { t: "s", v: categoryId }; // categoryId
     currentRow++;
   });

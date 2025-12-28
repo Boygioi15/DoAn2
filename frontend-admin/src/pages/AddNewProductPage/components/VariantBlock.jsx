@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { AddNewProductPageContext } from "../AddNewProductPage";
+import { EditProductPageContext } from "../EditProductPage";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import FileUploadCompact from "@/components/compact-upload";
 import { v4 } from "uuid";
 export default function VariantListBlock() {
-  const addProductContext = useContext(AddNewProductPageContext);
+  const addProductContext = useContext(EditProductPageContext);
   //   const createNewVariant = () => {
   //     const newVariant = {
   //       index: total,
@@ -41,15 +41,36 @@ export default function VariantListBlock() {
   //     return;
   //   };
   return (
-    <div className={`${reusableStyle.inputBlock}`}>
-      <h2>Biến thể sản phẩm</h2>
+    <div
+      className={
+        `${reusableStyle.inputBlock}` +
+        (addProductContext.edit &&
+          addProductContext.initialProductData &&
+          !addProductContext.initialProductData.isDrafted &&
+          " opacity-90 pointer-events-none")
+      }
+    >
+      <div className="flex flex-row justify-between items-center ">
+        <h2>Biến thể sản phẩm</h2>
+        {addProductContext.edit &&
+          addProductContext.initialProductData &&
+          !addProductContext.initialProductData.isDrafted && (
+            <h6 className="text-muted-foreground">Chế độ cập nhật - cố định</h6>
+          )}
+      </div>
       <h6>
         Tạo biến thể cho sản phẩm, hiện cố định 2 biến thể là màu sắc và kích cỡ
       </h6>
       {addProductContext.variant1 && (
         <VariantBlock
           variant={addProductContext.variant1}
-          onVariantChange={addProductContext.setVariant1}
+          onVariantChange={(newVariant) => {
+            addProductContext.setVariant1(newVariant);
+            addProductContext.generateVariantDetailFromVariant(
+              newVariant,
+              addProductContext.variant2
+            );
+          }}
           errors={addProductContext.formErrors.variant1Error}
         />
       )}
@@ -58,7 +79,13 @@ export default function VariantListBlock() {
           variant={addProductContext.variant2}
           onVariantChange={(newVariant) => {
             addProductContext.setVariant2(newVariant);
-            addProductContext.generateNewSizeListDataFromVariant(newVariant);
+            addProductContext.generateVariantDetailFromVariant(
+              addProductContext.variant1,
+              newVariant
+            );
+            addProductContext.generateNewSizeGuidanceDataFromVariant(
+              newVariant
+            );
           }}
           errors={addProductContext.formErrors.variant2Error}
         />
@@ -75,7 +102,7 @@ export default function VariantListBlock() {
     </div>
   );
 }
-function VariantBlock({ variant, onVariantChange, errors }) {
+function VariantBlock({ variant, initialImageUrls, onVariantChange, errors }) {
   return (
     <div className={reusableStyle.variantBlock}>
       <div className="flex justify-between items-center">
@@ -147,16 +174,14 @@ function VariantBlock({ variant, onVariantChange, errors }) {
             {/* gallery*/}
             {variantValue.name.length > 0 && variant.index === 0 && (
               <FileUploadCompact
+                initialImageUrls={variantValue.initialImage}
                 onFilesChange={(files) => {
                   const newValueList = variant.valueList;
                   const currentValue = newValueList[index];
                   currentValue.img = files;
-                  onVariantChange((prev) => ({
-                    ...prev,
-                    valueList: newValueList,
-                  }));
+                  onVariantChange({ ...variant, valueList: newValueList });
                 }}
-                maxFiles={6}
+                maxFiles={12}
                 className={"grow"}
               />
             )}

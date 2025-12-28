@@ -1,11 +1,11 @@
 import { Input } from "@/components/ui/input";
-import { AddNewProductPageContext } from "../AddNewProductPage";
+import { EditProductPageContext } from "../EditProductPage";
 import { Button } from "@/components/ui/button";
 import { Trash2Icon } from "lucide-react";
 import { useContext } from "react";
 
 export default function PropertyBlock({}) {
-  const addProductContext = useContext(AddNewProductPageContext);
+  const addProductContext = useContext(EditProductPageContext);
   return (
     <div
       className={
@@ -71,7 +71,6 @@ export default function PropertyBlock({}) {
           )}
         </ul>
       )}
-      <div className="flex flex-row gap-5"></div>
     </div>
   );
 }

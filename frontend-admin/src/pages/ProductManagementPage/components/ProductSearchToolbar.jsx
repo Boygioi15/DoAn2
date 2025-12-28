@@ -1,5 +1,7 @@
-import { InputWithStartAddOn } from "@/reusable-component/Input";
-import { SelectWithStartAddOn } from "@/reusable-component/Select";
+import {
+  InputWithStartAddOn,
+  SelectWithStartAddOn,
+} from "@/reusable-component/Input";
 
 export default function ProductSearchToolbar({
   queryName,

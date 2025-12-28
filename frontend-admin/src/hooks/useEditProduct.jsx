@@ -2,6 +2,7 @@ import categoryApi from "@/api/categoryApi";
 import { productApi } from "@/api/productApi";
 import { slugifyOption } from "@/constants";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import slugify from "slugify";
 import { toast } from "sonner";
 import { v4 } from "uuid";
@@ -29,8 +30,23 @@ const variant2Default = {
   ],
 };
 
-export default function useAddProduct() {
+export default function useEditProduct() {
   //data
+  const navigate = useNavigate();
+  const [searchParam, setSearchParam] = useSearchParams();
+  const edit = useMemo(() => {
+    if (!searchParam.get("edit")) {
+      return false;
+    }
+    if (searchParam.get("edit") === "true") {
+      return true;
+    }
+  }, [searchParam]);
+  const param = useParams();
+  // console.log("P: ", param);
+  // console.log("SP: ", searchParam);
+
+  const [isSubmitLoading, setIsSubmitLoading] = useState(false);
   const [productName, setProductName] = useState("");
   const [allCategories, setAllCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
@@ -43,7 +59,7 @@ export default function useAddProduct() {
   const [variant2, setVariant2] = useState(variant2Default);
   const [variantDetailList, setVariantDetailList] = useState([]);
 
-  const [sizeList, setSizeList] = useState([]);
+  const [sizeGuidance, setSizeGuidance] = useState([]);
   const [formErrors, setFormErrors] = useState({
     basicInfoError: [],
     propertyListError: [],
@@ -87,13 +103,13 @@ export default function useAddProduct() {
     const newVariantDetailList = variantDetailList.map((variant, index) => {
       const newVariant = { ...variant };
       if (allPrice.trim() !== "") {
-        newVariant.sellingPrice = allPrice;
+        newVariant.price = allPrice;
       }
       if (allStock.trim() !== "") {
         newVariant.stock = allStock;
       }
       if (allSellerSku.trim() !== "") {
-        newVariant.sellerSku = allSellerSku + `-${index + 1}`;
+        newVariant.seller_sku = allSellerSku + `-${index + 1}`;
       }
       return newVariant;
     });
@@ -104,12 +120,12 @@ export default function useAddProduct() {
     setAllStock("");
     setAllSellerSku("");
   };
-  const generateVariantDetailFromVariant = () => {
+  const generateVariantDetailFromVariant = (variant1, variant2) => {
     if (!variant1 && !variant2) {
       const specialCase = [
         {
-          sellerSku: slugify(productName, slugifyOption) || "special-case",
-          sellingPrice: "",
+          seller_sku: slugify(productName, slugifyOption) || "special-case",
+          price: "",
           stock: "",
           isInUse: true,
           isOpenToSale: true,
@@ -138,8 +154,8 @@ export default function useAddProduct() {
             sellSku = slugify(productName, slugifyOption);
           }
           newDataRow.push({
-            sellerSku: sellSku,
-            sellingPrice: "",
+            seller_sku: sellSku,
+            price: "",
             stock: "",
             isInUse: true,
             isOpenToSale: true,
@@ -159,8 +175,8 @@ export default function useAddProduct() {
               sellSku = slugify(productName);
             }
             newDataRow.push({
-              sellerSku: sellSku,
-              sellingPrice: "",
+              seller_sku: sellSku,
+              price: "",
               stock: "",
               isInUse: true,
               isOpenToSale: true,
@@ -190,9 +206,9 @@ export default function useAddProduct() {
           if (match) {
             match.isOpenToSale = oldDataRow[i].isOpenToSale;
             match.isInUse = oldDataRow[i].isInUse;
-            match.sellerSku = oldDataRow[i].sellerSku;
+            match.seller_sku = oldDataRow[i].seller_sku;
             match.stock = oldDataRow[i].stock;
-            match.sellingPrice = oldDataRow[i].sellingPrice;
+            match.price = oldDataRow[i].price;
           }
         } else {
           // console.log("C: ");
@@ -204,9 +220,9 @@ export default function useAddProduct() {
           if (match) {
             match.isOpenToSale = oldDataRow[i].isOpenToSale;
             match.isInUse = oldDataRow[i].isInUse;
-            match.sellerSku = oldDataRow[i].sellerSku;
+            match.seller_sku = oldDataRow[i].seller_sku;
             match.stock = oldDataRow[i].stock;
-            match.sellingPrice = oldDataRow[i].sellingPrice;
+            match.price = oldDataRow[i].price;
           }
         }
       }
@@ -216,9 +232,6 @@ export default function useAddProduct() {
     // console.log("N: ", newDataRow);
     setVariantDetailList(newDataRow);
   };
-  useEffect(() => {
-    generateVariantDetailFromVariant();
-  }, [variant1, variant2]);
 
   //size list
   const [useSize1, setUseSize1] = useState(true);
@@ -227,8 +240,17 @@ export default function useAddProduct() {
   const [useSize4, setUseSize4] = useState(true);
   const [useSize5, setUseSize5] = useState(true);
 
-  const generateNewSizeListDataFromVariant = (newVariant2) => {
-    const oldSizeList = [...sizeList];
+  const generateNewSizeGuidanceDataFromVariant = (
+    newVariant2,
+    initialSizeList = null
+  ) => {
+    let oldSizeList = [];
+    if (initialSizeList) {
+      oldSizeList = [...initialSizeList];
+    } else {
+      oldSizeList = [...sizeGuidance];
+    }
+    console.log("OSL: ", oldSizeList);
     const newSizeList = [];
     newVariant2.valueList.forEach((value) => {
       if (value.name.trim().length > 0)
@@ -247,12 +269,19 @@ export default function useAddProduct() {
     oldSizeList.forEach((oldSize) => {
       for (let i = 0; i < newSizeList.length; i++) {
         if (oldSize.name === newSizeList[i].name) {
-          newSizeList[i] = oldSize;
+          if (oldSize.fit.height)
+            newSizeList[i].fit.height = oldSize.fit.height;
+          if (oldSize.fit.weight)
+            newSizeList[i].fit.weight = oldSize.fit.weight;
+          if (oldSize.fit.bust) newSizeList[i].fit.bust = oldSize.fit.bust;
+          if (oldSize.fit.waist) newSizeList[i].fit.waist = oldSize.fit.waist;
+          if (oldSize.fit.hip) newSizeList[i].fit.hip = oldSize.fit.hip;
           break;
         }
       }
     });
-    setSizeList(newSizeList);
+    console.log("NSL: ", newSizeList);
+    setSizeGuidance(newSizeList);
   };
 
   //error
@@ -278,7 +307,7 @@ export default function useAddProduct() {
       newErrorList.push("Tên sản phẩm phải tối thiểu 10 ký tự!");
     }
     if (!thumbnailFile) {
-      newErrorList.push("Vui lòng tải ảnh bìa sản phẩm lên!");
+      if (!edit) newErrorList.push("Vui lòng tải ảnh bìa sản phẩm lên!");
     }
     setFormErrors((prev) => ({ ...prev, basicInfoError: newErrorList }));
   }, [productName, selectedCategory, thumbnailFile]);
@@ -346,7 +375,7 @@ export default function useAddProduct() {
     }
     for (let i = 0; i < valueList.length - 1; i++) {
       if (valueList[i].img.length < 1) {
-        newErrorList.push("Phải cung cấp ảnh cho mọi biến thể!");
+        if (!edit) newErrorList.push("Phải cung cấp ảnh cho mọi biến thể!");
         break;
       }
     }
@@ -378,12 +407,6 @@ export default function useAddProduct() {
         break;
       }
     }
-    for (let i = 0; i < valueList.length - 1; i++) {
-      if (valueList[i].img.length) {
-        newErrorList.push("Phải cung cấp ảnh cho mọi biến thể!");
-        break;
-      }
-    }
     const names = valueList.map((value) => value.name);
     if (names.length !== new Set(names).size) {
       newErrorList.push("Các biến thể không được trùng tên nhau!");
@@ -399,8 +422,8 @@ export default function useAddProduct() {
     const newErrorList = [];
     for (const dataRow of variantDetailList) {
       if (
-        dataRow.sellingPrice.trim() === "" ||
-        dataRow.sellerSku.trim() === "" ||
+        dataRow.price.trim() === "" ||
+        dataRow.seller_sku.trim() === "" ||
         dataRow.stock.trim() === ""
       ) {
         newErrorList.push("Không được bỏ trống bất kỳ dòng nào!");
@@ -409,11 +432,11 @@ export default function useAddProduct() {
     }
     const sellerSkuSet = new Set();
     for (const dataRow of variantDetailList) {
-      if (sellerSkuSet.has(dataRow.sellerSku)) {
+      if (sellerSkuSet.has(dataRow.seller_sku)) {
         newErrorList.push("Không được trùng tên seller sku");
         break;
       }
-      sellerSkuSet.add(dataRow.sellerSku);
+      sellerSkuSet.add(dataRow.seller_sku);
     }
     setFormErrors((prev) => ({
       ...prev,
@@ -433,25 +456,268 @@ export default function useAddProduct() {
     return false;
   }, [formErrors]);
 
+  const handleLoadSampleData = async () => {
+    setProductName("Áo polo dài tay nam test");
+    setProductDescription("<p>Thử sản phẩm</p>");
+    setSelectedCategory("c98e2fe4-7ba5-4881-a313-421134145b63");
+    setProductPropertyList([
+      { name: "Chống nắng", value: "Có" },
+      { name: "Chống mưa", value: "Có" },
+      { name: "Chất liệu", value: "30% trắng 70% xanh" },
+    ]);
+    const v1Sample = {
+      index: 0,
+      name: "Màu sắc",
+      valueList: [
+        {
+          name: "Xanh",
+          img: [],
+          tempId: v4(),
+        },
+        {
+          name: "Đỏ",
+          img: [],
+          tempId: v4(),
+        },
+        {
+          name: "",
+          img: [],
+          tempId: v4(),
+        },
+      ],
+    };
+    const v2Sample = {
+      index: 1,
+      name: "Kích cỡ",
+      valueList: [
+        {
+          name: "S",
+          tempId: v4(),
+        },
+        {
+          name: "M",
+          tempId: v4(),
+        },
+        {
+          name: "L",
+          tempId: v4(),
+        },
+        {
+          name: "",
+          tempId: v4(),
+        },
+      ],
+    };
+
+    setVariant1(v1Sample);
+    setVariant2(v2Sample);
+    generateVariantDetailFromVariant(v1Sample, v2Sample);
+    setSizeGuidance([
+      {
+        name: "S",
+        fit: {
+          height: { min: 150, max: 158 },
+          weight: { min: 42, max: 48 },
+          bust: { min: 78, max: 84 },
+          waist: { min: 58, max: 64 },
+          hip: { min: 82, max: 88 },
+        },
+      },
+      {
+        name: "M",
+        fit: {
+          height: { min: 158, max: 165 },
+          weight: { min: 48, max: 55 },
+          bust: { min: 84, max: 90 },
+          waist: { min: 64, max: 70 },
+          hip: { min: 88, max: 94 },
+        },
+      },
+      {
+        name: "L",
+        fit: {
+          height: { min: 165, max: 172 },
+          weight: { min: 55, max: 62 },
+          bust: { min: 90, max: 96 },
+          waist: { min: 70, max: 76 },
+          hip: { min: 94, max: 100 },
+        },
+      },
+    ]);
+    setAllPrice("499000");
+    setAllStock("20");
+    setAllSellerSku("ao-polo-nam-test");
+  };
+
+  //edit section
+  const [initialProductData, setInitialProductData] = useState(null);
+  const getProductDetail = async (productId) => {
+    try {
+      const result = await productApi.getProductDetail_EditProduct(productId);
+      setInitialProductData(result.data);
+      return result.data;
+    } catch (error) {
+      console.log(error);
+      toast.error("Có lỗi khi tải dữ liệu sản phẩm");
+    }
+  };
+  const loadInitialData = async (productDetail) => {
+    setProductName(productDetail.name || "");
+    setSelectedCategory(productDetail.categoryId);
+    if (productDetail.productDescription) {
+    }
+    setProductDescription(productDetail.description || "");
+    setProductPropertyList(productDetail.propertyList || []);
+    let v1 = productDetail.variant1;
+
+    //load image
+    v1.valueList = v1.valueList.map((value) => ({
+      ...value,
+      initialImage: value.img,
+      tempId: value.optionId,
+    }));
+    if (productDetail.isDrafted) {
+      v1.valueList.push({ name: "", tempId: v4(), img: [] });
+    }
+    let v2 = productDetail.variant2;
+    v2.valueList = v2.valueList.map((value) => ({
+      ...value,
+      tempId: value.optionId,
+    }));
+    if (productDetail.isDrafted) {
+      v2.valueList.push({ name: "", tempId: v4() });
+    }
+    setVariant1(v1);
+    setVariant2(v2);
+    let initialSizeGuidance = productDetail.sizeGuidance;
+    initialSizeGuidance = initialSizeGuidance.map((size) => {
+      const input = size.name;
+      const match = input.match(/^([A-Z]+)/);
+      const name = match ? match[1] : null;
+      return {
+        ...size,
+        name,
+      };
+    });
+    if (initialSizeGuidance.length > 0) {
+      setUseSize1(!!initialSizeGuidance[0].fit.height);
+      setUseSize2(!!initialSizeGuidance[0].fit.weight);
+      setUseSize3(!!initialSizeGuidance[0].fit.bust);
+      setUseSize4(!!initialSizeGuidance[0].fit.waist);
+      setUseSize5(!!initialSizeGuidance[0].fit.hip);
+    }
+    generateNewSizeGuidanceDataFromVariant(v2, initialSizeGuidance);
+    const _temp = productDetail.variantDetailList.map((detail) => ({
+      ...detail,
+      v1_name: detail.optionValue1,
+      v2_name: detail.optionValue2,
+      v1_tempId: detail.optionId1,
+      v2_tempId: detail.optionId2,
+      stock: detail.stock ? detail.stock.toString() : "",
+      price: detail.price ? detail.price.toString() : "",
+    }));
+    // console.log(_temp);
+    setVariantDetailList(_temp);
+    // setSizeGuidance(productDetail.sizeGuidance);
+  };
+  // useEffect(() => {
+  //   console.log("VDL: ", variantDetailList);
+  // }, [variantDetailList]);
+  const onEditBootup = async () => {
+    console.log(edit);
+    if (edit) {
+      const productId = param.productId;
+      const detail = await getProductDetail(productId);
+      loadInitialData(detail);
+    }
+  };
+  useEffect(() => {
+    onEditBootup();
+  }, [edit]);
+
   //submit
-  const handlePublishSubmit = async () => {
+  const handlePublishNewProduct = async () => {
     const formData = await formFinalFormData();
     try {
-      const response = await productApi.createNewProduct(formData);
+      setIsSubmitLoading(true);
+      const response = await productApi.publishNewProduct(formData);
+      navigate("/product-management");
     } catch (error) {
       console.log(error);
       toast.error("Có lỗi khi thêm mới sản phẩm");
+    } finally {
+      setIsSubmitLoading(false);
     }
   };
-  const handleDraftSubmit = async () => {
+  const handleCreateNewDraft = async () => {
     const formData = await formFinalFormData();
-    formData.append("isDraft", "1");
     try {
-      const response = await productApi.createNewProduct(formData);
+      setIsSubmitLoading(true);
+
+      const response = await productApi.createNewDraft(formData);
+      navigate("/product-management");
     } catch (error) {
-      toast.error("Có lỗi khi thêm mới sản phẩm");
+      console.log(error);
+      toast.error("Có lỗi khi thêm mới bản nháp");
+    } finally {
+      setIsSubmitLoading(false);
     }
   };
+  const handleUpdateDraft = async () => {
+    try {
+      setIsSubmitLoading(true);
+
+      const formData = await formFinalFormData();
+      const response = await productApi.updateDraft(
+        initialProductData.productId,
+        formData
+      );
+      toast.success("Cập nhật bản nháp thành công");
+      navigate("/product-management");
+    } catch (error) {
+      console.log(error);
+      toast.error("Có lỗi khi cập nhật bản nháp");
+    } finally {
+      setIsSubmitLoading(false);
+    }
+  };
+  const handlePublishDraft = async () => {
+    try {
+      setIsSubmitLoading(true);
+
+      const formData = await formFinalFormData();
+      const response = await productApi.publishDraft(
+        initialProductData.productId,
+        formData
+      );
+      toast.success("Xuất bản bản nháp thành công");
+      navigate("/product-management");
+    } catch (error) {
+      console.log(error);
+      toast.error("Có lỗi khi xuất bản bản nháp");
+    } finally {
+      setIsSubmitLoading(false);
+    }
+  };
+  const handleUpdateProduct = async () => {
+    try {
+      setIsSubmitLoading(true);
+
+      const formData = await formFinalFormData();
+      const response = await productApi.updateProduct(
+        initialProductData.productId,
+        formData
+      );
+      toast.success("Cập nhật sản phẩm thành công");
+      navigate("/product-management");
+    } catch (error) {
+      console.log(error);
+      toast.error("Có lỗi khi Cập nhật sản phẩm");
+    } finally {
+      setIsSubmitLoading(false);
+    }
+  };
+
   const formFinalFormData = async () => {
     const formData = new FormData();
     formData.append("productName", productName);
@@ -464,7 +730,7 @@ export default function useAddProduct() {
     formData.append("propertyList", JSON.stringify(tosendPropertyList));
     formData.append("description", productDescription);
 
-    let toSendSizeList = sizeList.map((size) => {
+    let toSendSizeList = sizeGuidance.map((size) => {
       const toSendSize = {
         name: size.name,
         fit: {},
@@ -508,7 +774,7 @@ export default function useAddProduct() {
       return toSendSize;
     });
 
-    formData.append("sizeList", JSON.stringify(toSendSizeList));
+    formData.append("sizeGuidance", JSON.stringify(toSendSizeList));
 
     //variants & img
     //variantData
@@ -562,90 +828,11 @@ export default function useAddProduct() {
     });
     return formData;
   };
-  const handleLoadSampleData = async () => {
-    setProductName("Áo polo dài tay nam test");
-    setProductDescription("<p>Thử sản phẩm</p>");
-    setSelectedCategory("c98e2fe4-7ba5-4881-a313-421134145b63");
-    setProductPropertyList([
-      { name: "Chống nắng", value: "Có" },
-      { name: "Chống mưa", value: "Có" },
-      { name: "Chất liệu", value: "30% trắng 70% xanh" },
-    ]);
-    setVariant1({
-      index: 0,
-      name: "Màu sắc",
-      valueList: [
-        {
-          name: "Xanh",
-          img: [],
-          tempId: v4(),
-        },
-        {
-          name: "Đỏ",
-          img: [],
-          tempId: v4(),
-        },
-      ],
-    });
-    setVariant2({
-      index: 1,
-      name: "Kích cỡ",
-      valueList: [
-        {
-          name: "S",
-          img: [],
-          tempId: v4(),
-        },
-        {
-          name: "M",
-          img: [],
-          tempId: v4(),
-        },
-        {
-          name: "L",
-          img: [],
-          tempId: v4(),
-        },
-      ],
-    });
-    generateVariantDetailFromVariant();
-    setSizeList([
-      {
-        name: "S",
-        fit: {
-          height: { min: 150, max: 158 },
-          weight: { min: 42, max: 48 },
-          bust: { min: 78, max: 84 },
-          waist: { min: 58, max: 64 },
-          hip: { min: 82, max: 88 },
-        },
-      },
-      {
-        name: "M",
-        fit: {
-          height: { min: 158, max: 165 },
-          weight: { min: 48, max: 55 },
-          bust: { min: 84, max: 90 },
-          waist: { min: 64, max: 70 },
-          hip: { min: 88, max: 94 },
-        },
-      },
-      {
-        name: "L",
-        fit: {
-          height: { min: 165, max: 172 },
-          weight: { min: 55, max: 62 },
-          bust: { min: 90, max: 96 },
-          waist: { min: 70, max: 76 },
-          hip: { min: 94, max: 100 },
-        },
-      },
-    ]);
-    setAllPrice("499000");
-    setAllStock("20");
-    setAllSellerSku("ao-polo-nam-test");
-  };
+
   return {
+    edit,
+    initialProductData,
+
     // ---------- Basic product data ----------
     productName,
     setProductName,
@@ -670,10 +857,11 @@ export default function useAddProduct() {
     setVariant2,
     variantDetailList,
     setVariantDetailList,
+    generateVariantDetailFromVariant,
 
     //sizes
-    sizeList,
-    setSizeList,
+    sizeGuidance,
+    setSizeGuidance,
 
     useSize1,
     useSize2,
@@ -685,7 +873,7 @@ export default function useAddProduct() {
     setUseSize3,
     setUseSize4,
     setUseSize5,
-    generateNewSizeListDataFromVariant,
+    generateNewSizeGuidanceDataFromVariant,
 
     allPrice,
     setAllPrice,
@@ -702,8 +890,13 @@ export default function useAddProduct() {
     hasError,
 
     // ---------- Submit actions ----------
-    handlePublishSubmit,
-    handleDraftSubmit,
+    handlePublishNewProduct,
+    handleCreateNewDraft,
+    handleUpdateDraft,
+    handlePublishDraft,
+    handleUpdateProduct,
     handleLoadSampleData,
+
+    isSubmitLoading,
   };
 }

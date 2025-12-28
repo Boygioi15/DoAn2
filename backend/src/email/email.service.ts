@@ -353,7 +353,7 @@ export class EmailService {
                                                     <td style="color:#687385;padding:4px 0">Email</td>
                                                     <td style="color:#434447;font-weight:500;padding:4px 0">${order.email}</td>
                                                     <td style="color:#687385;padding:4px 0">Trạng thái</td>
-                                                    <td style="padding:4px 0; font-weight:600; color:#2579f2;">${order.payment_status}</td>
+                                                    <td style="padding:4px 0; font-weight:600; color:#2579f2;">${order.payment_state}</td>
                                                 </tr>
                                                 <tr>
                                                     <td style="color:#687385;padding:4px 0">SĐT</td>

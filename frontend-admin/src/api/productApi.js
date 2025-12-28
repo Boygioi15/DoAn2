@@ -1,12 +1,60 @@
 import { axiosClient_Backend } from "./apiClient";
 
 export const productApi = {
-  createNewProduct: async (productData) => {
-    return await axiosClient_Backend.post("/product", productData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+  publishNewProduct: async (productData) => {
+    return await axiosClient_Backend.post(
+      "/product/publish-new-product",
+      productData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+  },
+  createNewDraft: async (productData) => {
+    return await axiosClient_Backend.post(
+      `/product/create-new-draft`,
+      productData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+  },
+  updateDraft: async (productId, productData) => {
+    return await axiosClient_Backend.patch(
+      `/product/update-draft/${productId}`,
+      productData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+  },
+  publishDraft: async (productId, productData) => {
+    return await axiosClient_Backend.patch(
+      `/product/publish-draft/${productId}`,
+      productData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+  },
+  updateProduct: async (productId, productData) => {
+    return await axiosClient_Backend.patch(
+      `/product/update-product/${productId}`,
+      productData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
   },
   getProductList: async (query) => {
     return await axiosClient_Backend.get(`/product/admin?${query}`);

@@ -4,7 +4,7 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { CreateProductDto } from '../dto/create-product.dto';
+import { CreateProductDto } from '../dto/product.dto';
 import slugify from 'slugify';
 import { InjectModel } from '@nestjs/mongoose';
 import {
@@ -16,6 +16,8 @@ import {
   ProductDocument,
   ProductProperty,
   ProductPropertyDocument,
+  ProductSizeGuidance,
+  ProductSizeGuidanceDocument,
   ProductVariant,
   ProductVariantDocument,
   VariantOption,
@@ -50,6 +52,8 @@ export class ProductQueryService {
 
     @InjectModel(ProductProperty.name)
     private readonly productPropertyModel: Model<ProductPropertyDocument>,
+    @InjectModel(ProductSizeGuidance.name)
+    private readonly productSizeGuidanceModel: Model<ProductSizeGuidanceDocument>,
     @InjectModel(ProductDescription.name)
     private readonly productDescriptionModel: Model<ProductDescriptionDocument>,
   ) {}
@@ -103,6 +107,9 @@ export class ProductQueryService {
       };
     }
     if (productTab) {
+      if (productTab === 'all') {
+        matchStage.isDeleted = false;
+      }
       if (productTab === 'published') {
         matchStage.isPublished = true;
         matchStage.isDrafted = false;
@@ -414,6 +421,7 @@ export class ProductQueryService {
     }
     // console.log('FI: ', filters.categoryId);
     let catId = filters.categoryId;
+    console.log('CID: ', catId);
     const catDetail = await this.categoryService.getCategoryDetail(catId);
     if (!catDetail) {
       throw new InternalServerErrorException(
@@ -521,8 +529,9 @@ export class ProductQueryService {
         //price
         const { minPrice } = await this.getProductSellingPrice(product);
         let allProductVariants = await this.getAllVariantsOfProduct(product);
+        console.log('APV: ', allProductVariants);
         allProductVariants = allProductVariants.filter(
-          (variant) => variant.isInUse && variant.isOpenToSale,
+          (variant) => variant.isOpenToSale,
         );
         //option data
         let optionData: any = [];
@@ -560,12 +569,7 @@ export class ProductQueryService {
   async getProductCategoryName(product: ProductDocument) {
     const { categoryId } = product;
     const category = await this.categoryService.getCategoryDetail(categoryId);
-    if (!category) {
-      throw new InternalServerErrorException(
-        'Không tồn tại danh mục tương ứng ' + categoryId.toString(),
-      );
-    }
-    return category.categoryName;
+    return category?.categoryName;
   }
   async getAllVariantsOfProduct(product: ProductDocument) {
     const { productId } = product;
@@ -648,7 +652,6 @@ export class ProductQueryService {
           sku: 1,
           price: 1,
           stock: 1,
-          isInUse: 1,
           isOpenToSale: 1,
           seller_sku: 1,
           platform_sku: 1,
@@ -703,9 +706,12 @@ export class ProductQueryService {
   }
   async getProductPropertyList(product: ProductDocument) {
     const { productId } = product;
-    const data = await this.productPropertyModel.find({
-      productId: productId,
-    });
+    const data = await this.productPropertyModel
+      .find({
+        productId: productId,
+      })
+      .select('name value')
+      .lean();
     // console.log('Property list: ', data);
     return data;
   }
@@ -717,33 +723,45 @@ export class ProductQueryService {
     // console.log('Description: ', data);
     return data;
   }
+  async getProductSizeGuidance(product: ProductDocument) {
+    const { productId } = product;
+    const data = await this.productSizeGuidanceModel
+      .find({
+        productId: productId,
+      })
+      .select('name fit')
+      .lean();
+    // console.log('Size guidance: ', data);
+    return data;
+  }
   //get detail
-
   async getProductDetail_Admin(productId: string) {
     const product = await this.productModel.findOne({ productId: productId });
     if (!product) {
       throw new InternalServerErrorException('Product not found!');
     }
     const propertyList = await this.getProductPropertyList(product);
+    const sizeGuidance = await this.getProductSizeGuidance(product);
     const descriptionDb = await this.getProductDescription(product);
     const description = descriptionDb?.description;
     const options = await this.getAllProductOptions(product);
     let optionsGrouped = this.groupOptions(options);
     const v1 = optionsGrouped.find((grouped: any) => grouped.index === 0);
     const v2 = optionsGrouped.find((grouped: any) => grouped.index === 1);
-    const allVariantsSellingPoint = await this.getAllVariantsOfProduct(product);
+    const variantDetailList = await this.getAllVariantsOfProduct(product);
     return {
       productId: product.productId,
       name: product.name,
       sku: product.sku,
       categoryId: product.categoryId,
       thumbnailURL: product.display_thumbnail_image,
-      propertyList: JSON.stringify(propertyList),
-      description: JSON.stringify(description),
+      propertyList: propertyList,
+      sizeGuidance,
+      description: description,
       variant1: v1,
       variant2: v2,
-      variantSellingPoint: allVariantsSellingPoint,
-      isPublised: product.isPublished,
+      variantDetailList,
+      isPublished: product.isPublished,
       isDrafted: product.isDrafted,
       isDeleted: product.isDeleted,
     };
@@ -761,11 +779,12 @@ export class ProductQueryService {
     }
     const categoryName = category.categoryName;
     const propertyList = await this.getProductPropertyList(product);
+    const sizeGuidance = await this.getProductSizeGuidance(product);
     const descriptionDb = await this.getProductDescription(product);
     const description = descriptionDb?.description;
     let allProductVariants = await this.getAllVariantsOfProduct(product);
     allProductVariants = allProductVariants.filter(
-      (variant) => variant.isInUse && variant.isOpenToSale,
+      (variant) => variant.isOpenToSale,
     );
     let optionData: any = [];
     const totalStock = await this.getProductTotalStock(product);
@@ -800,6 +819,7 @@ export class ProductQueryService {
       thumbnailURL: product.display_thumbnail_image,
       sku: product.sku,
       propertyList: JSON.stringify(propertyList),
+      sizeGuidance: JSON.stringify(sizeGuidance),
       description: JSON.stringify(description),
       allProductVariants,
       optionData,
@@ -828,7 +848,7 @@ export class ProductQueryService {
       );
     }
     let _product = await this.getProductDetail_Admin(productId);
-    let _variant = await _product.variantSellingPoint.find(
+    let _variant = await _product.variantDetailList.find(
       (variant) => variant.variantId === variantId,
     );
     return { product: _product, variant: _variant };

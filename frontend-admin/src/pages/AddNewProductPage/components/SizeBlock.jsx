@@ -7,14 +7,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useContext } from "react";
-import { AddNewProductPageContext } from "../AddNewProductPage";
+import { EditProductPageContext } from "../EditProductPage";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Minus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function SizeBlock() {
-  const addProductContext = useContext(AddNewProductPageContext);
-  if (addProductContext.sizeList.length === 0)
+  const addProductContext = useContext(EditProductPageContext);
+  if (addProductContext.sizeGuidance.length === 0)
     return (
       <div className={`${reusableStyle.inputBlock}`}>
         <h2>Bảng kích thước</h2>
@@ -86,7 +87,7 @@ export default function SizeBlock() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {addProductContext.sizeList.map((size, index) => (
+          {addProductContext.sizeGuidance.map((size, index) => (
             <TableRow key={index}>
               <TableCell className={"text-center"}>{size.name}</TableCell>
               <TableCellMinMax
@@ -97,19 +98,20 @@ export default function SizeBlock() {
                   const newSize = { ...size };
                   newSize.fit.height.min = value;
 
-                  const newSizeList = [...addProductContext.sizeList];
+                  const newSizeList = [...addProductContext.sizeGuidance];
                   newSizeList[index] = newSize;
-                  addProductContext.setSizeList(newSizeList);
+                  addProductContext.setSizeGuidance(newSizeList);
                 }}
                 onValueChangeMax={(value) => {
                   const newSize = { ...size };
                   newSize.fit.height.max = value;
 
-                  const newSizeList = [...addProductContext.sizeList];
+                  const newSizeList = [...addProductContext.sizeGuidance];
                   newSizeList[index] = newSize;
-                  addProductContext.setSizeList(newSizeList);
+                  addProductContext.setSizeGuidance(newSizeList);
                 }}
               />
+
               <TableCellMinMax
                 disabled={!addProductContext.useSize2}
                 valueMin={size.fit.weight.min}
@@ -118,17 +120,17 @@ export default function SizeBlock() {
                   const newSize = { ...size };
                   newSize.fit.weight.min = value;
 
-                  const newSizeList = [...addProductContext.sizeList];
+                  const newSizeList = [...addProductContext.sizeGuidance];
                   newSizeList[index] = newSize;
-                  addProductContext.setSizeList(newSizeList);
+                  addProductContext.setSizeGuidance(newSizeList);
                 }}
                 onValueChangeMax={(value) => {
                   const newSize = { ...size };
                   newSize.fit.weight.max = value;
 
-                  const newSizeList = [...addProductContext.sizeList];
+                  const newSizeList = [...addProductContext.sizeGuidance];
                   newSizeList[index] = newSize;
-                  addProductContext.setSizeList(newSizeList);
+                  addProductContext.setSizeGuidance(newSizeList);
                 }}
               />
               <TableCellMinMax
@@ -139,17 +141,17 @@ export default function SizeBlock() {
                   const newSize = { ...size };
                   newSize.fit.bust.min = value;
 
-                  const newSizeList = [...addProductContext.sizeList];
+                  const newSizeList = [...addProductContext.sizeGuidance];
                   newSizeList[index] = newSize;
-                  addProductContext.setSizeList(newSizeList);
+                  addProductContext.setSizeGuidance(newSizeList);
                 }}
                 onValueChangeMax={(value) => {
                   const newSize = { ...size };
                   newSize.fit.bust.max = value;
 
-                  const newSizeList = [...addProductContext.sizeList];
+                  const newSizeList = [...addProductContext.sizeGuidance];
                   newSizeList[index] = newSize;
-                  addProductContext.setSizeList(newSizeList);
+                  addProductContext.setSizeGuidance(newSizeList);
                 }}
               />
               <TableCellMinMax
@@ -160,17 +162,17 @@ export default function SizeBlock() {
                   const newSize = { ...size };
                   newSize.fit.waist.min = value;
 
-                  const newSizeList = [...addProductContext.sizeList];
+                  const newSizeList = [...addProductContext.sizeGuidance];
                   newSizeList[index] = newSize;
-                  addProductContext.setSizeList(newSizeList);
+                  addProductContext.setSizeGuidance(newSizeList);
                 }}
                 onValueChangeMax={(value) => {
                   const newSize = { ...size };
                   newSize.fit.waist.max = value;
 
-                  const newSizeList = [...addProductContext.sizeList];
+                  const newSizeList = [...addProductContext.sizeGuidance];
                   newSizeList[index] = newSize;
-                  addProductContext.setSizeList(newSizeList);
+                  addProductContext.setSizeGuidance(newSizeList);
                 }}
               />
               <TableCellMinMax
@@ -181,17 +183,17 @@ export default function SizeBlock() {
                   const newSize = { ...size };
                   newSize.fit.hip.min = value;
 
-                  const newSizeList = [...addProductContext.sizeList];
+                  const newSizeList = [...addProductContext.sizeGuidance];
                   newSizeList[index] = newSize;
-                  addProductContext.setSizeList(newSizeList);
+                  addProductContext.setSizeGuidance(newSizeList);
                 }}
                 onValueChangeMax={(value) => {
                   const newSize = { ...size };
                   newSize.fit.hip.max = value;
 
-                  const newSizeList = [...addProductContext.sizeList];
+                  const newSizeList = [...addProductContext.sizeGuidance];
                   newSizeList[index] = newSize;
-                  addProductContext.setSizeList(newSizeList);
+                  addProductContext.setSizeGuidance(newSizeList);
                 }}
               />
             </TableRow>

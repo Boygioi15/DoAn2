@@ -1,25 +1,10 @@
-import React, { createContext, useState } from "react";
+import React, { createContext } from "react";
 import { useCustomerManagement } from "@/hooks/useCustomerManagement";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { FileSpreadsheet } from "lucide-react"; // Changed icon to Spreadsheet for Excel
-import { Dialog } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
 
 // Components
 import { CustomerTable } from "./components/CustomerTable";
 import { CustomerDetailPanel } from "./components/CustomerDetailPanel";
-import { InputWithStartAddOn } from "@/reusable-component/Input";
-import { SelectWithStartAddOn } from "@/reusable-component/Select";
 import CustomerSearchToolbar from "./components/CustomerSearchToolbar";
 import CustomerPagination from "@/reusable-component/PaginationRow";
 

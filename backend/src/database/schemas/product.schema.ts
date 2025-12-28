@@ -7,7 +7,7 @@ export type VariantOptionDocument = HydratedDocument<VariantOption>;
 export type Product_OptionDocument = HydratedDocument<Product_Option>;
 
 export type ProductPropertyDocument = HydratedDocument<ProductProperty>;
-export type ProductSizeDocument = HydratedDocument<ProductSize>;
+export type ProductSizeGuidanceDocument = HydratedDocument<ProductSizeGuidance>;
 
 export type ProductDescriptionDocument = HydratedDocument<ProductDescription>;
 @Schema({ timestamps: true, collection: 'product' })
@@ -35,7 +35,7 @@ export class Product {
   @Prop()
   categoryId: string;
 
-  @Prop({ default: false })
+  @Prop({ default: true })
   isPublished: boolean;
 
   @Prop({ default: false })
@@ -78,9 +78,6 @@ export class ProductVariant {
 
   @Prop()
   price: number;
-
-  @Prop()
-  isInUse: boolean;
 
   @Prop()
   isOpenToSale: boolean;
@@ -139,8 +136,8 @@ export class ProductDescription {
   @Prop()
   description: string;
 }
-@Schema({ timestamps: true, collection: 'product_size' })
-export class ProductSize {
+@Schema({ timestamps: true, collection: 'product_size_guidance' })
+export class ProductSizeGuidance {
   @Prop()
   productId: string;
 
@@ -163,7 +160,8 @@ export const ProductVariantSchema =
   SchemaFactory.createForClass(ProductVariant);
 export const VariantOptionSchema = SchemaFactory.createForClass(VariantOption);
 export const ProductOptionSchema = SchemaFactory.createForClass(Product_Option);
-export const ProductSizeSchema = SchemaFactory.createForClass(ProductSize);
+export const ProductSizeSchema =
+  SchemaFactory.createForClass(ProductSizeGuidance);
 export const ProductPropertySchema =
   SchemaFactory.createForClass(ProductProperty);
 export const ProductDescriptionSchema =

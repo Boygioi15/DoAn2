@@ -1,53 +1,8 @@
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { PencilIcon, Trash2Icon, ArchiveRestore } from "lucide-react";
-import { formatMoney } from "@/utils";
-import { useNavigate } from "react-router-dom";
+import { useContext } from "react";
+import { OrderManagementPageContext } from "../OrderManagementPage";
 
-export default function ProductTable({
-  productList,
-  selectedProductIds,
-  toggleSelection,
-  toggleSelectAll,
-  currentTab,
-  updateProductPublished,
-  deleteProduct,
-  restoreProduct,
-}) {
-  const navigate = useNavigate();
-  const isSpecialView = currentTab === "deleted" || currentTab === "draft";
-  const isAllSelected =
-    productList.length > 0 && selectedProductIds.length === productList.length;
-
-  if (productList.length === 0) {
-    return (
-      <div className="text-center py-10 text-muted-foreground">
-        Không có sản phẩm phù hợp
-      </div>
-    );
-  }
-
+export default function OrderTable() {
+  const {} = useContext(OrderManagementPageContext);
   return (
     <div className="rounded-md border">
       <Table>

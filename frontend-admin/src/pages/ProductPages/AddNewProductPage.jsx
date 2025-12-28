@@ -66,7 +66,7 @@ const variant2Default = {
     },
   ],
 };
-export default function AddNewProductPage() {
+export default function EditProductPage() {
   const [productName, setProductName] = useState("");
   const [allCategories, setAllCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");

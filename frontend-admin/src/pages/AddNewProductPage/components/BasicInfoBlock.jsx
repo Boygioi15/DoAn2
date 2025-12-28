@@ -1,14 +1,15 @@
 import { useContext } from "react";
-import { AddNewProductPageContext } from "../AddNewProductPage";
+import { EditProductPageContext } from "../EditProductPage";
 import { InputBlock_Input } from "@/reusable-component/Input";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import ComboBoxWithSearch from "@/reusable-component/ComboboxWithSearch";
 import UploadComponent from "@/reusable-component/UploadComponent";
 import { buildCategoryNameRecursively } from "@/utils";
+import { Button } from "@/components/ui/button";
 
 export default function BasicInfoBlock() {
-  const addProductContext = useContext(AddNewProductPageContext);
+  const addProductContext = useContext(EditProductPageContext);
   return (
     <div
       className={
@@ -70,6 +71,11 @@ export default function BasicInfoBlock() {
         <div className="w-[30%] flex flex-col gap-2.5">
           <h2>Ảnh bìa sản phẩm</h2>
           <UploadComponent
+            initialImageUrl={
+              addProductContext.edit &&
+              addProductContext.initialProductData &&
+              addProductContext.initialProductData.thumbnailURL
+            }
             uploadComponentId={"basicinfo-thumbnail"}
             className="h-full"
             onImageChange={(file) => addProductContext.setThumbnailFile(file)}

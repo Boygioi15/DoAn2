@@ -37,16 +37,17 @@ import slugify from "slugify";
 import { toast } from "sonner";
 import { v4 } from "uuid";
 import BasicInfoBlock from "./components/BasicInfoBlock";
-import useAddProduct from "@/hooks/useAddProduct";
+import useEditProduct from "@/hooks/useEditProduct";
 import DescriptionBlock from "./components/DescriptionBlock";
 import PropertyBlock from "./components/PropertyBlock";
 import VariantDetailBlock from "./components/VariantDetailBlock";
 import SizeBlock from "./components/SizeBlock";
 import VariantListBlock from "./components/VariantBlock";
+import { Spinner } from "@/components/ui/spinner";
 
-export const AddNewProductPageContext = createContext();
-export default function AddNewProductPage() {
-  const addProductHook = useAddProduct();
+export const EditProductPageContext = createContext();
+export default function EditProductPage() {
+  const addProductHook = useEditProduct();
 
   //tracker
   const basicInfoRef = useRef(null);
@@ -61,8 +62,8 @@ export default function AddNewProductPage() {
   useEffect(() => {
     const sections = [
       basicInfoRef.current,
-      propertiesRef.current,
       descriptionRef.current,
+      propertiesRef.current,
       variantsRef.current,
       sizeRef.current,
       variantDetailRef.current,
@@ -89,7 +90,7 @@ export default function AddNewProductPage() {
   const [tipState, setTipState] = useState(0);
 
   return (
-    <AddNewProductPageContext.Provider value={addProductHook}>
+    <EditProductPageContext.Provider value={addProductHook}>
       <div className="page-layout">
         {/* Big layout!*/}
         {/*Content*/}
@@ -113,74 +114,159 @@ export default function AddNewProductPage() {
             <div ref={variantDetailRef} onClick={() => setTipState(6)}>
               <VariantDetailBlock />
             </div>
+            {/* EDIT FIELD */}
             <div
               className={`${reusableStyle.inputBlock} flex flex-row justify-between  sticky bottom-0 bg-gray-50 shadow-3xl! -ml-1`}
             >
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={addProductHook.handleLoadSampleData}
-                >
-                  Load giá trị mẫu
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={addProductHook.handleRefreshData}
-                >
-                  Làm mới trang
-                </Button>
+              <div>
+                {!addProductHook.edit && (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={addProductHook.handleLoadSampleData}
+                    >
+                      Load giá trị mẫu
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={addProductHook.handleRefreshData}
+                    >
+                      Làm mới trang
+                    </Button>
+                  </div>
+                )}
               </div>
-              <div className="flex flex-row gap-2">
-                <Button variant={"ghost"}>Hủy bỏ</Button>
-                <Button
-                  variant={"outline"}
-                  className={"border-blue-500"}
-                  onClick={addProductHook.handleDraftSubmit}
-                >
-                  Lưu bản nháp
-                </Button>
-                <Button
-                  className={"bg-blue-500"}
-                  id={"submit-button"}
-                  onClick={addProductHook.handlePublishSubmit}
-                >
-                  Gửi đi
-                </Button>
-              </div>
+              {!addProductHook.edit && (
+                <div className="flex flex-row gap-2">
+                  <Button
+                    variant={"outline"}
+                    className={
+                      "border-blue-500" +
+                      (addProductHook.isSubmitLoading &&
+                        "opacity-50 pointer-events-none")
+                    }
+                    onClick={addProductHook.handleCreateNewDraft}
+                  >
+                    {addProductHook.isSubmitLoading && <Spinner />}
+                    Lưu bản nháp
+                  </Button>
+
+                  <Button
+                    id={"submit-button"}
+                    className={
+                      addProductHook.isSubmitLoading &&
+                      "opacity-50 pointer-events-none"
+                    }
+                    onClick={addProductHook.handlePublishNewProduct}
+                  >
+                    {addProductHook.isSubmitLoading && <Spinner />}
+                    Xuất bản sản phẩm
+                  </Button>
+                </div>
+              )}
+              {addProductHook.edit &&
+                addProductHook.initialProductData &&
+                addProductHook.initialProductData.isDrafted && (
+                  <div className="flex flex-row gap-2">
+                    <Button
+                      variant={"outline"}
+                      className={
+                        "border-blue-500" +
+                        (addProductHook.isSubmitLoading &&
+                          "opacity-50 pointer-events-none")
+                      }
+                      onClick={addProductHook.handleUpdateDraft}
+                    >
+                      {addProductHook.isSubmitLoading && <Spinner />}
+                      Lưu bản nháp
+                    </Button>
+
+                    <Button
+                      id={"submit-button"}
+                      onClick={addProductHook.handlePublishDraft}
+                      className={
+                        addProductHook.isSubmitLoading &&
+                        "opacity-50 pointer-events-none"
+                      }
+                    >
+                      {addProductHook.isSubmitLoading && <Spinner />}
+                      Xuất bản bản nháp
+                    </Button>
+                  </div>
+                )}
+              {addProductHook.edit &&
+                addProductHook.initialProductData &&
+                !addProductHook.initialProductData.isDrafted && (
+                  <div className="flex flex-row gap-2">
+                    <Button
+                      id={"submit-button"}
+                      onClick={addProductHook.handleUpdateProduct}
+                    >
+                      {addProductHook.isSubmitLoading && <Spinner />}
+                      Cập nhật sản phẩm
+                    </Button>
+                  </div>
+                )}
             </div>
           </div>
 
           <div className="flex flex-col gap-6 sticky top-5 h-fit">
-            <ProgressTracker currentStep={currentStep} />
+            <ProgressTracker
+              currentStep={currentStep}
+              refTable={[
+                basicInfoRef,
+                descriptionRef,
+                propertiesRef,
+                variantsRef,
+                sizeRef,
+                variantDetailRef,
+              ]}
+              isEditing={addProductHook.isEditing}
+            />
             <TipBlock state={tipState} />
             <ErrorBlock hasError={addProductHook.hasError} />
           </div>
         </div>
       </div>
-    </AddNewProductPageContext.Provider>
+    </EditProductPageContext.Provider>
   );
 }
 const steps = [
   "Thông tin cơ bản",
-  "Mô tả",
-  "Thuộc tính",
+  "Mô tả sản phẩm",
+  "Thuộc tính sản phẩm",
   "Biến thể sản phẩm",
   "Bảng kích thước",
   "Chi tiết biến thể",
 ];
 
-const ProgressTracker = ({ currentStep }) => {
+const ProgressTracker = ({ currentStep, isEditing, refTable }) => {
   return (
     <div
-      className={`flex flex-col w-full gap-4 h-fit ${reusableStyle.inputBlock}`}
+      className={`flex flex-col w-full gap-1! h-fit ${reusableStyle.inputBlock}`}
     >
-      <h2 className="text-blue-500">Tiến độ</h2>
+      <h2 className="text-blue-500">
+        Tiến độ - {!isEditing ? "Cập nhật sản phẩm" : "Thêm mới sản phẩm"}
+      </h2>
       {steps.map((step, index) => {
         const isActive = index === currentStep;
         const isDone = index < currentStep;
 
         return (
-          <div key={step} className="flex flex-row items-center gap-2 pl-2">
+          <div
+            key={step}
+            className="flex flex-row items-center gap-1 pl-2 py-2 cursor-pointer hover:bg-gray-100"
+            onClick={() => {
+              console.log("HO");
+              const ref = refTable[index];
+              if (ref?.current) {
+                ref.current.scrollIntoView({
+                  behavior: "smooth",
+                  block: "start",
+                });
+              }
+            }}
+          >
             <div
               className={
                 "w-8 h-8 flex items-center justify-center rounded-full border " +

@@ -1,9 +1,10 @@
 import ReactQuill from "react-quill-new";
-import { AddNewProductPageContext } from "../AddNewProductPage";
+import { EditProductPageContext } from "../EditProductPage";
 import { useContext } from "react";
+import { Button } from "@/components/ui/button";
 
 export default function DescriptionBlock() {
-  const addProductContext = useContext(AddNewProductPageContext);
+  const addProductContext = useContext(EditProductPageContext);
   return (
     <div
       id="descripton"
