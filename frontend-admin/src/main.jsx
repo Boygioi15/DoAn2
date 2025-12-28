@@ -1,15 +1,15 @@
-import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import UserManagementPage from "./pages/UserManagementPage";
 import RootLayout from "./layouts/RootLayout/RootLayout";
 import "./main.css";
 import "./others/local_copy_of_google_font.css";
-import AddNewProductPage from "./pages/ProductPages/AddNewProductPage";
-import ProductManagementPage from "./pages/ProductManagementPage";
+
+import ProductManagementPage from "./pages/ProductManagementPage/ProductManagementPage";
 import TestUploadPage from "./pages/Test/TestUpload";
-import CategoryPage from "./pages/CategoryPage/CategoryPage";
-import EditProductPage from "./pages/ProductPages/EditProductPage";
+import CategoryManagementPage from "./pages/CategoryManagementPage/CategoryManagementPage";
+import EditProductPage from "./pages/AddNewProductPage/EditProductPage";
+import UserManagementPage from "./pages/UserManagementPage/UserManagementPage";
+import OrderManagementPage from "./pages/OrderManagementPage/OrderManagementPage";
 
 const router = createBrowserRouter([
   {
@@ -21,8 +21,8 @@ const router = createBrowserRouter([
         path: "user",
       },
       {
-        element: <AddNewProductPage />,
-        path: "add-product",
+        element: <EditProductPage />,
+        path: "edit-product",
       },
       {
         element: <EditProductPage />,
@@ -33,8 +33,12 @@ const router = createBrowserRouter([
         path: "product-management",
       },
       {
-        element: <CategoryPage />,
+        element: <CategoryManagementPage />,
         path: "category-management",
+      },
+      {
+        element: <OrderManagementPage />,
+        path: "order-management",
       },
       {
         element: <TestUploadPage />,

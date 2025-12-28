@@ -25,9 +25,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { slugifyOption } from "@/constants";
-import ComboBoxWithSearch from "@/reuseables/ComboboxWithSearch";
-import { InputBlock_Input } from "@/reuseables/Input";
-import UploadComponent from "@/reuseables/UploadComponent";
+import ComboBoxWithSearch from "@/reusable-component/ComboboxWithSearch";
+import { InputBlock_Input } from "@/reusable-component/Input";
+import UploadComponent from "@/reusable-component/UploadComponent";
 import { buildCategoryNameRecursively } from "@/utils";
 import { Menu, Trash, Trash2Icon } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -66,7 +66,7 @@ const variant2Default = {
     },
   ],
 };
-export default function AddNewProductPage() {
+export default function EditProductPage() {
   const [productName, setProductName] = useState("");
   const [allCategories, setAllCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");

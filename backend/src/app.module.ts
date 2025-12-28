@@ -19,6 +19,7 @@ import { EmailModule } from './email/email.module';
 import { CronModule } from './cron/cron.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { SpeechModule } from './speech/speech.module';
+import { OrderModule } from './order/order.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { SpeechModule } from './speech/speech.module';
     EmailModule,
     CronModule,
     SpeechModule,
+    OrderModule,
   ],
   controllers: [AppController],
   providers: [

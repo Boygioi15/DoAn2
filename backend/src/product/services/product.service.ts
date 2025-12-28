@@ -3,7 +3,12 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { CreateProductDto } from '../dto/create-product.dto';
+import {
+  CreateProductDto,
+  ProductPropertyDto,
+  ProductSizeGuidanceDto,
+  ProductVariantDetailDto,
+} from '../dto/product.dto';
 import slugify from 'slugify';
 import { InjectModel } from '@nestjs/mongoose';
 import {
@@ -15,6 +20,8 @@ import {
   ProductDocument,
   ProductProperty,
   ProductPropertyDocument,
+  ProductSizeGuidance,
+  ProductSizeGuidanceDocument,
   ProductVariant,
   ProductVariantDocument,
   VariantOption,
@@ -25,12 +32,16 @@ import { slugifyOption } from 'src/constants';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { CategoryService } from 'src/category/category.service';
 import { ProductQueryService } from './product-query.service';
+import { Multer } from 'multer';
+import { ProductDeleteService } from './product-delete.service';
 @Injectable()
 export class ProductService {
   constructor(
     private readonly cloudinaryService: CloudinaryService,
     private readonly categoryService: CategoryService,
     private readonly productQueryService: ProductQueryService,
+    private readonly productDeleteService: ProductDeleteService,
+
     @InjectModel(Product.name)
     private readonly productModel: Model<ProductDocument>,
     @InjectModel(ProductVariant.name)
@@ -40,26 +51,132 @@ export class ProductService {
     @InjectModel(Product_Option.name)
     private readonly productOptionModel: Model<Product_OptionDocument>,
 
+    @InjectModel(ProductSizeGuidance.name)
+    private readonly productSizeModel: Model<ProductSizeGuidanceDocument>,
     @InjectModel(ProductProperty.name)
     private readonly productPropertyModel: Model<ProductPropertyDocument>,
     @InjectModel(ProductDescription.name)
     private readonly productDescriptionModel: Model<ProductDescriptionDocument>,
   ) {}
+  async publishNewProduct(
+    createProductDto: CreateProductDto,
+    files: Array<Express.Multer.File>,
+  ) {
+    //full create new
+    return await this.createNewProduct(createProductDto, files);
+  }
+  async createNewDraft(
+    createProductDto: CreateProductDto,
+    files: Array<Express.Multer.File>,
+  ) {
+    //full create new
+    return await this.createNewProduct(createProductDto, files, true);
+  }
+  async publishDraft(
+    createProductDto: CreateProductDto,
+    files: Array<Express.Multer.File>,
+    productId: string,
+  ) {
+    //delete then create
+    await this.productDeleteService.deleteProductData(productId, true);
+    return await this.createNewProduct(
+      createProductDto,
+      files,
+      false,
+      productId,
+    );
+  }
+  async updateDraft(
+    updateProductDto: CreateProductDto,
+    files: Array<Express.Multer.File>,
+    productId: string,
+  ) {
+    //delete then create, but with initalId
+    await this.productDeleteService.deleteProductData(productId, true);
+    return await this.createNewProduct(
+      updateProductDto,
+      files,
+      true,
+      productId,
+    );
+  }
+  async updateProduct(
+    productId: string,
+    updateProductDto: CreateProductDto,
+    files: Array<Express.Multer.File>,
+  ) {
+    const {
+      productName,
+      categoryId,
+      description,
+      propertyList,
+      sizeGuidance,
+      variantTableData,
+    } = updateProductDto;
+
+    // Parse JSON first (sync work)
+    const parsedPropertyList: ProductPropertyDto[] = JSON.parse(propertyList);
+    const parsedSizeGuidance: ProductSizeGuidanceDto[] =
+      JSON.parse(sizeGuidance);
+    const parsedVariantDetailList: ProductVariantDetailDto[] =
+      JSON.parse(variantTableData);
+
+    // Create promises (do NOT await yet)
+    const updateBasicInfoPromise = this.updateProductBasicInfo(
+      productId,
+      productName,
+      categoryId,
+    );
+
+    const updateDescriptionPromise = this.updateProductDescription(
+      productId,
+      description,
+    );
+
+    const updatePropertyPromise = this.updateProductProperty(
+      productId,
+      parsedPropertyList,
+    );
+
+    const updateSizeGuidancePromise = this.updateProductSizeGuidance(
+      productId,
+      parsedSizeGuidance,
+    );
+
+    const updateVariantDetailPromise = this.updateProductVariantDetailList(
+      productId,
+      parsedVariantDetailList,
+    );
+
+    // Await everything at the end
+    await Promise.all([
+      updateBasicInfoPromise,
+      updateDescriptionPromise,
+      updatePropertyPromise,
+      updateSizeGuidancePromise,
+      updateVariantDetailPromise,
+    ]);
+  }
 
   async createNewProduct(
     createProductDto: CreateProductDto,
     files: Array<Express.Multer.File>,
+    isDrafted: boolean = false,
+    initialProductId: string | undefined = undefined,
   ) {
-    const thumbnailFile = files.find(
-      (file) => file.fieldname === 'thumbnailFile',
-    );
-    if (!thumbnailFile) {
-      console.log('Failed to locate thumbnail file');
-      throw new BadRequestException('Trường đặt thumbnail file không hợp lệ');
+    let thumbnailFile: Express.Multer.File | undefined = undefined;
+    if (!isDrafted) {
+      thumbnailFile = files.find((file) => file.fieldname === 'thumbnailFile');
+      if (!thumbnailFile) {
+        console.log('Failed to locate thumbnail file');
+        throw new BadRequestException('Trường đặt thumbnail file không hợp lệ');
+      }
     }
     const productId = await this.createProductBasicInfo(
       createProductDto,
       thumbnailFile,
+      isDrafted,
+      initialProductId,
     );
 
     if (!!!productId) {
@@ -70,7 +187,7 @@ export class ProductService {
     }
     this.createProductDescription(productId, createProductDto);
     this.createProductProperty(productId, createProductDto);
-
+    this.createProductSize(productId, createProductDto);
     const { totalVariant } = createProductDto;
     if (totalVariant === '1') {
     } else if (totalVariant === '2') {
@@ -112,17 +229,20 @@ export class ProductService {
       console.log('A4');
       console.log('Linkage created');
     }
-    const finalProduct = await this.denormalizeProduct(productId);
-    console.log('Product backfilled: ', finalProduct);
-    return finalProduct;
+    if (!isDrafted) {
+      const finalProduct = await this.denormalizeProduct(productId);
+      console.log('Product backfilled: ', finalProduct);
+      return finalProduct;
+    }
   }
-
   //return product id on success, null otherwise
   async createProductBasicInfo(
     createProductDto: CreateProductDto,
-    thumbnailFile: Express.Multer.File,
+    thumbnailFile: Express.Multer.File | undefined,
+    isDrafted: boolean,
+    initialProductId: string | undefined = undefined,
   ) {
-    const { productName, isDrafted, categoryId } = createProductDto;
+    const { productName, categoryId } = createProductDto;
     const sku = this.generateSKU();
     //slugify
     const productSlug = slugify(productName, slugifyOption);
@@ -131,36 +251,51 @@ export class ProductService {
     const productPrice = 49000;
 
     //upload thumbnail to cloudinary then get its url
-    const response = await this.cloudinaryService.uploadFile(thumbnailFile);
-    if (!response)
-      throw new InternalServerErrorException(
-        'Upload thumbnail to Cloudinary failed',
-      );
-    const thumbnailURL = response?.secure_url;
-    let newProduct: ProductDocument;
-    if (isDrafted) {
+    let thumbnailUrl: string | undefined = undefined;
+    if (thumbnailFile) {
+      const response = await this.cloudinaryService.uploadFile(thumbnailFile);
+      if (!response)
+        throw new InternalServerErrorException(
+          'Upload thumbnail to Cloudinary failed',
+        );
+      thumbnailUrl = response?.secure_url;
+    }
+    console.log('create ', initialProductId);
+    let newProduct: ProductDocument | null;
+
+    if (!initialProductId) {
+      // CREATE
+      console.log('create initial data');
       newProduct = await this.productModel.create({
         name: productName,
         slug: productSlug,
+        sku,
         display_price: productPrice,
-        display_thumbnail_image: thumbnailURL,
-        categoryId: categoryId,
-        isDrafted: true,
+        display_thumbnail_image: thumbnailUrl,
+        categoryId,
+        isDrafted,
+        isPublished: !isDrafted,
       });
     } else {
-      newProduct = await this.productModel.create({
-        sku: sku,
-        name: productName,
-        slug: productSlug,
-        display_price: productPrice,
-        display_thumbnail_image: thumbnailURL,
-        categoryId: categoryId,
-        isPublished: true,
-      });
+      // UPDATE
+      newProduct = await this.productModel.findOneAndUpdate(
+        { productId: initialProductId },
+        {
+          name: productName,
+          slug: productSlug,
+          sku,
+          display_price: productPrice,
+          display_thumbnail_image: thumbnailUrl,
+          categoryId,
+          isDrafted,
+          isPublished: !isDrafted,
+        },
+        { new: true, upsert: true },
+      );
     }
 
     console.log('New product basic info created: ', newProduct);
-    return newProduct.productId;
+    return newProduct?.productId;
   }
   async createProductDescription(
     productId: string,
@@ -173,18 +308,67 @@ export class ProductService {
     console.log('Product description created: ', _newDescription);
     return _newDescription;
   }
+  async createProductSize(
+    productId: string,
+    createProductDto: CreateProductDto,
+  ) {
+    const { sizeGuidance } = createProductDto;
+    const _sizeList: ProductSizeGuidanceDto[] = JSON.parse(sizeGuidance);
+    const tobeInserted = _sizeList.map((size: ProductSizeGuidanceDto) => {
+      const sizeRow: any = {};
+      sizeRow.productId = productId;
+      sizeRow.name = size.name;
+      sizeRow.fit = {};
+      if (size.fit.height) {
+        sizeRow.fit.height = {
+          min: size.fit.height.min,
+          max: size.fit.height.max,
+        };
+      }
+      if (size.fit.weight) {
+        sizeRow.fit.weight = {
+          min: size.fit.weight.min,
+          max: size.fit.weight.max,
+        };
+      }
+      if (size.fit.bust) {
+        sizeRow.fit.bust = {
+          min: size.fit.bust.min,
+          max: size.fit.bust.max,
+        };
+      }
+      if (size.fit.waist) {
+        sizeRow.fit.waist = {
+          min: size.fit.waist.min,
+          max: size.fit.waist.max,
+        };
+      }
+      if (size.fit.hip) {
+        sizeRow.fit.hip = {
+          min: size.fit.hip.min,
+          max: size.fit.hip.max,
+        };
+      }
+
+      return sizeRow;
+    });
+
+    const response = await this.productSizeModel.insertMany(tobeInserted);
+    console.log('Product size created: ', response);
+    return response;
+  }
   async createProductProperty(
     productId: string,
     createProductDto: CreateProductDto,
   ) {
     const { propertyList } = createProductDto;
-    let deStringed = JSON.parse(propertyList);
-    if (deStringed.length === 0) return;
-    deStringed = deStringed.map((element) => ({
-      ...element,
+    const _propertyList: ProductPropertyDto[] = JSON.parse(propertyList);
+    const tobeInserted: ProductProperty[] = _propertyList.map((property) => ({
       productId,
+      name: property.name,
+      value: property.value,
     }));
-    const response = await this.productPropertyModel.insertMany(deStringed);
+    const response = await this.productPropertyModel.insertMany(tobeInserted);
     console.log('Product property created: ', response);
     return response;
   }
@@ -261,7 +445,7 @@ export class ProductService {
       const response = await this.productVariantModel.create({
         platform_sku: this.generateSKU(),
         seller_sku: dataRow.seller_sku,
-        price: dataRow.sellingPrice,
+        price: dataRow.price,
         stock: dataRow.stock,
         isInUse: dataRow.isInUse,
         isOpenToSale: dataRow.isOpenToSale,
@@ -290,6 +474,144 @@ export class ProductService {
     return result;
   }
 
+  async updateProductBasicInfo(
+    productId: string,
+    productName: string,
+    categoryId: string,
+  ) {
+    const productSlug = slugify(productName, slugifyOption);
+
+    const newBasicInfo = await this.productModel.findOneAndUpdate(
+      { productId },
+      {
+        name: productName,
+        slug: productSlug,
+        categoryId: categoryId,
+        isDrafted: false,
+      },
+      { new: true },
+    );
+
+    if (!newBasicInfo) {
+      console.log('Product basic info update failed!');
+      throw new InternalServerErrorException(
+        'Product basic info update failed!',
+      );
+    }
+  }
+  async updateProductDescription(productId: string, description: string) {
+    const _newDescription = await this.productDescriptionModel.findOneAndUpdate(
+      { productId: productId },
+      {
+        description: description,
+      },
+    );
+    console.log('Product description updated: ', _newDescription);
+    if (!_newDescription) {
+      console.log('Product basic info update failed!');
+      throw new InternalServerErrorException(
+        'Product description update failed!',
+      );
+    }
+    return _newDescription;
+  }
+  async updateProductSizeGuidance(
+    productId: string,
+    sizeGuidanceList: ProductSizeGuidanceDto[],
+  ) {
+    const tobeInserted = sizeGuidanceList.map(
+      (size: ProductSizeGuidanceDto) => {
+        const sizeRow: any = {};
+        sizeRow.productId = productId;
+        sizeRow.name = size.name;
+        sizeRow.fit = {};
+        if (size.fit.height) {
+          sizeRow.fit.height = {
+            min: size.fit.height.min,
+            max: size.fit.height.max,
+          };
+        }
+        if (size.fit.weight) {
+          sizeRow.fit.weight = {
+            min: size.fit.weight.min,
+            max: size.fit.weight.max,
+          };
+        }
+        if (size.fit.bust) {
+          sizeRow.fit.bust = {
+            min: size.fit.bust.min,
+            max: size.fit.bust.max,
+          };
+        }
+        if (size.fit.waist) {
+          sizeRow.fit.waist = {
+            min: size.fit.waist.min,
+            max: size.fit.waist.max,
+          };
+        }
+        if (size.fit.hip) {
+          sizeRow.fit.hip = {
+            min: size.fit.hip.min,
+            max: size.fit.hip.max,
+          };
+        }
+
+        return sizeRow;
+      },
+    );
+    //delete old
+    await this.productSizeModel.deleteMany({ productId });
+    const response = await this.productSizeModel.insertMany(tobeInserted);
+    console.log('Product size updated: ', response);
+    return response;
+  }
+  async updateProductProperty(
+    productId: string,
+    propertyList: ProductPropertyDto[],
+  ) {
+    const tobeInserted: ProductPropertyDto[] = propertyList.map((property) => ({
+      productId,
+      name: property.name,
+      value: property.value,
+    }));
+    await this.productPropertyModel.deleteMany({ productId });
+    const response = await this.productPropertyModel.insertMany(tobeInserted);
+    console.log('Product property updated: ', response);
+    return response;
+  }
+  async updateProductVariantDetailList(
+    productId: string,
+    variantDetailList: ProductVariantDetailDto[],
+  ) {
+    const promises = variantDetailList.map(async (variantDetail) => {
+      const newVariantDetail: ProductVariantDetailDto = {
+        ...variantDetail,
+      };
+      return await this.productVariantModel.findOneAndUpdate(
+        { variantId: newVariantDetail.variantId },
+        {
+          ...newVariantDetail,
+        },
+      );
+    });
+    await Promise.all(promises);
+  }
+
+  async deleteVariantAndOptionOfProduct(productId: string) {
+    const options = await this.productOptionModel
+      .find({ productId })
+      .select('variantId optionId')
+      .lean();
+    const variantIdList = options.map((option) => option.variantId);
+    const optionIdList = options.map((option) => option.optionId);
+    await this.productVariantModel.deleteMany({
+      variantId: { $in: variantIdList },
+    });
+    await this.variantOptionModel.deleteMany({
+      variantId: { $in: optionIdList },
+    });
+  }
+
   async denormalizeProduct(productId: string) {
     const product = await this.productModel.findOne({ productId });
     if (!product) {
@@ -315,6 +637,10 @@ export class ProductService {
     });
     let allColors = Array.from(_allColors);
     let allSizes = Array.from(_allSizes);
+    let categoryName = await this.categoryService.getCategoryDetail(
+      product.productId,
+    );
+
     const newProduct = await this.productModel.findOneAndUpdate(
       { productId },
       {
@@ -322,9 +648,11 @@ export class ProductService {
         totalStock,
         allColors,
         allSizes,
+        categoryName,
       },
       { new: true },
     );
+
     return newProduct;
   }
   generateSKU(length = 10) {

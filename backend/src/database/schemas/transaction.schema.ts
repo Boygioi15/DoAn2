@@ -23,8 +23,8 @@ export class Order {
   @Prop() payment_cashout_price: number;
 
   //payment gateway related
-  @Prop({ default: false }) payment_checked: boolean;
-  @Prop({ default: 'created' }) payment_status: string;
+  //order payment status: all, created, pending, succeeded, failed, cancelled
+  @Prop({ default: 'created' }) payment_state: string;
   @Prop() payment_gateway_code: number;
   @Prop() payment_url: string;
 
@@ -34,7 +34,8 @@ export class Order {
   @Prop() email: string;
 
   //delivery
-  @Prop({ default: 'PENDING' }) delivery_state: string;
+  //order delivery status: all, pending, ongoing, delivered, succeeded, failed, canceled
+  @Prop({ default: 'pending' }) delivery_state: string;
 }
 
 @Schema({ timestamps: true, collection: 'order_detail' })

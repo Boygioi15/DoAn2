@@ -15,10 +15,11 @@ export const passwordRules = [
 ];
 
 export const routeNameMap = {
-  user: "Quản lý tài khoản",
-  "account-info": "Thông tin tài khoản",
-  "change-password": "Đổi mật khẩu",
-  address: "Địa chỉ",
+  user: "Quản lý người dùng",
+  "product-management": "Quản lý sản phẩm",
+  "category-management": "Quản lý ngành hàng",
+  "edit-product": "Thêm sản phẩm",
+  "edit-product": "Chỉnh sửa sản phẩm",
 };
 export const slugifyOption = {
   replacement: "-", // replace spaces with replacement character, defaults to `-`
