@@ -307,19 +307,11 @@ export class UserService {
     );
     return await this.getAllUserAddress(userId);
   }
-  findAll() {
-    return `This action returns all user`;
-  }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
-  }
-
-  // update(id: number, updateUserDto: UpdateUserDto) {
-  //   return `This action updates a #${id} user`;
-  // }
-
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async setUserBan(userId: string, banState: boolean) {
+    return await this.userModel.findOneAndUpdate(
+      { userId },
+      { isBanned: banState },
+    );
   }
 }

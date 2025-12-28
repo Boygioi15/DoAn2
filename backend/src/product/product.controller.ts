@@ -9,10 +9,10 @@ import {
   UseInterceptors,
   UploadedFiles,
   Query,
+  Request,
 } from '@nestjs/common';
 import { ProductService } from './services/product.service';
-import { CreateProductDto } from './dto/create-product.dto';
-import { UpdateProductDto } from './dto/update-product.dto';
+import { CreateProductDto } from './dto/product.dto';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { ProductQueryService } from './services/product-query.service';
 import { ProductDeleteService } from './services/product-delete.service';
@@ -24,43 +24,105 @@ export class ProductController {
     private readonly productQueryService: ProductQueryService,
     private readonly productDeleteService: ProductDeleteService,
   ) {}
-  @Post()
+  @Post('publish-new-product')
   @UseInterceptors(AnyFilesInterceptor())
-  create(
+  async publishNewProduct(
     @UploadedFiles() files: Array<Express.Multer.File>,
     @Body() createProductDto: CreateProductDto,
   ) {
+    console.log('CPD: ', createProductDto);
     // console.log('F: ', files);
-    return this.productService.createNewProduct(createProductDto, files);
+    return await this.productService.createNewProduct(
+      createProductDto,
+      files,
+      false,
+    );
   }
-  @Get('get-detail/admin/:id')
-  async getProductDetail_Admin(@Param('id') productId: string) {
+  @Post('create-new-draft')
+  @UseInterceptors(AnyFilesInterceptor())
+  async createNewDraft(
+    @UploadedFiles() files: Array<Express.Multer.File>,
+    @Body() createProductDto: CreateProductDto,
+  ) {
+    console.log('CPD: ', createProductDto);
+    // console.log('F: ', files);
+    return await this.productService.createNewProduct(
+      createProductDto,
+      files,
+      true,
+    );
+  }
+  @Patch('update-draft/:productId')
+  @UseInterceptors(AnyFilesInterceptor())
+  async updateDraft(
+    @UploadedFiles() files: Array<Express.Multer.File>,
+    @Body() createProductDto: CreateProductDto,
+    @Param('productId') productId: string,
+  ) {
+    return await this.productService.updateDraft(
+      createProductDto,
+      files,
+      productId,
+    );
+  }
+  @Patch('publish-draft/:productId')
+  @UseInterceptors(AnyFilesInterceptor())
+  async publishDraft(
+    @UploadedFiles() files: Array<Express.Multer.File>,
+    @Body() createProductDto: CreateProductDto,
+    @Param('productId') productId: string,
+  ) {
+    return await this.productService.publishDraft(
+      createProductDto,
+      files,
+      productId,
+    );
+  }
+  @Patch('update-product/:productId')
+  @UseInterceptors(AnyFilesInterceptor())
+  updateProduct(
+    @UploadedFiles() files: Array<Express.Multer.File>,
+    @Body() updateProductDto: CreateProductDto,
+    @Param('productId') productId: string,
+  ) {
+    console.log('CPD: ', updateProductDto);
+    return this.productService.updateProduct(
+      productId,
+      updateProductDto,
+      files,
+    );
+  }
+
+  @Get('get-detail/admin/:productId')
+  async getProductDetail_Admin(@Param('productId') productId: string) {
     const product =
       await this.productQueryService.getProductDetail_Admin(productId);
 
     return product;
   }
-  @Get('get-detail/client/:id')
-  async getProductDetail_Client(@Param('id') productId: string) {
+  @Get('get-detail/client/:productId')
+  async getProductDetail_Client(@Param('productId') productId: string) {
     const product =
       await this.productQueryService.getProductDetail_Client(productId);
     return product;
   }
   @Get('admin')
-  async getAllProducts_ItemManagement(@Query() q) {
+  async getProductList_Admin(@Query() q) {
     const productList = await this.productQueryService.getAllProduct({
       role: 'ADMIN',
       filters: {
-        priceMin: q.priceMin,
-        priceMax: q.priceMax,
+        queryProductName: q.queryProductName,
+        queryCategoryName: q.queryCategoryName,
+        queryProductSku: q.queryProductSku,
+        productTab: q.productTab,
+        stockState: q.stockState,
         categoryId: q.categoryId,
-        search: q.query,
       },
       pagination: {
         from: q.from || 1,
-        size: q.size || 24,
+        size: q.size || 10,
       },
-      sortBy: q.sort,
+      sortBy: q.sortBy,
     });
     return productList;
   }

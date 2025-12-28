@@ -18,6 +18,7 @@ import { TransactionModule } from './transaction/transaction.module';
 import { EmailModule } from './email/email.module';
 import { CronModule } from './cron/cron.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { OrderModule } from './order/order.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     TransactionModule,
     EmailModule,
     CronModule,
+    OrderModule,
   ],
   controllers: [AppController],
   providers: [

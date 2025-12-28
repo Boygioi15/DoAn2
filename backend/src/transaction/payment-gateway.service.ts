@@ -27,12 +27,12 @@ export class PaymentGatewayService {
       apiKey: apiKey,
       checksumKey: checksumKey,
     });
-    try {
-      this.payOSInstance.webhooks.confirm(payos_notifyURL);
-    } catch (error) {
-      console.log('Web hook payos không hoạt động');
-      console.log(error);
-    }
+    // try {
+    //   this.payOSInstance.webhooks.confirm(payos_notifyURL);
+    // } catch (error) {
+    //   console.log('Web hook payos không hoạt động');
+    //   console.log(error);
+    // }
   }
   async createPaymentLink_MOMO(
     orderCode: string,

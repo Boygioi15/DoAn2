@@ -245,7 +245,7 @@ export class TransactionService {
       {
         payment_gateway_code,
         payment_url,
-        payment_status: 'pending',
+        payment_state: 'pending',
       },
       { new: true },
     );
@@ -263,9 +263,9 @@ export class TransactionService {
     console.log('orderId: ', orderId);
 
     const order = await this.orderModel.findOneAndUpdate(
-      { _id: orderId, payment_status: { $ne: state } },
+      { _id: orderId, payment_state: { $ne: state } },
       {
-        payment_status: state,
+        payment_state: state,
         payment_checked: checked,
       },
       { new: true },
@@ -319,7 +319,7 @@ export class TransactionService {
   async findAndUpdateExpiredOrder() {
     const now = Date.now();
     const failedOrderList = await this.orderModel.find({
-      payment_status: 'pending',
+      payment_state: 'pending',
       payment_method: { $ne: 'cod' },
       createdAt: { $lt: new Date(now - order_ttl) },
     });
@@ -329,11 +329,11 @@ export class TransactionService {
     await Promise.all(promises);
     // await this.orderModel.updateMany(
     //   {
-    //     payment_status: 'pending',
+    //     payment_state: 'pending',
     //     createdAt: { $lt: new Date(now - order_ttl) },
     //   },
     //   {
-    //     $set: { payment_status: 'failed' },
+    //     $set: { payment_state: 'failed' },
     //   },
     // );
   }

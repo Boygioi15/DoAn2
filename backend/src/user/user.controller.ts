@@ -118,8 +118,19 @@ export class UserController {
     );
     return { stt: 200, newAllUserAddress };
   }
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.userService.remove(+id);
+  /////admin block
+  @Post('/:userId/ban')
+  async banUser(@Param('userId') userId: string) {
+    await this.userService.setUserBan(userId, true);
+  }
+  @Post('/:userId/unban')
+  async unbanUser(@Param('userId') userId: string) {
+    await this.userService.setUserBan(userId, false);
+  }
+  @Get('/:userId/get-detail')
+  async getUserDetail(@Param('userId') userId: string) {
+    const defaultUserAddress =
+      await this.userService.getDefaultAddressOfUser(userId);
+    return { defaultUserAddress };
   }
 }

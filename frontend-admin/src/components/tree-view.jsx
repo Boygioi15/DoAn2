@@ -34,9 +34,9 @@ const TreeView = React.forwardRef(
     const [selectedItemId, setSelectedItemId] = React.useState(
       initialSelectedItemId
     );
-    useEffect(() => {
-      console.log("SI: ", selectedItemId);
-    }, [selectedItemId]);
+    // useEffect(() => {
+    //   console.log("SI: ", selectedItemId);
+    // }, [selectedItemId]);
     const [draggedItem, setDraggedItem] = React.useState(null);
 
     const handleSelectChange = React.useCallback(
@@ -320,9 +320,9 @@ const TreeLeaf = React.forwardRef(
       setIsDragOver(false);
       handleDrop?.(item);
     };
-    if (selectedItemId === item._id) {
-      console.log("TE: ", `SI: ${selectedItemId}`, `ID: ${item._id}`);
-    }
+    // if (selectedItemId === item._id) {
+    //   console.log("TE: ", `SI: ${selectedItemId}`, `ID: ${item._id}`);
+    // }
 
     return (
       <div

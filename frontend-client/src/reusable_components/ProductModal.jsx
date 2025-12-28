@@ -13,11 +13,28 @@ import {
   ChevronRight,
   ChevronsRight,
   ChevronUpIcon,
+  Ruler,
 } from 'lucide-react';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import SpinnerOverlay from './SpinnerOverlay';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Separator } from '@/components/ui/separator';
 
 export default function ProductModal({ productId }) {
   const navigate = useNavigate();
@@ -169,6 +186,32 @@ export default function ProductModal({ productId }) {
     return disabledList;
   }, [optionData]);
 
+  const sizeGuidance = useMemo(() => {
+    if (!productDetail) return null;
+    return JSON.parse(productDetail.sizeGuidance);
+  }, [productDetail]);
+  const sizeGuidanceHeaderList = useMemo(() => {
+    const headerList = ['Kích cỡ'];
+    if (sizeGuidance && sizeGuidance.length > 0) {
+      if (sizeGuidance[0].fit.height) {
+        headerList.push('Chiều cao (cm)');
+      }
+      if (sizeGuidance[0].fit.weight) {
+        headerList.push('Cân nặng (kg)');
+      }
+      if (sizeGuidance[0].fit.bust) {
+        headerList.push('Vòng 1 (cm)');
+      }
+      if (sizeGuidance[0].fit.waist) {
+        headerList.push('Vòng 2 (cm)');
+      }
+      if (sizeGuidance[0].fit.hip) {
+        headerList.push('Vòng 3 (cm)');
+      }
+    }
+    return headerList;
+  }, [sizeGuidance]);
+
   //cart functionalities
   const [addLoading, setAddLoading] = useState(false);
 
@@ -292,9 +335,89 @@ export default function ProductModal({ productId }) {
       </div>
       {/* Size selection */}
       <div className={`flex flex-col gap-3 `}>
-        <span>
-          Kích thước: <b>{currentSize}</b>
-        </span>
+        <div className="flex justify-between">
+          <span>
+            Kích thước: <b>{currentSize}</b>
+          </span>
+          <Sheet>
+            <SheetTrigger>
+              <span className="text-blue-600 text-sm flex gap-2 cursor-pointer hover:underline">
+                <Ruler /> Gợi ý tìm kích thước
+              </span>
+            </SheetTrigger>
+            <SheetContent className={' w-fit! max-w-200!'}>
+              <SheetHeader>
+                <SheetTitle>Bảng gợi ý kích thước</SheetTitle>
+                <SheetDescription>
+                  Hãy chọn kích thước phù hợp với bạn
+                </SheetDescription>
+              </SheetHeader>
+              <Separator className={'mx-4'} />
+              <Table
+                className={
+                  'w-fit mx-5  [&_td]:border [&_td]:text-center  [&_td]:border-gray-400'
+                }
+              >
+                <TableHeader>
+                  {' '}
+                  <TableRow>
+                    {sizeGuidanceHeaderList.map((header, index) => (
+                      <TableCell
+                        className={
+                          'w-20 bg-gray-700 hover:bg-gray-700/90 text-white text-[14px] font-medium ' +
+                          (index === 0 && ' text-left!')
+                        }
+                        key={index}
+                      >
+                        {header}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+
+                <TableBody>
+                  {sizeGuidance.map((size) => (
+                    <TableRow
+                      className={
+                        '[&_td]:text-[14px] font-medium cursor-pointer'
+                      }
+                    >
+                      <TableCell className="w-25 text-left! bg-gray-700 hover:bg-gray-700/80 text-white text-[14px] font-medium">
+                        {size.name}
+                      </TableCell>
+                      {size.fit.height && (
+                        <TableCell>
+                          {size.fit.height.min} - {size.fit.height.max}
+                        </TableCell>
+                      )}
+                      {size.fit.weight && (
+                        <TableCell className={'w-20'}>
+                          {size.fit.weight.min} - {size.fit.weight.max}
+                        </TableCell>
+                      )}
+                      {size.fit.bust && (
+                        <TableCell className={'w-20'}>
+                          {size.fit.bust.min} - {size.fit.bust.max}
+                        </TableCell>
+                      )}
+                      {size.fit.waist && (
+                        <TableCell className={'w-20'}>
+                          {size.fit.waist.min} - {size.fit.waist.max}
+                        </TableCell>
+                      )}
+                      {size.fit.hip && (
+                        <TableCell className={'w-20'}>
+                          {size.fit.hip.min} - {size.fit.hip.max}
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </SheetContent>
+          </Sheet>
+        </div>
+
         <div className="flex gap-2">
           {option2List &&
             option2List.map((option2) => {

@@ -4,7 +4,7 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { CreateProductDto } from '../dto/create-product.dto';
+import { CreateProductDto } from '../dto/product.dto';
 import slugify from 'slugify';
 import { InjectModel } from '@nestjs/mongoose';
 import {
@@ -16,6 +16,8 @@ import {
   ProductDocument,
   ProductProperty,
   ProductPropertyDocument,
+  ProductSizeGuidance,
+  ProductSizeGuidanceDocument,
   ProductVariant,
   ProductVariantDocument,
   VariantOption,
@@ -50,13 +52,127 @@ export class ProductQueryService {
 
     @InjectModel(ProductProperty.name)
     private readonly productPropertyModel: Model<ProductPropertyDocument>,
+    @InjectModel(ProductSizeGuidance.name)
+    private readonly productSizeGuidanceModel: Model<ProductSizeGuidanceDocument>,
     @InjectModel(ProductDescription.name)
     private readonly productDescriptionModel: Model<ProductDescriptionDocument>,
   ) {}
 
   //filter
-  async buildQueryPipeline(
-    role: string,
+  async buildAdminQueryPipeline(
+    filter: {
+      queryProductName: string;
+      queryCategoryName: string;
+      queryProductSku: string;
+      productTab: string;
+      stockState: string;
+      categoryId: string;
+    },
+    pagination: {
+      from: number;
+      size: number;
+    },
+    sortBy: string,
+  ) {
+    const {
+      queryProductName,
+      queryCategoryName,
+      queryProductSku,
+      productTab,
+      stockState,
+      categoryId,
+    } = filter;
+    const { from, size } = pagination;
+    // console.log('F: ', filters);
+    // console.log('P: ', pagination);
+    const queryPipeline: any = [];
+
+    const matchStage: any = {};
+    if (queryProductName) {
+      matchStage.name = {
+        $regex: queryProductName.trim(),
+        $options: 'i',
+      };
+    }
+    if (queryCategoryName) {
+      matchStage.categoryName = {
+        $regex: queryCategoryName.trim(),
+        $options: 'i',
+      };
+    }
+    if (queryProductSku) {
+      matchStage.sku = {
+        $regex: queryProductSku.trim(),
+        $options: 'i',
+      };
+    }
+    if (productTab) {
+      if (productTab === 'all') {
+        matchStage.isDeleted = false;
+      }
+      if (productTab === 'published') {
+        matchStage.isPublished = true;
+        matchStage.isDrafted = false;
+        matchStage.isDeleted = false;
+      } else if (productTab === 'not-published') {
+        matchStage.isPublished = false;
+        matchStage.isDrafted = false;
+        matchStage.isDeleted = false;
+      } else if (productTab === 'draft') {
+        matchStage.isPublished = false;
+        matchStage.isDrafted = true;
+        matchStage.isDeleted = false;
+      } else if (productTab === 'deleted') {
+        matchStage.isDeleted = true;
+      }
+    }
+    if (stockState) {
+      if (stockState === '1') {
+        matchStage.totalStock = { $eq: 0 };
+      } else if (stockState === '0') {
+        matchStage.totalStock = { $gt: 0 };
+      }
+    }
+    if (categoryId) {
+      matchStage.categoryId = categoryId;
+    }
+    //sort
+    const sortObj: any = {};
+
+    if (sortBy === 'newest') sortObj.createdAt = -1;
+    if (sortBy === 'alphabetical-az') sortObj.name = -1;
+    if (sortBy === 'alphabetical-za') sortObj.name = 1;
+
+    //pagination:
+    const skip = (Number(from) - 1) * size;
+
+    if (Object.keys(matchStage).length > 0) {
+      queryPipeline.push({ $match: matchStage });
+    }
+    if (Object.keys(sortObj).length > 0) {
+      queryPipeline.push({
+        $facet: {
+          productList: [
+            { $sort: sortObj },
+            { $skip: skip },
+            { $limit: Number(size) },
+          ],
+          total: [{ $count: 'count' }],
+        },
+      });
+    } else {
+      queryPipeline.push({
+        $facet: {
+          productList: [{ $skip: skip }, { $limit: Number(size) }],
+          total: [{ $count: 'count' }],
+        },
+      });
+    }
+    queryPipeline.push({ $match: {} });
+    return queryPipeline;
+  }
+
+  async buildClientQueryPipeline(
     filters: {
       search?: string;
       categoryIdList?: string;
@@ -76,8 +192,8 @@ export class ProductQueryService {
     const { categoryIdList, colorList, sizeList, priceMin, priceMax, search } =
       filters;
     const { from, size } = pagination;
-    console.log('F: ', filters);
-    console.log('P: ', pagination);
+    // console.log('F: ', filters);
+    // console.log('P: ', pagination);
     const queryPipeline: any = [];
     if (search) {
       queryPipeline.push({
@@ -85,21 +201,20 @@ export class ProductQueryService {
           index: 'search_index',
           text: {
             query: search,
-            path: 'name',
+            path: ['name', 'categoryName'],
           },
         },
       });
     }
-    if (role === 'CLIENT') {
-      queryPipeline.push({
-        $match: {
-          isDeleted: false,
-          isPublished: true,
-          isDrafted: false,
-          totalStock: { $gt: 0 },
-        },
-      });
-    }
+    queryPipeline.push({
+      $match: {
+        isDeleted: false,
+        isPublished: true,
+        isDrafted: false,
+        totalStock: { $gt: 0 },
+      },
+    });
+
     if (categoryIdList) {
       queryPipeline.push({
         $match: {
@@ -304,7 +419,9 @@ export class ProductQueryService {
         pagination,
       });
     }
+    // console.log('FI: ', filters.categoryId);
     let catId = filters.categoryId;
+    console.log('CID: ', catId);
     const catDetail = await this.categoryService.getCategoryDetail(catId);
     if (!catDetail) {
       throw new InternalServerErrorException(
@@ -346,25 +463,42 @@ export class ProductQueryService {
   async getAllProduct({ role, filters, sortBy, pagination }) {
     //filter => sort => pagination
 
-    const queryPipeline: any = await this.buildQueryPipeline(
-      role,
-      filters,
-      pagination,
-      sortBy,
-    );
-    console.log('Query object: ', queryPipeline);
+    let queryPipeline: any;
+    if (role === 'CLIENT') {
+      queryPipeline = await this.buildClientQueryPipeline(
+        filters,
+        pagination,
+        sortBy,
+      );
+    } else if (role === 'ADMIN') {
+      queryPipeline = await this.buildAdminQueryPipeline(
+        filters,
+        pagination,
+        sortBy,
+      );
+    }
+
+    console.log('Query pipeline: ', queryPipeline);
 
     //console.log('P: ', pagination);
     let result: any = await this.productModel.aggregate(queryPipeline);
 
     // .sort(sortObj),
-    console.log('Result: ', result);
     const productList = result[0].productList;
+
+    //admin
+    // console.log('Result: ', result[0]);
+    let totalItemAdmin = 0;
+    if (role === 'ADMIN' && result[0].productList.length > 0) {
+      totalItemAdmin = result[0].total[0].count;
+    }
     // console.log('T: ', totalItem);
     // console.log('PL: ', productList);
     const metadata1 = result[0].stage1ComputedResults;
     const metadata2 = result[0].stage2ComputedResults;
     // const metadata1 = result[0].stage1ComputedResults;
+
+    ////JOIN MORE DATA
     if (role === 'ADMIN') {
       const productListPromises = productList.map(async (product) => {
         const { minPrice, maxPrice } =
@@ -386,8 +520,8 @@ export class ProductQueryService {
       });
       let _productList = await Promise.all(productListPromises);
       return {
-        data: _productList,
-        metadata: { ...metadata1[0], ...metadata2 },
+        productList: _productList,
+        metadata: { totalItem: totalItemAdmin },
       };
     } else {
       //all color & sizes
@@ -395,8 +529,9 @@ export class ProductQueryService {
         //price
         const { minPrice } = await this.getProductSellingPrice(product);
         let allProductVariants = await this.getAllVariantsOfProduct(product);
+        console.log('APV: ', allProductVariants);
         allProductVariants = allProductVariants.filter(
-          (variant) => variant.isInUse && variant.isOpenToSale,
+          (variant) => variant.isOpenToSale,
         );
         //option data
         let optionData: any = [];
@@ -434,12 +569,7 @@ export class ProductQueryService {
   async getProductCategoryName(product: ProductDocument) {
     const { categoryId } = product;
     const category = await this.categoryService.getCategoryDetail(categoryId);
-    if (!category) {
-      throw new InternalServerErrorException(
-        'Không tồn tại danh mục tương ứng',
-      );
-    }
-    return category.categoryName;
+    return category?.categoryName;
   }
   async getAllVariantsOfProduct(product: ProductDocument) {
     const { productId } = product;
@@ -522,7 +652,6 @@ export class ProductQueryService {
           sku: 1,
           price: 1,
           stock: 1,
-          isInUse: 1,
           isOpenToSale: 1,
           seller_sku: 1,
           platform_sku: 1,
@@ -578,7 +707,10 @@ export class ProductQueryService {
   async getProductPropertyList(product: ProductDocument) {
     const { productId } = product;
     const data = await this.productPropertyModel
-      .find({ productId: productId })
+      .find({
+        productId: productId,
+      })
+      .select('name value')
       .lean();
     // console.log('Property list: ', data);
     return data;
@@ -591,37 +723,45 @@ export class ProductQueryService {
     // console.log('Description: ', data);
     return data;
   }
+  async getProductSizeGuidance(product: ProductDocument) {
+    const { productId } = product;
+    const data = await this.productSizeGuidanceModel
+      .find({
+        productId: productId,
+      })
+      .select('name fit')
+      .lean();
+    // console.log('Size guidance: ', data);
+    return data;
+  }
   //get detail
-
   async getProductDetail_Admin(productId: string) {
     const product = await this.productModel.findOne({ productId: productId });
     if (!product) {
       throw new InternalServerErrorException('Product not found!');
     }
-    const propertyListDb = await this.getProductPropertyList(product);
-    const propertyList = propertyListDb.map((property) => ({
-      name: property.name,
-      value: property.value,
-    }));
+    const propertyList = await this.getProductPropertyList(product);
+    const sizeGuidance = await this.getProductSizeGuidance(product);
     const descriptionDb = await this.getProductDescription(product);
     const description = descriptionDb?.description;
     const options = await this.getAllProductOptions(product);
     let optionsGrouped = this.groupOptions(options);
     const v1 = optionsGrouped.find((grouped: any) => grouped.index === 0);
     const v2 = optionsGrouped.find((grouped: any) => grouped.index === 1);
-    const allVariantsSellingPoint = await this.getAllVariantsOfProduct(product);
+    const variantDetailList = await this.getAllVariantsOfProduct(product);
     return {
       productId: product.productId,
       name: product.name,
       sku: product.sku,
       categoryId: product.categoryId,
       thumbnailURL: product.display_thumbnail_image,
-      propertyList: JSON.stringify(propertyList),
-      description: JSON.stringify(description),
+      propertyList: propertyList,
+      sizeGuidance,
+      description: description,
       variant1: v1,
       variant2: v2,
-      variantSellingPoint: allVariantsSellingPoint,
-      isPublised: product.isPublished,
+      variantDetailList,
+      isPublished: product.isPublished,
       isDrafted: product.isDrafted,
       isDeleted: product.isDeleted,
     };
@@ -638,16 +778,13 @@ export class ProductQueryService {
       throw new InternalServerErrorException('Không có category tương ứng!');
     }
     const categoryName = category.categoryName;
-    const propertyListDb = await this.getProductPropertyList(product);
-    const propertyList = propertyListDb.map((property) => ({
-      name: property.name,
-      value: property.value,
-    }));
+    const propertyList = await this.getProductPropertyList(product);
+    const sizeGuidance = await this.getProductSizeGuidance(product);
     const descriptionDb = await this.getProductDescription(product);
     const description = descriptionDb?.description;
     let allProductVariants = await this.getAllVariantsOfProduct(product);
     allProductVariants = allProductVariants.filter(
-      (variant) => variant.isInUse && variant.isOpenToSale,
+      (variant) => variant.isOpenToSale,
     );
     let optionData: any = [];
     const totalStock = await this.getProductTotalStock(product);
@@ -682,6 +819,7 @@ export class ProductQueryService {
       thumbnailURL: product.display_thumbnail_image,
       sku: product.sku,
       propertyList: JSON.stringify(propertyList),
+      sizeGuidance: JSON.stringify(sizeGuidance),
       description: JSON.stringify(description),
       allProductVariants,
       optionData,
@@ -710,7 +848,7 @@ export class ProductQueryService {
       );
     }
     let _product = await this.getProductDetail_Admin(productId);
-    let _variant = await _product.variantSellingPoint.find(
+    let _variant = await _product.variantDetailList.find(
       (variant) => variant.variantId === variantId,
     );
     return { product: _product, variant: _variant };
