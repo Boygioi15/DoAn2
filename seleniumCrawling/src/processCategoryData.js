@@ -9,7 +9,7 @@ async function main() {
 
   const normalizedData = await NormalizeCategoryList(categoryList);
   console.log("Raw data length: ", normalizedData.length);
-  console.log(normalizedData.slice(0, 10));
+  // console.log(normalizedData.slice(0, 10));
 
   console.log("Checking data integrity");
   console.log("Check parsable url");
@@ -21,7 +21,7 @@ async function main() {
   console.log("Check duplicate sku");
   await CheckDuplicateSku(processingData);
 
-  console.log("Finished: ", processingData.slice(0, 10));
+  // console.log("Finished: ", processingData.slice(0, 10));
   console.log("Processed data length: ", processingData.length);
 
   saveJson(PROCESSED_PATH, processingData);

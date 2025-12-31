@@ -221,6 +221,7 @@ export default function SearchPage() {
         </span>
       </div>
     );
+
   return (
     <div className="grid grid-cols-[2fr_7fr] gap-4 text-[14px] font-medium pl-15 pr-20 pb-25 relative">
       <div className="flex flex-col h-fit gap-4 sticky top-5 pt-5 ">

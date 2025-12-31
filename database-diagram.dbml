@@ -1,0 +1,275 @@
+// Database Schema for E-commerce Platform
+// Generated from NestJS Mongoose Schemas
+// Use at: https://dbdiagram.io/
+
+Table user {
+  _id objectid [primary key]
+  userId varchar [unique, note: 'UUID']
+  name varchar
+  sex varchar
+  birthdate timestamp
+  password varchar
+  hasPendingOrder varchar [default: null]
+  isBanned boolean [default: false]
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table user_login_profile {
+  _id objectid [primary key]
+  loginId varchar [unique, note: 'UUID']
+  userId varchar [ref: > user.userId]
+  provider varchar [note: 'Auth provider: local, google, etc']
+  identifier varchar [unique, note: 'Email or phone']
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table user_refresh_token {
+  _id objectid [primary key]
+  id varchar [unique, note: 'UUID']
+  userId varchar [ref: > user.userId]
+  refreshToken varchar
+  ttl timestamp [note: 'Token expiration time']
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table user_otp_cache {
+  _id objectid [primary key]
+  identifier varchar [unique, note: 'Email or phone']
+  otp varchar
+  bounceback timestamp
+  ttl timestamp [note: 'Auto-expires']
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table user_address {
+  _id objectid [primary key]
+  addressId varchar [unique, note: 'UUID']
+  userId varchar [ref: > user.userId]
+  contact_name varchar
+  contact_phone varchar
+  isActive boolean
+  address_detail varchar
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table address_detail_province {
+  _id objectid [primary key]
+  addressId varchar [unique, ref: > user_address.addressId]
+  provinceName varchar
+  provinceCode varchar
+  districtName varchar
+  districtCode varchar
+  wardName varchar
+  wardCode varchar
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table category {
+  _id objectid [primary key]
+  categoryId varchar [unique, note: 'UUID']
+  categoryName varchar
+  parentId varchar [ref: > category.categoryId, note: 'Self-reference for hierarchy']
+  categoryLevel integer [default: 1]
+  isDefault boolean [default: false]
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table product {
+  _id objectid [primary key]
+  productId varchar [unique, note: 'UUID']
+  name varchar
+  slug varchar
+  sku varchar
+  display_thumbnail_image varchar
+  categoryId varchar [ref: > category.categoryId]
+  isPublished boolean [default: true]
+  isDrafted boolean [default: false]
+  isDeleted boolean [default: false]
+  minPrice decimal [note: 'Denormalized - min variant price']
+  totalStock integer [note: 'Denormalized - sum of variant stocks']
+  allColors varchar[] [note: 'Denormalized array']
+  allSizes varchar[] [note: 'Denormalized array']
+  propertyString varchar [note: 'Denormalized properties']
+  descriptionString varchar [note: 'Denormalized description']
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table product_variant {
+  _id objectid [primary key]
+  variantId varchar [unique, note: 'UUID']
+  stock integer
+  seller_sku varchar
+  platform_sku varchar [unique]
+  price decimal
+  isOpenToSale boolean
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table variant_option {
+  _id objectid [primary key]
+  optionId varchar [unique, note: 'UUID']
+  name varchar [note: 'e.g., Color, Size']
+  value varchar [note: 'e.g., Red, XL']
+  index integer
+  image varchar[]
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table product_option {
+  _id objectid [primary key]
+  productId varchar [ref: > product.productId]
+  variantId varchar [ref: > product_variant.variantId]
+  optionId varchar [ref: > variant_option.optionId]
+  createdAt timestamp
+  updatedAt timestamp
+  
+  Note: 'Junction table linking products, variants, and options'
+}
+
+Table product_property {
+  _id objectid [primary key]
+  productId varchar [ref: > product.productId]
+  name varchar [note: 'Property name, e.g., Material']
+  value varchar [note: 'Property value, e.g., Cotton']
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table product_description {
+  _id objectid [primary key]
+  productId varchar [ref: > product.productId]
+  description text
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table product_size_guidance {
+  _id objectid [primary key]
+  productId varchar [ref: > product.productId]
+  name varchar
+  fit json [note: 'JSON with height, weight, bust, waist, hip ranges']
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table product_embedding {
+  _id objectid [primary key]
+  productId varchar [unique, ref: > product.productId]
+  description varchar
+  embedding float[] [note: 'Vector embedding for semantic search']
+  isEmbedded boolean [default: false]
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table cart {
+  _id objectid [primary key]
+  cartId varchar [unique, note: 'UUID']
+  userId varchar [ref: > user.userId]
+  totalItem integer [default: 0]
+  defaultPrice decimal [default: 0]
+  cashoutPrice decimal [default: 0]
+  allSelected boolean [default: false]
+  totalSelected integer [default: 0]
+  allowedToPurchase boolean [default: false]
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table cart_item {
+  _id objectid [primary key]
+  cartItemId varchar [unique, note: 'UUID']
+  cartId varchar [ref: > cart.cartId]
+  quantity integer [default: 1]
+  maxAllowedQuantity integer
+  unitPrice decimal
+  cashoutPrice decimal
+  selected boolean [default: true]
+  productId varchar [ref: > product.productId]
+  variantId varchar [ref: > product_variant.variantId]
+  product_name varchar [note: 'Denormalized']
+  product_thumbnail varchar [note: 'Denormalized']
+  product_sku varchar [note: 'Denormalized']
+  variant_thumbnail varchar [note: 'Denormalized']
+  variant_color varchar [note: 'Denormalized']
+  variant_size varchar [note: 'Denormalized']
+  variant_sku varchar [note: 'Denormalized']
+  isUpdated boolean [default: false]
+  invalidState varchar [default: 'normal', note: 'normal, invalid, outOfStock, overflow']
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table order {
+  _id objectid [primary key]
+  address_name varchar
+  address_phone varchar
+  address_province_code integer
+  address_province_name varchar
+  address_district_code integer
+  address_district_name varchar
+  address_ward_code integer
+  address_ward_name varchar
+  address_detail varchar
+  payment_method varchar [note: 'momo, cod']
+  payment_default_price decimal
+  payment_cashout_price decimal
+  payment_state varchar [default: 'created', note: 'created, pending, succeeded, failed, cancelled']
+  payment_gateway_code integer
+  payment_url varchar
+  reference_user varchar [ref: > user.userId]
+  reference_address varchar [ref: > user_address.addressId]
+  email varchar
+  delivery_state varchar [default: 'pending', note: 'pending, ongoing, delivered, succeeded, failed, canceled']
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table order_detail {
+  _id objectid [primary key]
+  orderId objectid [ref: > order._id]
+  quantity integer
+  unitPrice decimal
+  cashoutPrice decimal
+  productId varchar [ref: > product.productId]
+  variantId varchar [ref: > product_variant.variantId]
+  product_name varchar [note: 'Denormalized']
+  product_thumbnail varchar [note: 'Denormalized']
+  product_sku varchar [note: 'Denormalized']
+  variant_thumbnail varchar [note: 'Denormalized']
+  variant_color varchar [note: 'Denormalized']
+  variant_size varchar [note: 'Denormalized']
+  variant_sku varchar [note: 'Denormalized']
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table cloudinary_file_map {
+  _id objectid [primary key]
+  url varchar
+  publicId varchar
+  createdAt timestamp
+  updatedAt timestamp
+  
+  Note: 'Tracks uploaded files in Cloudinary CDN'
+}
+
+Table frontend_setting {
+  _id objectid [primary key]
+  homepage_banner varchar[]
+  toplayout_rotator_message varchar[]
+  createdAt timestamp
+  updatedAt timestamp
+  
+  Note: 'Configuration for frontend UI elements'
+}

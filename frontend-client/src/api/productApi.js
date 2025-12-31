@@ -19,4 +19,18 @@ export const productApi = {
       `category/direct-children-img/${categoryId}`
     );
   },
+  searchByImage: async (imageFile, queryString) => {
+    const formData = new FormData();
+    formData.append('image', imageFile);
+    return await axiosClient_Backend.post(
+      `product/search-by-image?${queryString}`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        timeout: 60000, // 60 seconds for AI processing
+      }
+    );
+  },
 };

@@ -15,8 +15,6 @@ export class SpeechToTextDto {
 }
 
 export class SpeechToTextResponseDto {
-  transcript: string;
-  confidence?: number;
-  language?: string;
+  correctedSentence: string;
+  censoredWordList: string[];
 }
-

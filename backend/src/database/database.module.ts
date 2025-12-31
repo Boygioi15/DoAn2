@@ -58,6 +58,10 @@ import {
   orderDetailSchema,
   orderSchema,
 } from './schemas/transaction.schema';
+import {
+  ProductEmbedding,
+  ProductEmbeddingSchema,
+} from './schemas/product_embedding.schema';
 
 @Module({
   imports: [
@@ -102,6 +106,10 @@ import {
       {
         name: CloudinaryFileMap.name,
         schema: CloudinaryFileMapSchema,
+      },
+      {
+        name: ProductEmbedding.name,
+        schema: ProductEmbeddingSchema,
       },
     ]),
   ],

@@ -48,8 +48,8 @@ async function main() {
     .build();
   for (let [index, dataRow] of dataRows.entries()) {
     console.log("PROGRESS: ", index, "/", dataRows.length);
-    if (index === 300) {
-      console.log("REACHING 300 index, threshold - terminated!");
+    if (index === 400) {
+      console.log("REACHING 400 index, threshold - terminated!");
       return;
     }
     try {
@@ -174,7 +174,12 @@ async function crawlProductData(driver) {
   const basic = await crawlProductBasicInfo(driver);
   const colorList = await crawlColorList(driver);
   const sizeList = await crawlSizeList(driver);
-  const sizeGuidance = await crawlSizeGuidance(driver);
+  let sizeGuidance = null;
+  try {
+    sizeGuidance = await crawlSizeGuidance(driver);
+  } catch (error) {
+    console.log("Failed to crawl size guidance");
+  }
   const detail = await crawlDescriptionAndProperty(driver);
   const breadcrumb = await crawlBreadcrumb(driver);
 

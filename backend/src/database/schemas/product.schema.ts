@@ -56,6 +56,12 @@ export class Product {
 
   @Prop()
   allSizes: string[];
+
+  @Prop()
+  propertyString: string;
+
+  @Prop()
+  descriptionString: string;
 }
 
 @Schema({ timestamps: true, collection: 'product_variant' })

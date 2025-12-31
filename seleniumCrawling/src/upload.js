@@ -101,11 +101,15 @@ async function addProductToAdminViaJSON(product) {
   }
   console.log("Working on: ", product);
   const formData = await formFormDataJSON(product);
-  const response = await axios.post("http://localhost:3000/product", formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
+  const response = await axios.post(
+    "http://localhost:3000/product/publish-new-product",
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
 }
 async function formFormDataJSON(product) {
   const formData = new FormData();
@@ -113,7 +117,7 @@ async function formFormDataJSON(product) {
   formData.append("categoryId", product.categoryId);
 
   const thumbnailFilePath = getFirstImageOfFirstFolder(product);
-  console.log("TF path: ", thumbnailFilePath);
+  // console.log("TF path: ", thumbnailFilePath);
   // Append file correctly
   formData.append("thumbnailFile", fs.createReadStream(thumbnailFilePath), {
     filename: thumbnailFilePath.split("/").pop(), // make sure to send a filename
@@ -219,9 +223,9 @@ async function formFormDataJSON(product) {
   formData.append("variant2Data", JSON.stringify(variant2Data));
   formData.append("variantTableData", JSON.stringify(variantTableData));
 
-  console.log("v1: ", JSON.stringify(variant1Data));
-  console.log("v2: ", JSON.stringify(variant2Data));
-  console.log("Vtable: ", variantTableData);
+  // console.log("v1: ", JSON.stringify(variant1Data));
+  // console.log("v2: ", JSON.stringify(variant2Data));
+  // console.log("Vtable: ", variantTableData);
   console.log("-----");
   console.log("-----");
   console.log("-----");

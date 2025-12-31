@@ -26,9 +26,9 @@ import {
   User,
 } from 'lucide-react';
 import { CartWrapper } from './CartComponent';
-import { SpeechToTextDialog } from '@/components/SpeechToTextDialog';
+import { SpeechToTextDialog } from '@/reusable_components/SpeechToTextDialog';
 import { ChatBot } from '@/components/ChatBot';
-import { ImageSearchDialog } from '@/components/ImageSearchDialog';
+import { ImageSearchDialog } from '@/reusable_components/ImageSearchDialog';
 
 export default function RootLayout({ children }) {
   return (
@@ -78,9 +78,17 @@ export function TopLayout() {
     navigate(`/search?query=${encodeURIComponent(transcript)}`);
   };
 
-  const handleImageSearchResults = (results) => {
+  const handleImageSearchResults = (productList, searchImage) => {
     // Navigate to search results page with image search results
-    navigate('/search', { state: { imageSearchResults: results } });
+    // console.log('PL : ', productList);
+    // console.log('OIL : ', originalImageUrl);
+
+    navigate('/search-by-image', {
+      state: {
+        productList,
+        searchImage,
+      },
+    });
   };
 
   return (

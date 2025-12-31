@@ -6,15 +6,35 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Mic, MicOff, X, Search } from 'lucide-react';
-import './SpeechToTextDialog.css';
+import { Mic, MicOff, X, Search, ChevronDown, ChevronUp } from 'lucide-react';
 import { speechApi } from '@/api/speechApi';
 import { toast } from 'sonner';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+
+// States: 'idle' | 'recording' | 'processing' | 'succeeded' | 'failed'
+const STATE = {
+  IDLE: 'idle',
+  RECORDING: 'recording',
+  PROCESSING: 'processing',
+  SUCCEEDED: 'succeeded',
+  FAILED: 'failed',
+};
 
 export function SpeechToTextDialog({ open, onOpenChange, onTranscript }) {
-  const [isRecording, setIsRecording] = useState(false);
+  const [state, setState] = useState(STATE.IDLE);
   const [transcript, setTranscript] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [censoredWordList, setCensoredWordList] = useState([]);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const streamRef = useRef(null);
@@ -24,7 +44,7 @@ export function SpeechToTextDialog({ open, onOpenChange, onTranscript }) {
     if (!open) {
       stopRecording();
       setTranscript('');
-      setIsProcessing(false);
+      setState(STATE.IDLE);
     }
   }, [open]);
 
@@ -32,11 +52,12 @@ export function SpeechToTextDialog({ open, onOpenChange, onTranscript }) {
   useEffect(() => {
     return () => {
       if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current.getTracks().forEach((track) => track.stop());
       }
     };
   }, []);
 
+  //idle-> recording
   const startRecording = async () => {
     try {
       // Request microphone access
@@ -45,9 +66,9 @@ export function SpeechToTextDialog({ open, onOpenChange, onTranscript }) {
 
       // Create MediaRecorder
       const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'audio/webm;codecs=opus'
+        mimeType: 'audio/webm;codecs=opus',
       });
-      
+
       audioChunksRef.current = [];
 
       mediaRecorder.ondataavailable = (event) => {
@@ -62,50 +83,56 @@ export function SpeechToTextDialog({ open, onOpenChange, onTranscript }) {
 
       mediaRecorderRef.current = mediaRecorder;
       mediaRecorder.start();
-      setIsRecording(true);
-      
+      setState(STATE.RECORDING);
     } catch (error) {
       console.error('Error starting recording:', error);
-      toast.error('Không thể truy cập microphone. Vui lòng kiểm tra quyền truy cập.');
+      toast.error(
+        'Không thể truy cập microphone. Vui lòng kiểm tra quyền truy cập.'
+      );
+      setState(STATE.FAILED);
     }
   };
-
   const stopRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+    if (
+      mediaRecorderRef.current &&
+      mediaRecorderRef.current.state === 'recording'
+    ) {
       mediaRecorderRef.current.stop();
     }
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
-    setIsRecording(false);
   };
-
+  //record->processing
   const stopAndSend = async () => {
-    if (!mediaRecorderRef.current || mediaRecorderRef.current.state !== 'recording') {
+    if (
+      !mediaRecorderRef.current ||
+      mediaRecorderRef.current.state !== 'recording'
+    ) {
       toast.error('Không có bản ghi âm');
+      setState(STATE.IDLE);
       return;
     }
 
     // Stop recording
     mediaRecorderRef.current.stop();
-    
+
     // Stop all tracks
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
-    
-    setIsRecording(false);
 
     // Wait a bit for the last data to be available
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
     // Create blob from chunks
     const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
 
     if (audioBlob.size === 0) {
       toast.error('Không có dữ liệu âm thanh');
+      setState(STATE.FAILED);
       return;
     }
 
@@ -114,7 +141,7 @@ export function SpeechToTextDialog({ open, onOpenChange, onTranscript }) {
   };
 
   const sendAudioToBackend = async (audioBlob) => {
-    setIsProcessing(true);
+    setState(STATE.PROCESSING);
 
     try {
       // Convert blob to base64
@@ -126,19 +153,21 @@ export function SpeechToTextDialog({ open, onOpenChange, onTranscript }) {
         language: 'vi-VN',
         mimeType: 'audio/webm',
       });
-
-      if (response.data && response.data.transcript) {
-        setTranscript(response.data.transcript);
+      console.log(response);
+      if (response.data) {
+        setTranscript(response.data.correctedSentence);
+        setCensoredWordList(response.data.censoredWordList);
+        setState(STATE.SUCCEEDED);
         toast.success('Đã chuyển đổi giọng nói thành công!');
       } else {
         toast.warning('Không nhận diện được giọng nói');
+        setState(STATE.FAILED);
       }
     } catch (error) {
       console.error('Error sending audio to backend:', error);
       const errorMessage = error.response?.data?.message || error.message;
       toast.error('Lỗi: ' + errorMessage);
-    } finally {
-      setIsProcessing(false);
+      setState(STATE.FAILED);
     }
   };
 
@@ -158,9 +187,10 @@ export function SpeechToTextDialog({ open, onOpenChange, onTranscript }) {
     }
   };
 
-  const handleClear = () => {
+  const handleRetry = () => {
     setTranscript('');
     audioChunksRef.current = [];
+    setState(STATE.IDLE);
   };
 
   return (
@@ -174,47 +204,55 @@ export function SpeechToTextDialog({ open, onOpenChange, onTranscript }) {
 
         <div className="flex flex-col items-center gap-6 py-6">
           {/* Microphone Icon with Animation */}
-          <div className="relative">
+          <div className="relative flex items-center justify-center">
             <div
               className={`
-                w-28 h-28 rounded-full flex items-center justify-center cursor-pointer
+                relative z-10 w-28 h-28 rounded-full flex items-center justify-center cursor-pointer
                 transition-all duration-300
-                ${isRecording 
-                  ? 'bg-red-500 speech-pulse-ring' 
-                  : isProcessing 
-                    ? 'bg-blue-500' 
-                    : 'bg-gray-200 hover:bg-gray-300'}
+                ${state === STATE.RECORDING ? 'bg-red-500 animate-pulse' : ''}
+                ${state === STATE.PROCESSING ? 'bg-blue-500' : ''}
+                ${state === STATE.SUCCEEDED ? 'bg-green-500' : ''}
+                ${state === STATE.FAILED ? 'bg-orange-500' : ''}
+                ${state === STATE.IDLE ? 'bg-gray-200 hover:bg-gray-300' : ''}
               `}
-              onClick={!isRecording && !isProcessing ? startRecording : undefined}
+              onClick={state === STATE.IDLE ? startRecording : undefined}
             >
-              {isProcessing ? (
+              {state === STATE.PROCESSING ? (
                 <div className="animate-spin rounded-full h-10 w-10 border-4 border-white border-t-transparent" />
-              ) : isRecording ? (
+              ) : state === STATE.RECORDING ? (
                 <Mic className="w-14 h-14 text-white animate-pulse" />
+              ) : state === STATE.SUCCEEDED ? (
+                <Mic className="w-14 h-14 text-white" />
+              ) : state === STATE.FAILED ? (
+                <X className="w-14 h-14 text-white" />
               ) : (
                 <Mic className="w-14 h-14 text-gray-600" />
               )}
             </div>
-            {isRecording && (
-              <div className="absolute inset-0 rounded-full bg-red-500 opacity-25 speech-ping-ring" />
+            {state === STATE.RECORDING && (
+              <div className="absolute inset-0 rounded-full bg-red-500 opacity-25 animate-ping" />
             )}
           </div>
 
           {/* Status Text */}
           <div className="text-center">
-            {isProcessing ? (
-              <p className="text-lg font-medium text-blue-600">
-                Đang xử lý...
-              </p>
-            ) : isRecording ? (
+            {state === STATE.PROCESSING && (
+              <p className="text-lg font-medium text-blue-600">Đang xử lý...</p>
+            )}
+            {state === STATE.RECORDING && (
               <p className="text-lg font-medium text-red-600">
                 🔴 Đang ghi âm...
               </p>
-            ) : transcript ? (
+            )}
+            {state === STATE.SUCCEEDED && (
               <p className="text-lg font-medium text-green-600">
                 ✅ Hoàn thành
               </p>
-            ) : (
+            )}
+            {state === STATE.FAILED && (
+              <p className="text-lg font-medium text-orange-600">❌ Thất bại</p>
+            )}
+            {state === STATE.IDLE && (
               <p className="text-lg font-medium text-gray-500">
                 Nhấn vào micro để bắt đầu
               </p>
@@ -222,28 +260,62 @@ export function SpeechToTextDialog({ open, onOpenChange, onTranscript }) {
           </div>
 
           {/* Transcript Display */}
-          {transcript && (
-            <div className="w-full min-h-[80px] p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <p className="text-center text-lg text-gray-800">
-                "{transcript}"
-              </p>
+          {state === STATE.SUCCEEDED && (
+            <div className="flex flex-col gap-2 w-full">
+              <Textarea
+                className="p-4 rounded-lg border border-gray-200 text-lg text-black"
+                value={transcript}
+                placeholder="Nhập tìm kiếm"
+                onChange={(e) => setTranscript(e.target.value)}
+              >
+                {transcript}
+              </Textarea>
+              {censoredWordList && censoredWordList.length > 0 && (
+                <Collapsible type="single">
+                  <CollapsibleTrigger
+                    className="text-center text-[13px] text-gray-500 group"
+                    asChild
+                  >
+                    <Button
+                      variant={'ghost'}
+                      className={'p-2 text-red-500 hover:text-red-500/90'}
+                    >
+                      Các từ bị ẩn
+                      <ChevronUp className="[[data-state=closed]>&]:rotate-180" />
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    {censoredWordList &&
+                      censoredWordList.map((word, index) => (
+                        <span className="flex gap-2 text-[13px] text-gray-500 pl-5 mb-1">
+                          <span className="w-5">*{index + 1}:</span>
+                          <span className="w-15">{word}</span>
+                        </span>
+                      ))}
+                  </CollapsibleContent>
+                </Collapsible>
+              )}
+
+              <span className="text-center text-[12px] text-gray-500">
+                Nếu bạn thấy không chính xác, hãy chỉnh lại ở trên
+              </span>
             </div>
           )}
 
           {/* Control Buttons */}
           <div className="flex gap-3 flex-wrap justify-center">
-            {!isRecording && !isProcessing && !transcript && (
+            {state === STATE.IDLE && (
               <Button
                 onClick={startRecording}
                 size="lg"
-                className="bg-red-500 hover:bg-red-600"
+                className="bg-blue-500 hover:bg-blue-600"
               >
                 <Mic className="w-5 h-5 mr-2" />
                 Bắt đầu
               </Button>
             )}
 
-            {isRecording && (
+            {state === STATE.RECORDING && (
               <Button
                 onClick={stopAndSend}
                 size="lg"
@@ -254,31 +326,30 @@ export function SpeechToTextDialog({ open, onOpenChange, onTranscript }) {
               </Button>
             )}
 
-            {transcript && !isProcessing && (
+            {(state === STATE.SUCCEEDED || state === STATE.FAILED) && (
               <>
-                <Button
-                  onClick={handleClear}
-                  size="lg"
-                  variant="outline"
-                >
+                <Button onClick={handleRetry} size="lg" variant="outline">
                   <X className="w-5 h-5 mr-2" />
                   Ghi lại
                 </Button>
-                <Button
-                  onClick={handleSearch}
-                  size="lg"
-                  className="bg-blue-500 hover:bg-blue-600"
-                >
-                  <Search className="w-5 h-5 mr-2" />
-                  Tìm kiếm
-                </Button>
+                {state === STATE.SUCCEEDED && (
+                  <Button
+                    onClick={handleSearch}
+                    size="lg"
+                    className="bg-red-500 hover:bg-red-500/80"
+                    disabled={transcript.trim().length === 0}
+                  >
+                    <Search className="w-5 h-5 mr-2" />
+                    Tìm kiếm
+                  </Button>
+                )}
               </>
             )}
           </div>
 
           {/* Helper Text */}
           <p className="text-sm text-gray-500 text-center max-w-[350px]">
-            {isRecording 
+            {state === STATE.RECORDING
               ? 'Nói rõ ràng vào micro, sau đó nhấn "Kết thúc"'
               : 'Âm thanh sẽ được gửi đến server để nhận diện'}
           </p>

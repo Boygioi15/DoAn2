@@ -34,6 +34,8 @@ import { CategoryService } from 'src/category/category.service';
 import { ProductQueryService } from './product-query.service';
 import { Multer } from 'multer';
 import { ProductDeleteService } from './product-delete.service';
+import { ProductEmbeddingService } from './product-embedding.service';
+import { extractSearchableText } from 'src/ultility';
 @Injectable()
 export class ProductService {
   constructor(
@@ -41,6 +43,7 @@ export class ProductService {
     private readonly categoryService: CategoryService,
     private readonly productQueryService: ProductQueryService,
     private readonly productDeleteService: ProductDeleteService,
+    private readonly productEmbeddingService: ProductEmbeddingService,
 
     @InjectModel(Product.name)
     private readonly productModel: Model<ProductDocument>,
@@ -63,7 +66,15 @@ export class ProductService {
     files: Array<Express.Multer.File>,
   ) {
     //full create new
-    return await this.createNewProduct(createProductDto, files);
+    const productId = await this.createNewProduct(createProductDto, files);
+    await this.denormalizeProduct(productId);
+    try {
+      await this.productEmbeddingService.generateAndSaveEmbeddingForProduct(
+        productId,
+      );
+    } catch (error) {
+      console.log('Generate embedding for product failed', error);
+    }
   }
   async createNewDraft(
     createProductDto: CreateProductDto,
@@ -79,12 +90,20 @@ export class ProductService {
   ) {
     //delete then create
     await this.productDeleteService.deleteProductData(productId, true);
-    return await this.createNewProduct(
+    const _productId = await this.createNewProduct(
       createProductDto,
       files,
       false,
       productId,
     );
+    await this.denormalizeProduct(_productId);
+    try {
+      await this.productEmbeddingService.generateAndSaveEmbeddingForProduct(
+        _productId,
+      );
+    } catch (error) {
+      console.log('Generate embedding for product failed', error);
+    }
   }
   async updateDraft(
     updateProductDto: CreateProductDto,
@@ -156,6 +175,15 @@ export class ProductService {
       updateSizeGuidancePromise,
       updateVariantDetailPromise,
     ]);
+
+    await this.denormalizeProduct(productId);
+    try {
+      await this.productEmbeddingService.generateAndSaveEmbeddingForProduct(
+        productId,
+      );
+    } catch (error) {
+      console.log('Generate embedding for product failed', error);
+    }
   }
 
   async createNewProduct(
@@ -163,7 +191,7 @@ export class ProductService {
     files: Array<Express.Multer.File>,
     isDrafted: boolean = false,
     initialProductId: string | undefined = undefined,
-  ) {
+  ): Promise<string> {
     let thumbnailFile: Express.Multer.File | undefined = undefined;
     if (!isDrafted) {
       thumbnailFile = files.find((file) => file.fieldname === 'thumbnailFile');
@@ -229,11 +257,7 @@ export class ProductService {
       console.log('A4');
       console.log('Linkage created');
     }
-    if (!isDrafted) {
-      const finalProduct = await this.denormalizeProduct(productId);
-      console.log('Product backfilled: ', finalProduct);
-      return finalProduct;
-    }
+    return productId;
   }
   //return product id on success, null otherwise
   async createProductBasicInfo(
@@ -253,12 +277,16 @@ export class ProductService {
     //upload thumbnail to cloudinary then get its url
     let thumbnailUrl: string | undefined = undefined;
     if (thumbnailFile) {
-      const response = await this.cloudinaryService.uploadFile(thumbnailFile);
-      if (!response)
-        throw new InternalServerErrorException(
-          'Upload thumbnail to Cloudinary failed',
-        );
-      thumbnailUrl = response?.secure_url;
+      try {
+        const response = await this.cloudinaryService.uploadFile(thumbnailFile);
+        if (!response)
+          throw new InternalServerErrorException(
+            'Upload thumbnail to Cloudinary failed',
+          );
+        thumbnailUrl = response?.secure_url;
+      } catch (error) {
+        console.log('error while upload thumbnail', error);
+      }
     }
     console.log('create ', initialProductId);
     let newProduct: ProductDocument | null;
@@ -641,6 +669,22 @@ export class ProductService {
       product.productId,
     );
 
+    //denormalize properties and description
+    let propertyList = await this.productPropertyModel
+      .find({ productId })
+      .select('value')
+      .lean();
+    const description = await this.productDescriptionModel.findOne({
+      productId,
+    });
+
+    let propertyString = '';
+    for (const property of propertyList) {
+      propertyString = propertyString.concat(property.value.toString() + ' ');
+    }
+    let descriptionString = extractSearchableText(
+      description?.description || '',
+    );
     const newProduct = await this.productModel.findOneAndUpdate(
       { productId },
       {
@@ -649,10 +693,13 @@ export class ProductService {
         allColors,
         allSizes,
         categoryName,
+        propertyString,
+        descriptionString,
       },
       { new: true },
     );
 
+    // Create search_index embedding after denormalization
     return newProduct;
   }
   generateSKU(length = 10) {
