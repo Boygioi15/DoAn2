@@ -20,6 +20,7 @@ export class FrontendSettingController {
   @Post('init-frontend-setting')
   async initFrontendSetting() {
     const result = await this.frontendSettingService.initFrontendSetting();
+    return { stt: 200 };
   }
   @Get('toplayout-category-data')
   async getTopCategoryData() {
@@ -49,5 +50,16 @@ export class FrontendSettingController {
     return await this.frontendSettingService.updateToplayoutRotatorMessage(
       messages,
     );
+  }
+  @Get('page/:page')
+  async getFrontendPage(@Param('page') page: string) {
+    return await this.frontendSettingService.getFrontendPage(page);
+  }
+  @Patch('page/:page')
+  async updateFrontendPage(
+    @Param('page') page: string,
+    @Body('content') content: string,
+  ) {
+    return await this.frontendSettingService.updateFrontendPage(page, content);
   }
 }

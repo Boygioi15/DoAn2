@@ -1,7 +1,7 @@
 import axios from "axios";
 import useAuthStore from "../contexts/zustands/AuthStore";
 const baseConfig = {
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000",
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:1210",
   headers: {
     "Content-Type": "application/json",
   },

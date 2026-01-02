@@ -33,6 +33,7 @@ import DetailedCategoryPage from './pages/DetailedCategoryPage';
 import CheckoutPageWrapper from './pages/CheckoutPage/CheckoutPage';
 import OrderPageWrapper from './pages/OrderResultPage';
 import SearchByImagePage from './pages/SearchByImagePage';
+import TermAndConditionPage from './pages/TermAndConditionPage';
 const router = createBrowserRouter([
   {
     path: '/',
@@ -80,6 +81,35 @@ const router = createBrowserRouter([
       {
         path: '/category/:category1Id/:category2Id/:category3Id',
         element: <DetailedCategoryPage />,
+      },
+      ////// ĐIỀU KHOẢN VÀ CHÍNH SÁCH//////
+      {
+        path: 'loyal-customer-condition',
+        element: <TermAndConditionPage />,
+      },
+      {
+        path: 'loyal-customer-policy',
+        element: <TermAndConditionPage />,
+      },
+      {
+        path: 'customer-security-policy',
+        element: <TermAndConditionPage />,
+      },
+      {
+        path: 'delivery-policy',
+        element: <TermAndConditionPage />,
+      },
+      {
+        path: 'general-size-guidance',
+        element: <TermAndConditionPage />,
+      },
+      {
+        path: 'contact',
+        element: <TermAndConditionPage />,
+      },
+      {
+        path: 'about',
+        element: <TermAndConditionPage />,
       },
       {
         path: 'error',

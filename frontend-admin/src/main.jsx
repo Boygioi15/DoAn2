@@ -10,6 +10,9 @@ import CategoryManagementPage from "./pages/CategoryManagementPage/CategoryManag
 import EditProductPage from "./pages/AddNewProductPage/EditProductPage";
 import UserManagementPage from "./pages/UserManagementPage/UserManagementPage";
 import OrderManagementPage from "./pages/OrderManagementPage/OrderManagementPage";
+import TermAndConditionPage from "./pages/FrontendSettingPage/TermAndConditionPage";
+import FrontendSettingPage from "./pages/FrontendSettingPage/FrontendSettingPage";
+import NotFoundPage from "./pages/NotFoundPage";
 
 const router = createBrowserRouter([
   {
@@ -41,8 +44,20 @@ const router = createBrowserRouter([
         path: "order-management",
       },
       {
+        element: <FrontendSettingPage />,
+        path: "frontend-setting",
+      },
+      {
+        element: <TermAndConditionPage />,
+        path: "term-and-condition",
+      },
+      {
         element: <TestUploadPage />,
         path: "test-upload",
+      },
+      {
+        path: "*",
+        element: <NotFoundPage />,
       },
     ],
   },

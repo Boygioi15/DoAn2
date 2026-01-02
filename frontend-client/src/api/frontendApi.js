@@ -14,4 +14,7 @@ export const frontendApi = {
       '/frontend-setting/toplayout-rotator-message'
     );
   },
+  getFrontendPage: async (url) => {
+    return await axiosClient_Backend.get(`/frontend-setting/page${url}`);
+  },
 };

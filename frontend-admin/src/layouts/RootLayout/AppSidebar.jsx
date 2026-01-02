@@ -1,11 +1,5 @@
 "use client";
 
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -15,12 +9,7 @@ import {
 import {
   Sidebar,
   SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import {
@@ -29,13 +18,11 @@ import {
   ChevronDown,
   Dock,
   MonitorCheck,
-  Pen,
+  MonitorCloud,
   Pencil,
   UserCircle2,
-  Wallet,
-  WalletCards,
 } from "lucide-react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const sidebarItems = [
   { title: "Quản lý khách hàng", url: "/user", icon: UserCircle2 },
@@ -66,6 +53,21 @@ const sidebarItems = [
       },
     ],
   },
+  {
+    group: "Cài đặt giao diện",
+    children: [
+      {
+        title: "Cài đặt giao diện",
+        url: "/frontend-setting",
+        icon: MonitorCloud,
+      },
+      {
+        title: "Chính sách & Điều khoản",
+        url: "/term-and-condition",
+        icon: Book,
+      },
+    ],
+  },
 ];
 export default function AppSideBar() {
   const navigate = useNavigate();
@@ -91,8 +93,9 @@ export default function AppSideBar() {
                 <ChevronDown className="transition-transform duration-200" />
               </CollapsibleTrigger>
               <CollapsibleContent>
-                {item1.children?.map((item2) => (
+                {item1.children?.map((item2, index2) => (
                   <Button
+                    key={index2}
                     variant={
                       pathname === item2.url ? "ghost-selected" : "ghost"
                     }

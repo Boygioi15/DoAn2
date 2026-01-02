@@ -20,6 +20,7 @@ export const routeNameMap = {
   "category-management": "Quản lý ngành hàng",
   "edit-product": "Thêm sản phẩm",
   "edit-product": "Chỉnh sửa sản phẩm",
+  "term-and-condition": "Chính sách & Điều khoản",
 };
 export const slugifyOption = {
   replacement: "-", // replace spaces with replacement character, defaults to `-`
