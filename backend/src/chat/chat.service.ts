@@ -27,6 +27,14 @@ const CHAT_TOOLS: OpenAI.ChatCompletionTool[] = [
             type: 'number',
             description: 'Giá tối đa (VND)',
           },
+          colorList: {
+            type: 'string',
+            description: 'Danh sách màu sắc cần lọc, phân cách bằng dấu phẩy (ví dụ: "Đen,Trắng,Xanh")',
+          },
+          sizeList: {
+            type: 'string',
+            description: 'Danh sách kích thước cần lọc, phân cách bằng dấu phẩy (ví dụ: "S,M,L,XL")',
+          },
           sortBy: {
             type: 'string',
             enum: ['newest', 'price-asc', 'price-desc', 'alphabetical-az'],
@@ -175,6 +183,8 @@ export class ChatService {
     query?: string;
     priceMin?: number;
     priceMax?: number;
+    colorList?: string;
+    sizeList?: string;
     sortBy?: string;
   }) {
     try {
@@ -184,6 +194,8 @@ export class ChatService {
           search: args.query,
           priceMin: args.priceMin,
           priceMax: args.priceMax,
+          colorList: args.colorList,
+          sizeList: args.sizeList,
         },
         pagination: {
           from: 1,
@@ -209,6 +221,7 @@ export class ChatService {
         colors: p.optionData?.map((o: any) => o.optionValue) || [],
       }));
 
+      console.log('Formatted Products: ', formattedProducts);
       return {
         success: true,
         totalFound: metadata?.totalItem2 || productList.length,

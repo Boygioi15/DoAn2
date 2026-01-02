@@ -475,7 +475,7 @@ export class ProductQueryService {
   }
   async getAllProduct({ role, filters, sortBy, pagination }) {
     //filter => sort => pagination
-
+    console.log('Filters: ', filters);
     let queryPipeline: any;
     if (role === 'CLIENT') {
       queryPipeline = await this.buildClientQueryPipeline(
