@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { MessageCircle, X, Send, Bot, User, ShoppingBag } from 'lucide-react';
+import { MessageCircle, X, Send, Bot, User, ShoppingBag, Image as ImageIcon } from 'lucide-react';
 import { chatApi } from '@/api/chatApi';
+import { productApi } from '@/api/productApi';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import MDEditor from '@uiw/react-md-editor';
@@ -21,6 +22,7 @@ export function ChatBot() {
   const [isLoading, setIsLoading] = useState(false);
   const [products, setProducts] = useState([]);
   const messagesEndRef = useRef(null);
+  const imageInputRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -65,6 +67,86 @@ export function ChatBot() {
   const handleProductClick = (productId) => {
     navigate(`/product-detail/${productId}`);
     setIsOpen(false);
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Vui lòng chọn file hình ảnh');
+      return;
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Kích thước file không được vượt quá 10MB');
+      return;
+    }
+
+    // Create preview URL for display
+    const previewUrl = URL.createObjectURL(file);
+
+    // Add user message with image
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: 'user',
+        content: '🖼️ Tìm kiếm bằng hình ảnh',
+        imageUrl: previewUrl,
+      },
+    ]);
+    setIsLoading(true);
+    setProducts([]);
+
+    try {
+      const response = await productApi.searchByImage(file);
+
+      if (response.data && response.data.length > 0) {
+        // Format products to match chat format
+        const formattedProducts = response.data.map((p) => ({
+          productId: p.productId,
+          name: p.name,
+          price: p.displayedPrice,
+          thumbnail: p.thumbnailURL,
+          colors: p.optionData?.map((o) => o.optionValue) || [],
+        }));
+
+        setProducts(formattedProducts);
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: 'assistant',
+            content: `Tôi tìm thấy ${response.data.length} sản phẩm tương tự với hình ảnh của bạn! Hãy xem các sản phẩm bên dưới nhé.`,
+          },
+        ]);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: 'assistant',
+            content: 'Xin lỗi, tôi không tìm thấy sản phẩm nào tương tự với hình ảnh này. Bạn có thể thử với hình ảnh khác hoặc mô tả sản phẩm bạn đang tìm kiếm.',
+          },
+        ]);
+      }
+    } catch (error) {
+      console.error('Image search error:', error);
+      toast.error('Không thể tìm kiếm bằng hình ảnh. Vui lòng thử lại.');
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: 'Xin lỗi, đã có lỗi khi tìm kiếm bằng hình ảnh. Vui lòng thử lại sau.',
+        },
+      ]);
+    } finally {
+      setIsLoading(false);
+      // Reset file input
+      if (imageInputRef.current) {
+        imageInputRef.current.value = '';
+      }
+    }
   };
 
   const formatPrice = (price) => {
@@ -127,12 +209,21 @@ export function ChatBot() {
                     className={`max-w-[80%] px-3 py-2 text-xs leading-relaxed
                     ${
                       msg.role === 'user'
-                        ? 'bg-violet-500 text-white rounded-full'
+                        ? 'bg-violet-500 text-white rounded-2xl'
                         : 'bg-gray-100 text-gray-800 rounded-2xl'
                     }`}
                   >
                     {msg.role === 'user' ? (
-                      msg.content
+                      <div>
+                        {msg.imageUrl && (
+                          <img
+                            src={msg.imageUrl}
+                            alt="Uploaded"
+                            className="w-24 h-24 object-cover rounded-lg mb-2"
+                          />
+                        )}
+                        <span>{msg.content}</span>
+                      </div>
                     ) : (
                       <div className="chat-markdown [&_img]:max-w-[100px] [&_img]:h-auto [&_img]:rounded-lg [&_img]:my-1 [&_p]:text-xs [&_li]:text-xs">
                         <MDEditor.Markdown
@@ -244,7 +335,25 @@ export function ChatBot() {
 
           {/* Input */}
           <div className="p-3 bg-gray-50 border-t flex-shrink-0">
+            {/* Hidden file input */}
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
+            />
             <div className="flex gap-2 items-center">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => imageInputRef.current?.click()}
+                disabled={isLoading}
+                className="rounded-full w-9 h-9 p-0 hover:bg-violet-100"
+                title="Tìm kiếm bằng hình ảnh"
+              >
+                <ImageIcon className="w-4 h-4 text-violet-500" />
+              </Button>
               <Input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
