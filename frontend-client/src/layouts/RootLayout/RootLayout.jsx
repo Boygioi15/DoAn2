@@ -69,10 +69,20 @@ export function TopLayout() {
   let loggedIn = false;
   loggedIn = !!authStore.refreshToken;
 
+  const [layoutSetting, setLayoutSetting] = useState(null);
   const [search, setSearch] = useState('');
   const [isSpeechToTextOpen, setIsSpeechToTextOpen] = useState(false);
   const [isImageSearchOpen, setIsImageSearchOpen] = useState(false);
 
+  const getLayoutSetting = async () => {
+    try {
+      const response = await frontendApi.getLayoutSetting();
+      setLayoutSetting(response.data);
+    } catch (error) {
+      console.log(error);
+      toast.error('Có lỗi khi lấy dữ liệu layout setting');
+    }
+  };
   const handleSpeechTranscript = (transcript) => {
     setSearch(transcript);
     navigate(`/search?query=${encodeURIComponent(transcript)}`);
@@ -90,7 +100,10 @@ export function TopLayout() {
       },
     });
   };
-
+  console.log('HI');
+  useEffect(() => {
+    getLayoutSetting();
+  }, []);
   return (
     <div className="TopLayout">
       <SpeechToTextDialog
@@ -103,8 +116,14 @@ export function TopLayout() {
         onOpenChange={setIsImageSearchOpen}
         onSearchResults={handleImageSearchResults}
       />
-      <TopLayout_TopBanner />
-      <TopLayout_MessageRotator />
+      {layoutSetting && layoutSetting.announcementBar && (
+        <AnnouncementBar announcementBar={layoutSetting.announcementBar} />
+      )}
+      {layoutSetting?.announcementCarousel && (
+        <AnnouncementCarousel
+          announcementCarousel={layoutSetting.announcementCarousel}
+        />
+      )}
       <div className="TopLayout_Toolbar">
         <div className="title cursor-pointer" onClick={() => navigate('/')}>
           Q-Shop
@@ -179,34 +198,20 @@ export function TopLayout() {
           </Button>
         </div>
       </div>
-      <TopLayout_CategorySelector />
+      {layoutSetting && layoutSetting.categoryData && (
+        <TopLayout_CategorySelector categoryData={layoutSetting.categoryData} />
+      )}
     </div>
   );
 }
-function TopLayout_TopBanner() {
+function AnnouncementBar({ announcementBar }) {
   return (
-    <Link className="TopLayout_TopBanner">
-      <img src={topBannerSample} />
+    <Link className="AnnouncementBar" to={announcementBar.relativePath}>
+      <img src={announcementBar.url} />
     </Link>
   );
 }
-function TopLayout_MessageRotator() {
-  const [message, setMessage] = useState([
-    'Ưu đãi ngập tràn',
-    'Quà hấp dẫn',
-    'Ôi trời ơi',
-  ]);
-  const getMessage = async () => {
-    try {
-      const response = await frontendApi.getTopLayoutRotatorMessage();
-      setMessage(response.data);
-    } catch (error) {
-      toast.error('Có lỗi khi lấy dữ liệu toplayout-message-rotator');
-    }
-  };
-  useEffect(() => {
-    getMessage();
-  }, []);
+function AnnouncementCarousel({ announcementCarousel }) {
   const [messageIndex, setMessageIndex] = useState(1);
   const [slideClass, setSlideClass] = useState('');
   const [slideDirection, setSlideDirection] = useState('next');
@@ -217,8 +222,9 @@ function TopLayout_MessageRotator() {
     setTimeout(() => {
       setMessageIndex((prev) =>
         state
-          ? (prev + 1) % message.length
-          : (prev - 1 + message.length) % message.length
+          ? (prev + 1) % announcementCarousel.length
+          : (prev - 1 + announcementCarousel.length) %
+            announcementCarousel.length
       );
       setSlideClass('slide-in');
     }, 300);
@@ -229,7 +235,7 @@ function TopLayout_MessageRotator() {
       handleMessageIndex(true);
     }, 3000);
     return () => clearInterval(interval);
-  }, [message, messageIndex]);
+  }, [announcementCarousel, messageIndex]);
 
   // Reset class after animation
   useEffect(() => {
@@ -246,7 +252,7 @@ function TopLayout_MessageRotator() {
       />
       <div style={{ width: '500px' }}></div>
       <div className={`message-text ${slideClass} ${slideDirection}`}>
-        {message[messageIndex]}
+        {announcementCarousel[messageIndex]}
       </div>
 
       <MdArrowForwardIos
@@ -258,20 +264,7 @@ function TopLayout_MessageRotator() {
     </div>
   );
 }
-function TopLayout_CategorySelector() {
-  const [categoryData, setCategoryData] = useState([]);
-  const getCategoryData = async () => {
-    try {
-      const response = await frontendApi.getCategoryData();
-      setCategoryData(response.data);
-    } catch (error) {
-      toast.error('Có lỗi khi lấy dữ liệu ngành hàng');
-    }
-  };
-  useEffect(() => {
-    getCategoryData();
-  }, []);
-  if (!categoryData) return;
+function TopLayout_CategorySelector({ categoryData }) {
   return (
     <div className="flex w-full bg-(--color-preset-gray) pl-25 pr-25 relative">
       {categoryData.map((t1) => (

@@ -11,7 +11,10 @@ export default function RootLayout() {
   const location = useLocation();
   const pathname = location.pathname;
   const pathParts = pathname.split("/").filter(Boolean);
-  const screenName = routeNameMap[pathParts[pathParts.length - 1]];
+  let screenName = "Trang chủ";
+  if (pathParts.length > 0) {
+    screenName = routeNameMap[pathParts[pathParts.length - 1]];
+  }
   return (
     <Suspense>
       <SidebarProvider className="bg-gray-100 ">

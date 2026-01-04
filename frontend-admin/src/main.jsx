@@ -13,12 +13,18 @@ import OrderManagementPage from "./pages/OrderManagementPage/OrderManagementPage
 import TermAndConditionPage from "./pages/FrontendSettingPage/TermAndConditionPage";
 import FrontendSettingPage from "./pages/FrontendSettingPage/FrontendSettingPage";
 import NotFoundPage from "./pages/NotFoundPage";
+import StatisticPage from "./pages/StatisticPage/StatisticPage";
+import StatisticPageSimple from "./pages/StatisticPage/StatisticPageSimple";
 
 const router = createBrowserRouter([
   {
     element: <RootLayout />,
     path: "/",
     children: [
+      { element: <StatisticPageSimple />, index: true },
+      { element: <StatisticPageSimple />, path: "statistic-overview" },
+      { element: <StatisticPage />, path: "/statistic-2" },
+
       {
         element: <UserManagementPage />,
         path: "user",

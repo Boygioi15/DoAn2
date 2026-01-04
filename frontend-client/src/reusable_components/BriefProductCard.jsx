@@ -56,7 +56,10 @@ export default function BriefProductCard({ briefProduct }) {
         {briefProduct.name}
       </span>
       <span className="text-[14px] font-bold pl-2">
-        {formatMoney(briefProduct.displayedPrice)} VNĐ
+        {briefProduct.displayedPrice
+          ? formatMoney(briefProduct.displayedPrice)
+          : 'Không xác định'}{' '}
+        VNĐ
       </span>
     </div>
   );

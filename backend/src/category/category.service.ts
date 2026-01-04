@@ -28,6 +28,9 @@ export class CategoryService {
     }
     return allCategories;
   }
+  async getAllLevel1Categories() {
+    return await this.categoryModel.find({ categoryLevel: { $eq: 1 } });
+  }
   async getAllProductOfCategories(categoryId: string) {
     const allProducts = await this.productModel.find({
       categoryId: categoryId,

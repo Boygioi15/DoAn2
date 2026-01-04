@@ -6,85 +6,65 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 export default function HomePage() {
-  const [allProduct, setAllproduct] = useState([]);
-  const [totalItem, setTotalItem] = useState(0);
-  const getAllProduct = async () => {
+  const [homepageSetting, setHomepageSetting] = useState(null);
+  const getHomepageSetting = async () => {
     try {
-      const response = await productApi.getAllProduct();
-      setAllproduct(response.data.data);
-      setTotalItem(response.data.totalItem);
+      const response = await frontendApi.getHomepageSetting();
+      setHomepageSetting(response.data);
     } catch (error) {
-      toast.error('Có lỗi khi lấy dữ liệu sản phẩm');
+      console.log(error);
+      toast.error('Có lỗi khi lấy dữ liệu homepage setting');
     }
   };
   useEffect(() => {
-    getAllProduct();
+    getHomepageSetting();
   }, []);
   return (
     <div>
-      <BannerRotator />
+      {homepageSetting && homepageSetting.heroCarousel && (
+        <HeroCarousel heroCarousel={homepageSetting.heroCarousel} />
+      )}
       {/* <img src="https://images.squarespace-cdn.com/content/v1/606d4bb793879d12d807d4c8/1b547f53-e6f9-461e-b9df-0104e04726b5/new-bg.jpg" /> */}
-      <div className="flex flex-col">
-        <h1>Tất cả sản phẩm</h1>
-        <div className="grid grid-cols-6 gap-4">
-          {allProduct &&
-            allProduct.map((product) => (
-              <BriefProductCard briefProduct={product} />
-            ))}
-        </div>
-      </div>
+      <div className="flex flex-col"></div>
     </div>
   );
 }
-function BannerRotator() {
-  const [homepageBanner, setHomepageBanner] = useState([]);
+function HeroCarousel({ heroCarousel }) {
   const [index, setIndex] = useState(0);
   const slideInterval = 3000;
-  const getHomepageBanner = async () => {
-    try {
-      const response = await frontendApi.getHomepageBanner();
-      setHomepageBanner(response.data); // must be array of URLs
-    } catch (error) {
-      toast.error('Có lỗi khi lấy dữ liệu banner');
-    }
-  };
-
-  useEffect(() => {
-    getHomepageBanner();
-  }, []);
 
   // Auto slide
   useEffect(() => {
-    if (homepageBanner.length === 0) return;
+    if (heroCarousel.length === 0) return;
     const timer = setInterval(() => {
-      setIndex((prev) => (prev + 1) % homepageBanner.length);
+      setIndex((prev) => (prev + 1) % heroCarousel.length);
     }, slideInterval); //
 
     return () => clearInterval(timer);
-  }, [homepageBanner]);
+  }, [heroCarousel]);
 
-  if (homepageBanner.length === 0) return null;
+  if (heroCarousel.length === 0) return null;
 
   const prev = () => {
-    setIndex((i) => (i - 1 + homepageBanner.length) % homepageBanner.length);
+    setIndex((i) => (i - 1 + heroCarousel.length) % heroCarousel.length);
   };
 
   const next = () => {
-    setIndex((i) => (i + 1) % homepageBanner.length);
+    setIndex((i) => (i + 1) % heroCarousel.length);
   };
 
   return (
-    <div className="relative w-full h-[450px] overflow-hidden">
+    <div className="relative w-full h-[600px] overflow-hidden">
       {/* Slides wrapper */}
       <div
         className="flex transition-transform duration-700 ease-in-out"
         style={{ transform: `translateX(-${index * 100}%)` }}
       >
-        {homepageBanner.map((url, i) => (
+        {heroCarousel.map((hero, i) => (
           <img
             key={i}
-            src={url}
-            className="w-full h-[450px] object-cover flex-shrink-0"
+            src={hero.url}
+            className="w-full h-full object-cover flex-shrink-0 cursor-pointer"
           />
         ))}
       </div>
@@ -107,7 +87,7 @@ function BannerRotator() {
 
       {/* Dots indicator */}
       <div className="absolute bottom-4 w-full flex justify-center gap-2">
-        {homepageBanner.map((_, i) => (
+        {heroCarousel.map((_, i) => (
           <button
             key={i}
             onClick={() => setIndex(i)}

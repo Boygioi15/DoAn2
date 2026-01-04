@@ -15,17 +15,31 @@ import {
 import {
   Book,
   Box,
+  ChartLine,
   ChevronDown,
   Dock,
   MonitorCheck,
   MonitorCloud,
   Pencil,
+  Search,
   UserCircle2,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const sidebarItems = [
+  {
+    group: "Thống kê & Báo cáo",
+    children: [
+      { title: "Thống kê chung", url: "/statistic-overview", icon: ChartLine },
+      {
+        title: "Phân tích tìm kiếm",
+        url: "/statistic-search",
+        icon: Search,
+      },
+    ],
+  },
   { title: "Quản lý khách hàng", url: "/user", icon: UserCircle2 },
+
   {
     group: "Sản phẩm",
     children: [

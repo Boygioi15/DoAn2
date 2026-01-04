@@ -22,6 +22,12 @@ const FRONTEND_PAGE_FIELD_MAP = {
   contact: 'contactPage',
   about: 'aboutPage',
 };
+const FRONTEND_SETTING_FIELD_MAP = {
+  'announcement-bar': 'announcementBar',
+  'announcement-carousel': 'announcementCarousel',
+  'hero-carousel': 'heroCarousel',
+  'category-page-setting': 'categoryPageSetting',
+};
 @Injectable()
 export class FrontendSettingService {
   constructor(
@@ -30,26 +36,139 @@ export class FrontendSettingService {
     @InjectModel(FrontendSetting.name)
     private readonly frontendSettingModel: Model<FrontendSettingDocument>,
   ) {}
-  async initFrontendSetting() {
-    const p2 = this.updateToplayoutRotatorMessage([]);
-    const p3 = this.updateTopLayoutBanner(null);
-    const p5 = this.updateHomepageBanner([]);
-
-    await Promise.resolve([p2, p3, p5]);
-    //upsert case
-    return await this.frontendSettingModel.findOneAndUpdate(
+  async resetFrontendSetting() {
+    return await this.frontendSettingModel.findOneAndReplace(
       {},
       {
-        homepage_banner: [],
-        toplayout_banner: null,
-        toplayout_rotator_message: [],
-        termAndConditionPage: '',
-        customerConditionPage: '',
+        loyalCustomerConditionPage: '',
+        loyalCustomerPolicyPage: '',
+        customerSecurityPolicyPage: '',
+        deliveryPolicyPage: '',
         contactPage: '',
+        generalSizeGuidancePage: '',
+        categoryPageSetting: {},
       },
       { upsert: true },
     );
   }
+  async getAllSetting() {
+    const categoryIdNameMap = await this.checkAndUpdateCategoryPageSetting();
+    const frontendSetting = await this.frontendSettingModel.findOne({}).lean();
+    return {
+      ...frontendSetting,
+      categoryIdNameMap: Object.fromEntries(categoryIdNameMap),
+    };
+  }
+  async checkAndUpdateCategoryPageSetting() {
+    const allLevel1Category =
+      await this.categoryService.getAllLevel1Categories();
+    const allLevel1CategoryId = allLevel1Category.map((cat) => cat.categoryId);
+    const frontendSetting = await this.frontendSettingModel.findOne({}).lean();
+    if (!frontendSetting) {
+      throw new InternalServerErrorException('No frontend setting');
+    }
+    let categorySetting = frontendSetting.categoryPageSetting || {};
+    for (const categoryId of allLevel1CategoryId) {
+      if (!categorySetting[categoryId]) {
+        categorySetting[categoryId] = '';
+      }
+    }
+    const newFrontendSetting = await this.frontendSettingModel.findOneAndUpdate(
+      {},
+      { categoryPageSetting: categorySetting },
+    );
+    //return categoryId-Name map
+    const categoryIdNameMap: Map<string, string> = new Map<string, string>();
+    for (const category of allLevel1Category) {
+      console.log('CID: ', category);
+      categoryIdNameMap.set(category.categoryId, category.categoryName);
+    }
+    console.log('map: ', categoryIdNameMap);
+    return categoryIdNameMap;
+  }
+  async getLayoutSetting() {
+    const frontendSetting = await this.frontendSettingModel.findOne({}).lean();
+    const categoryData = await this.getTopCategoryTree();
+    return {
+      announcementBar: frontendSetting?.announcementBar,
+      announcementCarousel: frontendSetting?.announcementCarousel,
+      categoryData: categoryData,
+    };
+  }
+  async getHomepageSetting() {
+    const frontendSetting = await this.frontendSettingModel.findOne({}).lean();
+    const categoryData = await this.getTopCategoryTree();
+    return {
+      heroCarousel: frontendSetting?.heroCarousel,
+      categoryData: categoryData,
+    };
+  }
+  async getCategoryPageSetting(categoryId: string) {
+    const frontendSetting = await this.frontendSettingModel.findOne({}).lean();
+    if (!frontendSetting) {
+      throw new InternalServerErrorException('No frontend setting');
+    }
+    return frontendSetting.categoryPageSetting[categoryId];
+  }
+  async getFrontendSetting(setting: string) {
+    const associatedField = FRONTEND_SETTING_FIELD_MAP[setting];
+    if (!associatedField) {
+      throw new BadRequestException('No field associated!');
+    }
+    const result = await this.frontendSettingModel
+      .findOne({})
+      .select(associatedField)
+      .lean();
+    if (!result) {
+      throw new InternalServerErrorException('No result found');
+    }
+    return result[associatedField];
+  }
+  async updateFrontendSetting(setting: string, content: string) {
+    const associatedField = FRONTEND_SETTING_FIELD_MAP[setting];
+    if (!associatedField) {
+      throw new BadRequestException('No field associated!');
+    }
+    const result = await this.frontendSettingModel.findOneAndUpdate(
+      {},
+      { [associatedField]: content },
+      { new: true },
+    );
+    if (!result) {
+      throw new InternalServerErrorException('No result found');
+    }
+    return result[associatedField];
+  }
+  async getFrontendPage(frontendPage: string) {
+    const associatedField = FRONTEND_PAGE_FIELD_MAP[frontendPage];
+    if (!associatedField) {
+      throw new BadRequestException('No field associated!');
+    }
+    const result = await this.frontendSettingModel
+      .findOne({})
+      .select(associatedField)
+      .lean();
+    if (!result) {
+      throw new InternalServerErrorException('No result found');
+    }
+    return result[associatedField];
+  }
+  async updateFrontendPage(frontendPage: string, content: string) {
+    const associatedField = FRONTEND_PAGE_FIELD_MAP[frontendPage];
+    if (!associatedField) {
+      throw new BadRequestException('No field associated!');
+    }
+    const result = await this.frontendSettingModel.findOneAndUpdate(
+      {},
+      { [associatedField]: content },
+      { new: true },
+    );
+    if (!result) {
+      throw new InternalServerErrorException('No result found');
+    }
+    return result[associatedField];
+  }
+
   async getTopCategoryTree() {
     const allT1Cats =
       await this.categoryService.getAllDirectChildrenOfCategory();
@@ -80,107 +199,5 @@ export class FrontendSettingService {
     const result = await Promise.all(t2Promises);
 
     return result;
-  }
-
-  async getFrontendSetting() {
-    return await this.frontendSettingModel.findOne();
-  }
-
-  async getTopLayoutBanner() {
-    const frontendSetting = await this.getFrontendSetting();
-    return frontendSetting?.toplayout_banner;
-  }
-  async updateTopLayoutBanner(file: Express.Multer.File | null) {
-    const preFrontendSetting = await this.getFrontendSetting();
-    //destroy previous url
-    const preURL = preFrontendSetting?.toplayout_banner;
-    if (preURL) {
-      const promise = this.cloudinaryService.deleteFileByURL(preURL);
-      promise.finally(() => {
-        console.log('Delete file by url done( url: ', preURL, ')');
-      });
-    }
-    if (!file) {
-      console.log('No file to update');
-      return;
-    }
-    try {
-      const response = await this.cloudinaryService.uploadFile(file);
-      const newToplayoutBanner = await this.frontendSettingModel.updateOne(
-        {},
-        { toplayout_banner: response?.secure_url },
-      );
-    } catch (error) {
-      console.log('Error while pushing banner to cloudinary: ', error);
-    }
-  }
-  async getHomepageBanner() {
-    const frontendSetting = await this.getFrontendSetting();
-    return frontendSetting?.homepage_banner;
-  }
-  async updateHomepageBanner(files: Express.Multer.File[]) {
-    const preFrontendSetting = await this.getFrontendSetting();
-    //destroy previous url
-    const preURLs = preFrontendSetting?.homepage_banner;
-    if (preURLs)
-      preURLs.map((url) => this.cloudinaryService.deleteFileByURL(url));
-
-    const urlList: string[] = [];
-    const cloudinaryPromieses = files.map(async (file) => {
-      // console.log('DB');
-      try {
-        const response = await this.cloudinaryService.uploadFile(file);
-        urlList.push(response?.secure_url);
-      } catch (error) {
-        console.log('Error while pushing banner to cloudinary: ', error);
-      }
-    });
-    await Promise.all(cloudinaryPromieses);
-    const newBanner = await this.frontendSettingModel.updateOne(
-      {},
-      { homepage_banner: urlList },
-    );
-    return newBanner;
-  }
-  async getToplayoutRotatorMessage() {
-    const frontendSetting = await this.getFrontendSetting();
-    return frontendSetting?.toplayout_rotator_message;
-  }
-  async updateToplayoutRotatorMessage(messages: string[]) {
-    const newRotatorMessages = await this.frontendSettingModel.updateOne(
-      {},
-      { toplayout_rotator_message: messages },
-    );
-    return newRotatorMessages;
-  }
-
-  async getFrontendPage(frontendPage: string) {
-    const associatedField = FRONTEND_PAGE_FIELD_MAP[frontendPage];
-    if (!associatedField) {
-      throw new BadRequestException('No field associated!');
-    }
-    const result = await this.frontendSettingModel
-      .findOne({})
-      .select(associatedField)
-      .lean();
-    if (!result) {
-      throw new InternalServerErrorException('No result found');
-    }
-    return result[associatedField];
-  }
-  async updateFrontendPage(frontendPage: string, content: string) {
-    const associatedField = FRONTEND_PAGE_FIELD_MAP[frontendPage];
-    if (!associatedField) {
-      throw new BadRequestException('No field associated!');
-    }
-    const result = await this.frontendSettingModel.findOneAndUpdate(
-      {},
-      { [associatedField]: content },
-      { new: true },
-    );
-    if (!result) {
-      throw new InternalServerErrorException('No result found');
-    }
-    return result[associatedField];
   }
 }

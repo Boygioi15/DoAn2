@@ -53,10 +53,7 @@ export default function CategoryManagementPage() {
       {categoryHook.categoryTree && (
         <div className="grid grid-cols-[40%_60%] gap-4 ">
           <div
-            className={
-              reusableStyle.inputBlock +
-              " shadow-xl overflow-scroll max-h-[700px]"
-            }
+            className={reusableStyle.inputBlock + " shadow-xl overflow-scroll"}
           >
             <div className="flex flex-col sticky -top-5 bg-white z-10 gap-4 leading-6">
               <h2>Danh sách ngành hàng</h2>
@@ -115,7 +112,7 @@ export default function CategoryManagementPage() {
                 <Dialog
                   open={categoryHook.isDeleteDialogOpen}
                   onOpenChange={(open) => {
-                    setIsDeleteDialogOpen(open);
+                    categoryHook.setIsDeleteDialogOpen(open);
                   }}
                 >
                   <DialogTrigger
