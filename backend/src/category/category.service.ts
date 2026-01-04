@@ -8,6 +8,10 @@ import {
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category-';
 import { Product, ProductDocument } from 'src/database/schemas/product.schema';
+import {
+  FrontendSetting,
+  FrontendSettingDocument,
+} from 'src/database/schemas/frontend-setting.schema';
 
 @Injectable()
 export class CategoryService {
@@ -17,6 +21,9 @@ export class CategoryService {
 
     @InjectModel(Product.name)
     private productModel: Model<ProductDocument>,
+
+    @InjectModel(FrontendSetting.name)
+    private frontendSettingModel: Model<FrontendSettingDocument>,
   ) {}
   async getAllCategories(filterUndefined: boolean) {
     let allCategories: CategoryDocument[] = [];
@@ -117,5 +124,20 @@ export class CategoryService {
     });
     //update all products of matching category
     return _deleted;
+  }
+
+  async getLandingPage(categoryId: string) {
+    // Get hero image from categoryPageSetting
+    const frontendSetting = await this.frontendSettingModel.findOne();
+    const heroImage = frontendSetting?.categoryPageSetting?.get(categoryId);
+
+    // Get children categories with images
+    const childrenCategories =
+      await this.getAllDirectChildrenOfCategoryWithImage(categoryId);
+
+    return {
+      heroImage,
+      childrenCategories,
+    };
   }
 }

@@ -34,6 +34,7 @@ import CheckoutPageWrapper from './pages/CheckoutPage/CheckoutPage';
 import OrderPageWrapper from './pages/OrderResultPage';
 import SearchByImagePage from './pages/SearchByImagePage';
 import TermAndConditionPage from './pages/TermAndConditionPage';
+import OverviewCategoryPage from './pages/OverviewCategoryPage';
 const router = createBrowserRouter([
   {
     path: '/',
@@ -73,6 +74,10 @@ const router = createBrowserRouter([
       {
         path: '/search-by-image',
         element: <SearchByImagePage />,
+      },
+      {
+        path: '/category/:categoryId',
+        element: <OverviewCategoryPage />,
       },
       {
         path: '/category/:category1Id/:category2Id',

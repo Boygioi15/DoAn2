@@ -23,6 +23,11 @@ export class CategoryController {
       await this.categoryService.getAllCategories(filterUndefined);
     return allCategories;
   }
+  @Get('/:categoryId/landing')
+  async getCategoryLandingPage(@Param('categoryId') categoryId: string) {
+    const landingData = await this.categoryService.getLandingPage(categoryId);
+    return landingData;
+  }
   @Get('by-name')
   async getCategoryByName(@Query('categoryName') categoryName: string) {
     const matchingCategory =

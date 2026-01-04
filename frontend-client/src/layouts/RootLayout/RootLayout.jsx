@@ -265,11 +265,19 @@ function AnnouncementCarousel({ announcementCarousel }) {
   );
 }
 function TopLayout_CategorySelector({ categoryData }) {
+  const navigate = useNavigate();
   return (
     <div className="flex w-full bg-(--color-preset-gray) pl-25 pr-25 relative">
       {categoryData.map((t1) => (
         <div className="group" key={t1.name}>
-          <button className="category-button">{t1.name}</button>
+          <button
+            className="category-button"
+            onClick={() => {
+              navigate(`/category/${t1.categoryId}`);
+            }}
+          >
+            {t1.name}
+          </button>
           <div
             className="
               absolute left-0 z-100

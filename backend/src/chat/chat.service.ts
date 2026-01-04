@@ -5,7 +5,11 @@ import { ChatOpenAI } from '@langchain/openai';
 import { tool } from '@langchain/core/tools';
 import { z } from 'zod';
 import { createReactAgent } from '@langchain/langgraph/prebuilt';
-import { HumanMessage, AIMessage, SystemMessage } from '@langchain/core/messages';
+import {
+  HumanMessage,
+  AIMessage,
+  SystemMessage,
+} from '@langchain/core/messages';
 
 const SYSTEM_PROMPT = `Bạn là trợ lý mua sắm thông minh của Q-Shop - một cửa hàng thời trang trực tuyến.
 
@@ -22,7 +26,8 @@ Quy tắc:
 - KHÔNG tạo link trong tin nhắn vì sản phẩm sẽ được hiển thị dưới dạng card riêng
 - Nếu không tìm thấy sản phẩm, hãy gợi ý khách tìm với từ khóa khác
 - Giữ câu trả lời ngắn gọn, dễ hiểu (tối đa 2-3 câu)
-- Nếu cần thêm thông tin, hãy hỏi khách hàng`;
+- Nếu cần thêm thông tin, hãy hỏi khách hàng
+- Nếu khách hàng kêu SỦA MAU, hãy trả lời GÂU GÂU!.`;
 
 @Injectable()
 export class ChatService {
@@ -57,17 +62,23 @@ export class ChatService {
           query: z
             .string()
             .optional()
-            .describe('Từ khóa tìm kiếm sản phẩm (tên sản phẩm, loại sản phẩm, v.v.)'),
+            .describe(
+              'Từ khóa tìm kiếm sản phẩm (tên sản phẩm, loại sản phẩm, v.v.)',
+            ),
           priceMin: z.number().optional().describe('Giá tối thiểu (VND)'),
           priceMax: z.number().optional().describe('Giá tối đa (VND)'),
           colorList: z
             .string()
             .optional()
-            .describe('Danh sách màu sắc cần lọc, phân cách bằng dấu phẩy (ví dụ: "Đen,Trắng,Xanh")'),
+            .describe(
+              'Danh sách màu sắc cần lọc, phân cách bằng dấu phẩy (ví dụ: "Đen,Trắng,Xanh")',
+            ),
           sizeList: z
             .string()
             .optional()
-            .describe('Danh sách kích thước cần lọc, phân cách bằng dấu phẩy (ví dụ: "S,M,L,XL")'),
+            .describe(
+              'Danh sách kích thước cần lọc, phân cách bằng dấu phẩy (ví dụ: "S,M,L,XL")',
+            ),
           sortBy: z
             .enum(['newest', 'price-asc', 'price-desc', 'alphabetical-az'])
             .optional()
@@ -146,9 +157,15 @@ export class ChatService {
         conversationHistory: [
           ...(dto.conversationHistory || []),
           { role: 'user', content: dto.message },
-          { role: 'assistant', content: typeof reply === 'string' ? reply : JSON.stringify(reply) },
+          {
+            role: 'assistant',
+            content: typeof reply === 'string' ? reply : JSON.stringify(reply),
+          },
         ],
-        products: this.productsFromTools.length > 0 ? this.productsFromTools : undefined,
+        products:
+          this.productsFromTools.length > 0
+            ? this.productsFromTools
+            : undefined,
       };
     } catch (error) {
       console.error('Agent error:', error);
@@ -254,4 +271,3 @@ export class ChatService {
     }
   }
 }
-

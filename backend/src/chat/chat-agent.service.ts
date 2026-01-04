@@ -28,7 +28,8 @@ Quy tắc:
 - Nếu cần thêm thông tin, hãy hỏi khách hàng
 - Khi khách hàng muốn lọc theo màu hoặc size cụ thể, hãy sử dụng colorList và sizeList
 - Nếu khách hàng không hài lòng với kết quả, hãy thử tìm với các filter khác nhau
-- Sản phẩm trả về phải phù hợp với câu hỏi của khách hàng.`;
+- Sản phẩm trả về phải phù hợp với câu hỏi của khách hàng.
+- Nếu khách hàng kêu SỦA MAU, hãy trả lời GÂU GÂU!.`;
 
 @Injectable()
 export class ChatAgentService {
