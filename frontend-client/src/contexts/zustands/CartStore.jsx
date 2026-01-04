@@ -26,7 +26,7 @@ const useCartStore = create(
       setAllowedToPurcase: (allowedToPurchase) => set({ allowedToPurchase }),
       setAllSelected: (allSelected) => set({ allSelected }),
       setTotalSelected: (totalSelected) => set({ totalSelected }),
-      setTotalSelected: (userId) => set({ userId }),
+      setUserId: (userId) => set({ userId }),
 
       getCartData: async () => {
         const authStore = useAuthStore.getState();

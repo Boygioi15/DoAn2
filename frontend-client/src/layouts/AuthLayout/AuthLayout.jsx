@@ -1,5 +1,5 @@
 import { Link, Outlet, useNavigate } from 'react-router-dom';
-import './Authlayout.css';
+import './AuthLayout.css';
 import { Title } from '../../reusable_components/comps';
 import { BotLayout } from '../RootLayout/RootLayout';
 import { createContext, useEffect, useState } from 'react';
