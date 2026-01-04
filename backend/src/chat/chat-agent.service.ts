@@ -1,11 +1,14 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { ChatMessageDto, ChatResponseDto } from './chat.dto';
-import { ProductQueryService } from '../product/services/product-query.service';
+import { Injectable } from '@nestjs/common';
 import { ChatOpenAI } from '@langchain/openai';
-import { tool } from '@langchain/core/tools';
-import { z } from 'zod';
+import { DynamicStructuredTool } from '@langchain/core/tools';
 import { createReactAgent } from '@langchain/langgraph/prebuilt';
-import { HumanMessage, AIMessage, SystemMessage } from '@langchain/core/messages';
+import {
+  HumanMessage,
+  AIMessage,
+  SystemMessage,
+} from '@langchain/core/messages';
+import { z } from 'zod';
+import { ProductQueryService } from '../product/services/product-query.service';
 
 const SYSTEM_PROMPT = `Bạn là trợ lý mua sắm thông minh của Q-Shop - một cửa hàng thời trang trực tuyến.
 
@@ -22,138 +25,165 @@ Quy tắc:
 - KHÔNG tạo link trong tin nhắn vì sản phẩm sẽ được hiển thị dưới dạng card riêng
 - Nếu không tìm thấy sản phẩm, hãy gợi ý khách tìm với từ khóa khác
 - Giữ câu trả lời ngắn gọn, dễ hiểu (tối đa 2-3 câu)
-- Nếu cần thêm thông tin, hãy hỏi khách hàng`;
+- Nếu cần thêm thông tin, hãy hỏi khách hàng
+- Khi khách hàng muốn lọc theo màu hoặc size cụ thể, hãy sử dụng colorList và sizeList
+- Nếu khách hàng không hài lòng với kết quả, hãy thử tìm với các filter khác nhau
+- Sản phẩm trả về phải phù hợp với câu hỏi của khách hàng.`;
 
 @Injectable()
-export class ChatService {
+export class ChatAgentService {
   private model: ChatOpenAI;
   private agent: any;
-  private productsFromTools: any[] = [];
+  private tools: DynamicStructuredTool[];
 
   constructor(private readonly productQueryService: ProductQueryService) {
+    this.initializeAgent();
+  }
+
+  private initializeAgent() {
+    // Initialize ChatOpenAI model
     this.model = new ChatOpenAI({
       modelName: 'gpt-4o-mini',
       temperature: 0.7,
       openAIApiKey: process.env.OPENAI_API_KEY,
     });
 
-    this.initializeAgent();
-  }
-
-  private initializeAgent() {
-    // Define tools using LangChain tool function
-    const searchProductsTool = tool(
-      async (input) => {
-        const result = await this.searchProducts(input);
-        // Store products for response
-        this.productsFromTools = result.products || [];
-        return JSON.stringify(result);
-      },
-      {
+    // Define tools
+    this.tools = [
+      new DynamicStructuredTool({
         name: 'search_products',
         description:
-          'Tìm kiếm sản phẩm trong cửa hàng. Sử dụng khi khách hàng muốn tìm sản phẩm, hỏi về giá, hoặc muốn xem các sản phẩm có sẵn.',
+          'Tìm kiếm sản phẩm trong cửa hàng. Sử dụng khi khách hàng muốn tìm sản phẩm, hỏi về giá, hoặc muốn xem các sản phẩm có sẵn. Có thể lọc theo màu sắc, kích thước, và giá.',
         schema: z.object({
           query: z
             .string()
             .optional()
-            .describe('Từ khóa tìm kiếm sản phẩm (tên sản phẩm, loại sản phẩm, v.v.)'),
+            .describe(
+              'Từ khóa tìm kiếm sản phẩm (tên sản phẩm, loại sản phẩm, v.v.)',
+            ),
           priceMin: z.number().optional().describe('Giá tối thiểu (VND)'),
           priceMax: z.number().optional().describe('Giá tối đa (VND)'),
           colorList: z
             .string()
             .optional()
-            .describe('Danh sách màu sắc cần lọc, phân cách bằng dấu phẩy (ví dụ: "Đen,Trắng,Xanh")'),
+            .describe(
+              'Danh sách màu sắc cần lọc, phân cách bằng dấu phẩy (ví dụ: "Đen,Trắng,Xanh")',
+            ),
           sizeList: z
             .string()
             .optional()
-            .describe('Danh sách kích thước cần lọc, phân cách bằng dấu phẩy (ví dụ: "S,M,L,XL")'),
+            .describe(
+              'Danh sách kích thước cần lọc, phân cách bằng dấu phẩy (ví dụ: "S,M,L,XL")',
+            ),
           sortBy: z
             .enum(['newest', 'price-asc', 'price-desc', 'alphabetical-az'])
             .optional()
             .describe('Cách sắp xếp kết quả'),
         }),
-      },
-    );
+        func: async (args) => {
+          return JSON.stringify(await this.searchProducts(args));
+        },
+      }),
 
-    const getProductDetailTool = tool(
-      async (input) => {
-        const result = await this.getProductDetail(input.productId);
-        return JSON.stringify(result);
-      },
-      {
+      new DynamicStructuredTool({
         name: 'get_product_detail',
         description:
-          'Lấy thông tin chi tiết của một sản phẩm cụ thể. Sử dụng khi khách hàng muốn biết thêm về một sản phẩm.',
+          'Lấy thông tin chi tiết của một sản phẩm cụ thể bao gồm các variants, sizes, colors có sẵn. Sử dụng khi khách hàng muốn biết thêm chi tiết về một sản phẩm.',
         schema: z.object({
           productId: z.string().describe('ID của sản phẩm cần xem chi tiết'),
         }),
-      },
-    );
-
-    const tools = [searchProductsTool, getProductDetailTool];
+        func: async (args) => {
+          return JSON.stringify(await this.getProductDetail(args.productId));
+        },
+      }),
+    ];
 
     // Create ReAct agent
     this.agent = createReactAgent({
       llm: this.model,
-      tools,
+      tools: this.tools,
     });
   }
 
-  async chat(dto: ChatMessageDto): Promise<ChatResponseDto> {
-    if (!process.env.OPENAI_API_KEY) {
-      throw new BadRequestException(
-        'OpenAI API key not configured. Please set OPENAI_API_KEY in .env file',
-      );
-    }
-
-    // Reset products for new conversation turn
-    this.productsFromTools = [];
-
-    // Build messages for the agent
+  async chat(
+    message: string,
+    conversationHistory: Array<{ role: string; content: string }>,
+  ): Promise<{
+    reply: string;
+    products: any[];
+    conversationHistory: Array<{ role: string; content: string }>;
+  }> {
+    // Build messages array
     const messages: (SystemMessage | HumanMessage | AIMessage)[] = [
       new SystemMessage(SYSTEM_PROMPT),
     ];
 
     // Add conversation history
-    if (dto.conversationHistory) {
-      for (const msg of dto.conversationHistory) {
-        if (msg.role === 'user') {
-          messages.push(new HumanMessage(msg.content));
-        } else if (msg.role === 'assistant') {
-          messages.push(new AIMessage(msg.content));
-        }
+    for (const msg of conversationHistory || []) {
+      if (msg.role === 'user') {
+        messages.push(new HumanMessage(msg.content));
+      } else if (msg.role === 'assistant') {
+        messages.push(new AIMessage(msg.content));
       }
     }
 
-    // Add current user message
-    messages.push(new HumanMessage(dto.message));
+    // Add current message
+    messages.push(new HumanMessage(message));
+
+    let productsFromTools: any[] = [];
+    let finalResponse = '';
 
     try {
-      // Invoke the ReAct agent
+      // Invoke the agent
       const result = await this.agent.invoke({
         messages,
       });
 
-      // Get the final AI response
-      const lastMessage = result.messages[result.messages.length - 1];
-      const reply =
-        lastMessage?.content ||
-        'Xin lỗi, tôi không thể trả lời lúc này. Vui lòng thử lại.';
+      // Extract the final response and any products from tool calls
+      const agentMessages = result.messages;
 
-      return {
-        reply: typeof reply === 'string' ? reply : JSON.stringify(reply),
-        conversationHistory: [
-          ...(dto.conversationHistory || []),
-          { role: 'user', content: dto.message },
-          { role: 'assistant', content: typeof reply === 'string' ? reply : JSON.stringify(reply) },
-        ],
-        products: this.productsFromTools.length > 0 ? this.productsFromTools : undefined,
-      };
+      for (const msg of agentMessages) {
+        // Check for tool messages that contain product data
+        if (msg.constructor.name === 'ToolMessage') {
+          try {
+            const toolResult = JSON.parse(msg.content);
+            if (toolResult.products && toolResult.products.length > 0) {
+              productsFromTools = toolResult.products;
+            }
+          } catch (e) {
+            // Not JSON or no products
+          }
+        }
+
+        // Get the final AI response
+        if (
+          msg.constructor.name === 'AIMessage' &&
+          typeof msg.content === 'string' &&
+          msg.content.length > 0
+        ) {
+          finalResponse = msg.content;
+        }
+      }
     } catch (error) {
       console.error('Agent error:', error);
-      throw new BadRequestException('Có lỗi xảy ra khi xử lý tin nhắn');
+      finalResponse =
+        'Xin lỗi, tôi gặp sự cố khi xử lý yêu cầu của bạn. Vui lòng thử lại.';
     }
+
+    if (!finalResponse) {
+      finalResponse =
+        'Xin lỗi, tôi không thể trả lời lúc này. Vui lòng thử lại.';
+    }
+
+    return {
+      reply: finalResponse,
+      products: productsFromTools,
+      conversationHistory: [
+        ...(conversationHistory || []),
+        { role: 'user', content: message },
+        { role: 'assistant', content: finalResponse },
+      ],
+    };
   }
 
   private async searchProducts(args: {
@@ -176,7 +206,7 @@ export class ChatService {
         },
         pagination: {
           from: 1,
-          size: 20,
+          size: 6,
         },
         sortBy: args.sortBy || 'newest',
       });
@@ -184,7 +214,6 @@ export class ChatService {
       const productList = result.productList || [];
       const metadata = result.metadata;
 
-      // Format products for the AI to understand
       const formattedProducts = productList.map((p: any) => ({
         productId: p.productId,
         name: p.name,
@@ -197,8 +226,6 @@ export class ChatService {
         thumbnail: p.thumbnailURL,
         colors: p.optionData?.map((o: any) => o.optionValue) || [],
       }));
-
-      console.log('ReAct Agent - Found Products:', formattedProducts);
 
       return {
         success: true,
@@ -254,4 +281,3 @@ export class ChatService {
     }
   }
 }
-
