@@ -33,12 +33,12 @@ upstream backend {
 
 # Upstream for frontend admin
 upstream frontend-admin {
-    server 127.0.0.1:1209;
+    server 127.0.0.1:1208;
 }
 
 # Upstream for frontend client
 upstream frontend-client {
-    server 127.0.0.1:1208;
+    server 127.0.0.1:1209;
 }
 
 # Main server - silkshop.online (single domain with path routing)
