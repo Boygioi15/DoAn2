@@ -62,6 +62,7 @@ import {
   ProductEmbedding,
   ProductEmbeddingSchema,
 } from './schemas/product_embedding.schema';
+import { DatabaseInitService } from './database-init.service';
 
 @Module({
   imports: [
@@ -114,6 +115,7 @@ import {
     ]),
   ],
   controllers: [DatabaseController],
+  providers: [DatabaseInitService],
   exports: [MongooseModule],
 })
 export class DatabaseModule {}
