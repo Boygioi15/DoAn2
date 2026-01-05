@@ -769,6 +769,9 @@ export class ProductQueryService {
     const v1 = optionsGrouped.find((grouped: any) => grouped.index === 0);
     const v2 = optionsGrouped.find((grouped: any) => grouped.index === 1);
     const variantDetailList = await this.getAllVariantsOfProduct(product);
+    if (!variantDetailList) {
+      throw new InternalServerErrorException('No variant!');
+    }
     return {
       productId: product.productId,
       name: product.name,
@@ -871,6 +874,9 @@ export class ProductQueryService {
     let _variant = await _product.variantDetailList.find(
       (variant) => variant.variantId === variantId,
     );
+    if (!_variant) {
+      throw new InternalServerErrorException('No variant in list!');
+    }
     return { product: _product, variant: _variant };
   }
   groupOptions(options) {
