@@ -546,40 +546,60 @@ export class ProductQueryService {
         metadata: { totalItem: totalItemAdmin },
       };
     } else {
+      console.log('Go to this branch');
       //all color & sizes
       const productListPromises = productList.map(async (product) => {
-        //price
-        const { minPrice } = await this.getProductSellingPrice(product);
-        let allProductVariants = await this.getAllVariantsOfProduct(product);
-        // console.log('APV: ', allProductVariants);
-        allProductVariants = allProductVariants.filter(
-          (variant) => variant.isOpenToSale,
-        );
-        //option data
-        let optionData: any = [];
-        for (const variant of allProductVariants) {
-          const exists = optionData.find(
-            (o) => o.optionId === variant.optionId1,
+        try {
+          console.log('Processing product:', product.productId);
+          //price
+          const { minPrice } = await this.getProductSellingPrice(product);
+          console.log('Got price for:', product.productId);
+          let allProductVariants = await this.getAllVariantsOfProduct(product);
+          console.log(
+            'Got variants for:',
+            product.productId,
+            'count:',
+            allProductVariants.length,
           );
-          if (!exists) {
-            optionData.push({
-              optionId: variant.optionId1,
-              optionName: variant.optionName1,
-              optionValue: variant.optionValue1,
-              optionImage: variant.optionImage1[0],
-            });
+          // console.log('APV: ', allProductVariants);
+          allProductVariants = allProductVariants.filter(
+            (variant) => variant.isOpenToSale,
+          );
+          //option data
+          let optionData: any = [];
+          for (const variant of allProductVariants) {
+            const exists = optionData.find(
+              (o) => o.optionId === variant.optionId1,
+            );
+            if (!exists) {
+              optionData.push({
+                optionId: variant.optionId1,
+                optionName: variant.optionName1,
+                optionValue: variant.optionValue1,
+                optionImage: variant.optionImage1[0],
+              });
+            }
           }
+          const categoryName = await this.getProductCategoryName(product);
+          console.log('Got category for:', product.productId);
+          return {
+            productId: product.productId,
+            thumbnailURL: product.display_thumbnail_image,
+            name: product.name,
+            categoryName: categoryName || 'Không có dữ liệu',
+            displayedPrice: minPrice,
+            optionData,
+          };
+        } catch (error) {
+          console.error('Error processing product:', product.productId, error);
+          throw error;
         }
-        return {
-          productId: product.productId,
-          thumbnailURL: product.display_thumbnail_image,
-          name: product.name,
-          categoryName:
-            (await this.getProductCategoryName(product)) || 'Không có dữ liệu',
-          displayedPrice: minPrice,
-          optionData,
-        };
       });
+      console.log(
+        'Starting Promise.all with',
+        productListPromises.length,
+        'promises',
+      );
       let _productList = await Promise.all(productListPromises);
       console.log('PLFinal: ', _productList.slice(0, 5));
 
