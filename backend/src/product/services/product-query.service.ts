@@ -617,105 +617,81 @@ export class ProductQueryService {
   }
   async getAllVariantsOfProduct(product: ProductDocument) {
     const { productId } = product;
-    const variants = await this.productVariantModel.aggregate([
-      // 1. Join each variant with all option links
-      {
-        $lookup: {
-          from: 'product_option', // your Product_Option collection
-          localField: 'variantId',
-          foreignField: 'variantId',
-          as: 'links',
-        },
-      },
+    const startTime = Date.now();
+    console.log(`[getAllVariantsOfProduct] Starting for product: ${productId}`);
 
-      // 2. Keep only variants belonging to this product
-      {
-        $match: {
-          'links.productId': productId,
-        },
-      },
+    // OPTIMIZED: First get the variant IDs for this product (much faster)
+    const t1 = Date.now();
+    const productOptions = await this.productOptionModel
+      .find({ productId })
+      .select('variantId optionId')
+      .lean();
+    console.log(
+      `[getAllVariantsOfProduct] Step 1 - Got productOptions: ${productOptions.length} items in ${Date.now() - t1}ms`,
+    );
 
-      // 3. Extract only optionIds from links
-      {
-        $addFields: {
-          optionIds: {
-            $map: {
-              input: '$links',
-              as: 'l',
-              in: '$$l.optionId',
-            },
-          },
-        },
-      },
-
-      // 4. Lookup option documents for all optionIds
-      {
-        $lookup: {
-          from: 'variant_option',
-          localField: 'optionIds',
-          foreignField: 'optionId',
-          as: 'optionsData',
-        },
-      },
-
-      // 5. Assume exactly 2 options → split them
-      {
-        $addFields: {
-          option1: {
-            $arrayElemAt: [
-              {
-                $filter: {
-                  input: '$optionsData',
-                  as: 'opt',
-                  cond: { $eq: ['$$opt.index', 0] },
-                },
-              },
-              0,
-            ],
-          },
-          option2: {
-            $arrayElemAt: [
-              {
-                $filter: {
-                  input: '$optionsData',
-                  as: 'opt',
-                  cond: { $eq: ['$$opt.index', 1] },
-                },
-              },
-              0,
-            ],
-          },
-        },
-      },
-
-      // 6. Final projection
-      {
-        $project: {
-          _id: 0,
-          variantId: 1,
-          sku: 1,
-          price: 1,
-          stock: 1,
-          isOpenToSale: 1,
-          seller_sku: 1,
-          platform_sku: 1,
-          optionId1: '$option1.optionId',
-          optionName1: '$option1.name',
-          optionValue1: '$option1.value',
-          optionImage1: '$option1.image',
-          optionId2: '$option2.optionId',
-          optionName2: '$option2.name',
-          optionValue2: '$option2.value',
-        },
-      },
-    ]);
-    if (!variants) {
-      throw new InternalServerErrorException(
-        `Can't fetch variant of product: ${product}`,
+    if (!productOptions || productOptions.length === 0) {
+      console.log(
+        `[getAllVariantsOfProduct] No product options found, returning empty`,
       );
+      return [];
     }
-    // console.log('All variants: ', variants);
-    return variants;
+
+    const variantIds = [...new Set(productOptions.map((po) => po.variantId))];
+    const optionIds = [...new Set(productOptions.map((po) => po.optionId))];
+    console.log(
+      `[getAllVariantsOfProduct] Found ${variantIds.length} variants, ${optionIds.length} options`,
+    );
+
+    // Get all variants and options in parallel
+    const t2 = Date.now();
+    const [variants, options] = await Promise.all([
+      this.productVariantModel.find({ variantId: { $in: variantIds } }).lean(),
+      this.variantOptionModel.find({ optionId: { $in: optionIds } }).lean(),
+    ]);
+    console.log(
+      `[getAllVariantsOfProduct] Step 2 - Parallel fetch complete: ${variants.length} variants, ${options.length} options in ${Date.now() - t2}ms`,
+    );
+
+    // Create option map for fast lookup
+    const optionMap = new Map(options.map((opt) => [opt.optionId, opt]));
+
+    // Build result by mapping variants with their options
+    const t3 = Date.now();
+    const result = variants.map((variant) => {
+      const variantOptions = productOptions
+        .filter((po) => po.variantId === variant.variantId)
+        .map((po) => optionMap.get(po.optionId))
+        .filter((opt) => opt !== undefined)
+        .sort((a, b) => (a.index || 0) - (b.index || 0));
+
+      const option1 = variantOptions[0];
+      const option2 = variantOptions[1];
+
+      return {
+        variantId: variant.variantId,
+        price: variant.price,
+        stock: variant.stock,
+        isOpenToSale: variant.isOpenToSale,
+        seller_sku: variant.seller_sku,
+        platform_sku: variant.platform_sku,
+        optionId1: option1?.optionId,
+        optionName1: option1?.name,
+        optionValue1: option1?.value,
+        optionImage1: option1?.image,
+        optionId2: option2?.optionId,
+        optionName2: option2?.name,
+        optionValue2: option2?.value,
+      };
+    });
+    console.log(
+      `[getAllVariantsOfProduct] Step 3 - Result mapping done in ${Date.now() - t3}ms`,
+    );
+    console.log(
+      `[getAllVariantsOfProduct] TOTAL TIME: ${Date.now() - startTime}ms for product ${productId}`,
+    );
+
+    return result;
   }
   async getAllProductOptions(product: ProductDocument) {
     const { productId } = product;
