@@ -52,7 +52,7 @@ services:
       context: ../frontend-client
       dockerfile: Dockerfile
       args:
-        - VITE_API_URL=http://localhost:3000
+        - VITE_API_URL=http://127.0.0.1:1210
     container_name: frontend-client-container
     ports:
       - 1209:80

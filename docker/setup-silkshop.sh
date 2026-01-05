@@ -28,17 +28,17 @@ echo -e "${YELLOW}Step 2: Creating Nginx configuration...${NC}"
 sudo tee /etc/nginx/sites-available/silkshop > /dev/null <<'EOF'
 # Upstream for backend API
 upstream backend {
-    server localhost:3000;
+    server 127.0.0.1:1210;
 }
 
 # Upstream for frontend admin
 upstream frontend-admin {
-    server localhost:5173;
+    server 127.0.0.1:1209;
 }
 
 # Upstream for frontend client
 upstream frontend-client {
-    server localhost:5174;
+    server 127.0.0.1:1208;
 }
 
 # Main server - silkshop.online (single domain with path routing)

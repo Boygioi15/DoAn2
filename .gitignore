@@ -18,7 +18,6 @@ deploy/
 
 #db
 dump
-dump.zip
 dump/
 
 database-diagram.dbml 
