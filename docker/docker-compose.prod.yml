@@ -1,3 +1,9 @@
+# Production docker-compose using pre-built images
+# Usage: docker-compose -f docker-compose.prod.yml up -d
+# Set REGISTRY environment variable to use images from registry
+# For Docker Hub: REGISTRY=hoangquy18 docker-compose -f docker-compose.prod.yml up -d
+# For AWS ECR: REGISTRY=your-account.dkr.ecr.region.amazonaws.com docker-compose -f docker-compose.prod.yml up -d
+
 services:
   mongodb:
     hostname: mongodb
@@ -16,9 +22,7 @@ services:
     restart: unless-stopped
 
   backend:
-    build:
-      context: ../backend
-      dockerfile: Dockerfile
+    image: ${REGISTRY:-hoangquy18}/backend:${TAG:-latest}
     container_name: backend-container
     environment:
       - NODE_ENV=production
@@ -33,11 +37,7 @@ services:
     restart: unless-stopped
 
   frontend-admin:
-    build:
-      context: ../frontend-admin
-      dockerfile: Dockerfile
-      args:
-        - VITE_API_URL=http://localhost:3000
+    image: ${REGISTRY:-hoangquy18}/frontend-admin:${TAG:-latest}
     container_name: frontend-admin-container
     ports:
       - 5173:80
@@ -48,11 +48,7 @@ services:
     restart: unless-stopped
 
   frontend-client:
-    build:
-      context: ../frontend-client
-      dockerfile: Dockerfile
-      args:
-        - VITE_API_URL=http://localhost:3000
+    image: ${REGISTRY:-hoangquy18}/frontend-client:${TAG:-latest}
     container_name: frontend-client-container
     ports:
       - 5174:80
@@ -69,3 +65,4 @@ volumes:
 networks:
   app-network:
     driver: bridge
+
