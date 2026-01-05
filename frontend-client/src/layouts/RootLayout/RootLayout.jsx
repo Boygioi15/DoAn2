@@ -116,7 +116,7 @@ export function TopLayout() {
       // console.log('Y: ', currentScrollY);
       // console.log('LCY: ', lastScrollY);
 
-      console.log('SD: ', scrollDelta);
+      // console.log('SD: ', scrollDelta);
       if (currentScrollY <= 20) {
         setIsCollapsed(false);
       }

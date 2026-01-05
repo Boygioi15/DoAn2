@@ -581,6 +581,8 @@ export class ProductQueryService {
         };
       });
       let _productList = await Promise.all(productListPromises);
+      console.log('PLFinal: ', _productList.slice(0, 5));
+
       return {
         productList: _productList,
         metadata: { ...metadata1[0], ...metadata2 },
