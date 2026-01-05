@@ -94,7 +94,7 @@ export function SignInBox() {
         />
       </div>
       <div className="AuthBox_ChangeState">
-        <div>Bạn mới biết đến Q-Shop? </div>
+        <div>Bạn mới biết đến SilkShop? </div>
         <button
           className="Stripped_Off_Button"
           onClick={() => {

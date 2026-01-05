@@ -1,10 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  InternalServerErrorException,
-} from '@nestjs/common';
-import { CreateProductDto } from '../dto/product.dto';
-import slugify from 'slugify';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import {
   Product,
@@ -23,10 +17,10 @@ import {
   VariantOptionDocument,
 } from 'src/database/schemas/product.schema';
 import { Model } from 'mongoose';
-import { slugifyOption } from 'src/constants';
-import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
-import { CategoryService } from 'src/category/category.service';
-import { ProductQueryService } from './product-query.service';
+import {
+  ProductEmbedding,
+  ProductEmbeddingDocument,
+} from 'src/database/schemas/product_embedding.schema';
 @Injectable()
 export class ProductDeleteService {
   constructor(
@@ -44,6 +38,8 @@ export class ProductDeleteService {
     private readonly productPropertyModel: Model<ProductPropertyDocument>,
     @InjectModel(ProductDescription.name)
     private readonly productDescriptionModel: Model<ProductDescriptionDocument>,
+    @InjectModel(ProductEmbedding.name)
+    private readonly productEmbeddingModel: Model<ProductEmbeddingDocument>,
   ) {}
   async deleteProductData(
     productId: string,
@@ -107,5 +103,6 @@ export class ProductDeleteService {
     await this.productPropertyModel.deleteMany();
     await this.productSizeGuidanceModel.deleteMany();
     await this.productDescriptionModel.deleteMany();
+    await this.productEmbeddingModel.deleteMany();
   }
 }

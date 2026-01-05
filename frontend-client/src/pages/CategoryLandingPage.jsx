@@ -3,8 +3,9 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import CategoryCard from '@/reusable_components/CategoryCard';
 
-export default function OverviewCategoryPage() {
+export default function CategoryLandingPage() {
   const { categoryId } = useParams();
   const navigate = useNavigate();
   const [landingData, setLandingData] = useState(null);
@@ -123,31 +124,15 @@ function CategorySlider({ categories, onCategoryClick }) {
         {/* Slider Container */}
         <div
           id="category-slider"
-          className="flex gap-6 overflow-x-auto scrollbar-hide scroll-smooth"
+          className="flex gap-2 overflow-x-auto scrollbar-hide scroll-smooth"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {categories.map((category) => (
-            <div
-              key={category.categoryId}
-              onClick={() => onCategoryClick(category)}
-              className="shrink-0 w-48 cursor-pointer group"
-            >
-              <div className="w-full h-48 mb-3 overflow-hidden rounded-lg">
-                {category.img ? (
-                  <img
-                    src={category.img}
-                    alt={category.categoryName}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                    <span className="text-gray-400">No image</span>
-                  </div>
-                )}
-              </div>
-              <h3 className="text-center font-semibold text-sm group-hover:underline">
-                {category.categoryName}
-              </h3>
+            <div key={category.categoryId} className="shrink-0 w-60">
+              <CategoryCard
+                category={category}
+                onClick={() => onCategoryClick(category)}
+              />
             </div>
           ))}
         </div>

@@ -17,6 +17,7 @@ async function run() {
     const db = client.db(DB_NAME);
     const categoryColl = db.collection('category');
 
+    const productsColl = db.collection('product');
     // Load all categories into memory
     const allCategories = await categoryColl
       .find({})
@@ -50,8 +51,18 @@ async function run() {
         { $set: { categoryLevel: level } },
       );
     }
-
-    console.log('Migration finished successfully.');
+    console.log('Category level updated');
+    for (const category of allCategories) {
+      const associatedProductLength = await productsColl.countDocuments({
+        categoryId: category.categoryId,
+      });
+      console.log('ASS: ', associatedProductLength);
+      // Update document
+      await categoryColl.updateOne(
+        { categoryId: category.categoryId },
+        { $set: { totalAssociatedProduct: associatedProductLength } },
+      );
+    }
   } catch (err) {
     console.error('Migration error:', err);
   } finally {

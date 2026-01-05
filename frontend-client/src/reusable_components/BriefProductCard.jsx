@@ -20,7 +20,7 @@ export default function BriefProductCard({ briefProduct }) {
   // console.log('BD', briefProduct);
   if (!briefProduct.optionData || briefProduct.optionData.length === 0) return;
   return (
-    <div className="flex flex-col gap-3 w-full h-auto">
+    <div className="flex flex-col gap-3 w-full h-auto group cursor-pointer transition-transform duration-300 hover:scale-105">
       <div className="w-full h-auto relative">
         <img
           className="w-full h-auto cursor-pointer"

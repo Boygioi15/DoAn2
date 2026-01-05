@@ -10,7 +10,7 @@ import {
 import { z } from 'zod';
 import { ProductQueryService } from '../product/services/product-query.service';
 
-const SYSTEM_PROMPT = `Bạn là trợ lý mua sắm thông minh của Q-Shop - một cửa hàng thời trang trực tuyến.
+const SYSTEM_PROMPT = `Bạn là trợ lý mua sắm thông minh của SilkShop - một cửa hàng thời trang trực tuyến.
 
 Nhiệm vụ của bạn:
 - Giúp khách hàng tìm kiếm và tư vấn sản phẩm phù hợp

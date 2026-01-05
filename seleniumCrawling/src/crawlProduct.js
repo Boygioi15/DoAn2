@@ -7,7 +7,7 @@ const chrome = require("selenium-webdriver/chrome");
 const { loadJson, saveJson } = require("./jsonWorking");
 const baseFolder = "../results/images";
 const slugify = require("slugify");
-
+const { v1: uuidv1 } = require("uuid");
 const slugifyOption = {
   replacement: "-", // replace spaces with replacement character, defaults to `-`
   remove: undefined, // remove characters that match regex, defaults to `undefined`
@@ -48,10 +48,10 @@ async function main() {
     .build();
   for (let [index, dataRow] of dataRows.entries()) {
     console.log("PROGRESS: ", index, "/", dataRows.length);
-    if (index === 400) {
-      console.log("REACHING 400 index, threshold - terminated!");
-      return;
-    }
+    // if (index === 400) {
+    //   console.log("REACHING 400 index, threshold - terminated!");
+    //   return;
+    // }
     try {
       console.log(`Opening: `, dataRow);
       if (dataRow.status) {
@@ -62,6 +62,8 @@ async function main() {
       await clickColorsAndDownload(driver, baseFolder);
       // After finishing crawling product details:
       let productJson = await crawlProductData(driver);
+
+      //PRODUCT CODE
       productJson = {
         ...productJson,
         categoryId: dataRow.categoryId,

@@ -15,6 +15,9 @@ export const productApi = {
     );
   },
   getAllDirectChildrenOfCategoryWithImage: async (categoryId) => {
+    if (!categoryId) {
+      return await axiosClient_Backend.get(`category/direct-children-img`);
+    }
     return await axiosClient_Backend.get(
       `category/direct-children-img/${categoryId}`
     );

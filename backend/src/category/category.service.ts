@@ -62,6 +62,59 @@ export class CategoryService {
     }
     return allDirectChilren;
   }
+
+  async getImageOfCategory(categoryId: string): Promise<string | null> {
+    // Get the category to check its level
+    const category = await this.categoryModel.findOne({ categoryId }).lean();
+    if (!category) return null;
+
+    const categoryLevel = category.categoryLevel;
+
+    if (categoryLevel === 1) {
+      // Level 1: Try to get image from any level 2 child
+      const level2Children = await this.categoryModel
+        .find({
+          parentId: categoryId,
+        })
+        .lean();
+      if (level2Children.length === 0) return null;
+
+      // Try each child until we find one with an image
+      for (const child of level2Children) {
+        const img = await this.getImageOfCategory(child.categoryId);
+        if (img) return img;
+      }
+      return null;
+    } else if (categoryLevel === 2) {
+      // Level 2: Try to get image from any level 3 child
+      const level3Children = await this.categoryModel
+        .find({
+          parentId: categoryId,
+        })
+        .lean();
+      if (level3Children.length === 0) return null;
+
+      // Try each child until we find one with an image
+      for (const child of level3Children) {
+        const img = await this.getImageOfCategory(child.categoryId);
+        if (img) return img;
+      }
+      return null;
+    } else if (categoryLevel === 3) {
+      // Level 3: Get image of first product with an image
+      const firstProduct: any = await this.productModel
+        .findOne({
+          categoryId,
+          display_thumbnail_image: { $exists: true, $ne: null },
+        })
+        .lean();
+      if (!firstProduct) return null;
+      return firstProduct.display_thumbnail_image || null;
+    }
+
+    return null;
+  }
+
   async getAllDirectChildrenOfCategoryWithImage(
     categoryId: string | null = null,
   ): Promise<CategoryDocument[]> {
@@ -80,16 +133,7 @@ export class CategoryService {
     console.log('ADC1: ', allDirectChilren);
     allDirectChilren = await Promise.all(
       allDirectChilren.map(async (children: any) => {
-        const firstProduct: any = await this.productModel
-          .findOne({
-            categoryId: children.categoryId,
-          })
-          .lean();
-        let img = null;
-        if (firstProduct) {
-          img = firstProduct.display_thumbnail_image;
-        }
-
+        const img = await this.getImageOfCategory(children.categoryId);
         return {
           ...children,
           img,
@@ -130,7 +174,6 @@ export class CategoryService {
     // Get hero image from categoryPageSetting
     const frontendSetting = await this.frontendSettingModel.findOne();
     const heroImage = frontendSetting?.categoryPageSetting?.get(categoryId);
-
     // Get children categories with images
     const childrenCategories =
       await this.getAllDirectChildrenOfCategoryWithImage(categoryId);

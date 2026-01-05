@@ -67,7 +67,9 @@ export class ProductService {
   ) {
     //full create new
     const productId = await this.createNewProduct(createProductDto, files);
-    await this.denormalizeProduct(productId);
+    const product = await this.denormalizeProduct(productId);
+    console.log('Product: ', product);
+
     try {
       await this.productEmbeddingService.generateAndSaveEmbeddingForProduct(
         productId,
@@ -266,7 +268,8 @@ export class ProductService {
     isDrafted: boolean,
     initialProductId: string | undefined = undefined,
   ) {
-    const { productName, categoryId } = createProductDto;
+    const { productName, categoryId, uploadCode } = createProductDto;
+    const trimmedCategory = categoryId.trimStart().trimEnd();
     const sku = this.generateSKU();
     //slugify
     const productSlug = slugify(productName, slugifyOption);
@@ -297,10 +300,11 @@ export class ProductService {
       newProduct = await this.productModel.create({
         name: productName,
         slug: productSlug,
+        uploadCode,
         sku,
         display_price: productPrice,
         display_thumbnail_image: thumbnailUrl,
-        categoryId,
+        categoryId: trimmedCategory,
         isDrafted,
         isPublished: !isDrafted,
       });
@@ -342,6 +346,10 @@ export class ProductService {
   ) {
     const { sizeGuidance } = createProductDto;
     const _sizeList: ProductSizeGuidanceDto[] = JSON.parse(sizeGuidance);
+    if (!_sizeList) {
+      console.log('No size list! for ', productId);
+      return;
+    }
     const tobeInserted = _sizeList.map((size: ProductSizeGuidanceDto) => {
       const sizeRow: any = {};
       sizeRow.productId = productId;
@@ -663,6 +671,9 @@ export class ProductService {
       _allColors.add(variant.optionValue1);
       _allSizes.add(variant.optionValue2);
     });
+    if (!minPrice) {
+      console.log('ERROR AT: ', productId);
+    }
     let allColors = Array.from(_allColors);
     let allSizes = Array.from(_allSizes);
     let categoryName = await this.categoryService.getCategoryDetail(

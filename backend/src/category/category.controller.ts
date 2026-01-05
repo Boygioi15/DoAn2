@@ -41,6 +41,10 @@ export class CategoryController {
     return this.categoryService.getAllDirectChildrenOfCategory(categoryId);
   }
   //cat2
+  @Get('direct-children-img')
+  async getAllDirectChildrenOfCategoryWithImageOfRoot() {
+    return this.categoryService.getAllDirectChildrenOfCategoryWithImage();
+  }
   @Get('direct-children-img/:categoryId')
   async getAllDirectChildrenOfCategoryWithImage(
     @Param('categoryId') categoryId: string,

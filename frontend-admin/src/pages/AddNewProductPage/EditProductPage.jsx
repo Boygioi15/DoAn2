@@ -1,41 +1,6 @@
-import categoryApi from "@/api/categoryApi";
-import { productApi } from "@/api/productApi";
-import FileUploadCompact from "@/components/compact-upload";
-import {
-  AlertDialogContent,
-  AlertDialogTrigger,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialog,
-  AlertDialogDescription,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { slugifyOption } from "@/constants";
-import ComboBoxWithSearch from "@/reusable-component/ComboboxWithSearch";
-import { InputBlock_Input } from "@/reusable-component/Input";
-import UploadComponent from "@/reusable-component/UploadComponent";
-import { buildCategoryNameRecursively } from "@/utils";
-import { Menu, Trash, Trash2Icon } from "lucide-react";
-import { createContext, useEffect, useMemo, useRef, useState } from "react";
-import ReactQuill from "react-quill-new";
+import { createContext, useEffect, useRef, useState } from "react";
 import "react-quill-new/dist/quill.snow.css";
-import slugify from "slugify";
-import { toast } from "sonner";
-import { v4 } from "uuid";
 import BasicInfoBlock from "./components/BasicInfoBlock";
 import useEditProduct from "@/hooks/useEditProduct";
 import DescriptionBlock from "./components/DescriptionBlock";

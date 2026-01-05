@@ -45,4 +45,10 @@ export class CloudinaryService {
     // console.log('RS: ', response);
     return;
   }
+  async resetStorage() {
+    const response = await cloudinary.api.delete_all_resources(
+      (error, result) => {},
+    );
+    return response;
+  }
 }

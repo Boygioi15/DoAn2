@@ -30,13 +30,27 @@ async function main() {
   //load via JSON
 
   for (let [index, product] of productsArray.entries()) {
+    // if (index === 10) {
+    //   console.log("REACHING INDEX = 10, RETURN");
+    //   break;
+    // }
     console.log("PROGRESS: ", index, "/", productsArray.length);
     try {
-      await addProductToAdminViaJSON(product);
+      const uploadCode = v4();
+      const toSendProduct = {
+        ...product,
+        uploadCode,
+      };
+      await addProductToAdminViaJSON(toSendProduct);
       product.done = true; // FIXED
+      product.uploadCode = uploadCode;
+      console.log("Saving product: ", product);
+      saveJson(PRODUCT_JSON_PATH, products);
     } catch (error) {
       console.log("FAILED AT ", product.sku);
       console.log(error);
+    } finally {
+      console.log("PROGRESS: ", index, "/", productsArray.length);
     }
   }
   saveJson(PRODUCT_JSON_PATH, products);
@@ -61,7 +75,7 @@ async function addProductToAdminViaFrontend(driver, product) {
     // Split into name and value
     const [pName, pValue] = clean.split(":").map((s) => s.trim());
 
-    console.log("pName:", pName, "pValue:", pValue);
+    // console.log("pName:", pName, "pValue:", pValue);
 
     // Send keys
     if (pName)
@@ -102,7 +116,7 @@ async function addProductToAdminViaJSON(product) {
   console.log("Working on: ", product);
   const formData = await formFormDataJSON(product);
   const response = await axios.post(
-    "http://localhost:3000/product/publish-new-product",
+    "http://localhost:1210/product/publish-new-product",
     formData,
     {
       headers: {
@@ -113,6 +127,7 @@ async function addProductToAdminViaJSON(product) {
 }
 async function formFormDataJSON(product) {
   const formData = new FormData();
+  formData.append("uploadCode", product.uploadCode);
   formData.append("productName", product.productName);
   formData.append("categoryId", product.categoryId);
 
@@ -154,7 +169,7 @@ async function formFormDataJSON(product) {
       tempId: tempid,
     });
   });
-  console.log("Map: ", colorCodeTempIdMap);
+  // console.log("Map: ", colorCodeTempIdMap);
 
   //path to folder
   for (let i = 0; i < product.colorList.length; i++) {
@@ -177,7 +192,7 @@ async function formFormDataJSON(product) {
     const tempIdMatch = colorCodeTempIdMap.get(lastWord);
 
     for (const filePath of files) {
-      console.log(filePath);
+      // console.log(filePath);
 
       formData.append(`v1_${tempIdMatch}`, fs.createReadStream(filePath), {
         filename: path.basename(filePath), // just the file name
@@ -202,13 +217,12 @@ async function formFormDataJSON(product) {
     for (let j = 0; j < variant2Data.valueList.length; j++) {
       const index = i * variant2Data.valueList.length + j + 1;
       const offset = j;
-      const sellingPrice = parseVND(product.displayedPrice) + offset * 10000;
-
+      const price = parseVND(product.displayedPrice) + offset * 10000;
+      const stock = Math.floor(Math.random(0, 1) * 20);
       const toPush = {
         seller_sku: slugify(product.productName, slugifyOption) + `-${index}`,
-        sellingPrice: sellingPrice,
-        stock: 20,
-        isInUse: true,
+        price,
+        stock,
         isOpenToSale: true,
         v1_name: variant1Data.valueList[i].value,
         v1_tempId: variant1Data.valueList[i].tempId,
@@ -287,7 +301,7 @@ async function uploadColorImages(driver, product) {
   for (let i = 0; i < product.colorList.length; i++) {
     const colorName = product.colorList[i];
     const lastWord = colorName.match(/\w+$/)[0];
-    console.log("CN: ", colorName);
+    // console.log("CN: ", colorName);
     // Example: ../images/3ot25w005/sk010/
     const imagesPath = path.join(
       __dirname,

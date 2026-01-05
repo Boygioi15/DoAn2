@@ -1,7 +1,15 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { MessageCircle, X, Send, Bot, User, ShoppingBag, Image as ImageIcon } from 'lucide-react';
+import {
+  MessageCircle,
+  X,
+  Send,
+  Bot,
+  User,
+  ShoppingBag,
+  Image as ImageIcon,
+} from 'lucide-react';
 import { chatApi } from '@/api/chatApi';
 import { productApi } from '@/api/productApi';
 import { toast } from 'sonner';
@@ -15,7 +23,7 @@ export function ChatBot() {
     {
       role: 'assistant',
       content:
-        'Xin chào! Tôi là trợ lý Q-Shop. Tôi có thể giúp bạn tìm kiếm sản phẩm, tư vấn mua hàng hoặc giải đáp thắc mắc. Bạn cần hỗ trợ gì?',
+        'Xin chào! Tôi là trợ lý SilkShop. Tôi có thể giúp bạn tìm kiếm sản phẩm, tư vấn mua hàng hoặc giải đáp thắc mắc. Bạn cần hỗ trợ gì?',
     },
   ]);
   const [input, setInput] = useState('');
@@ -126,7 +134,8 @@ export function ChatBot() {
           ...prev,
           {
             role: 'assistant',
-            content: 'Xin lỗi, tôi không tìm thấy sản phẩm nào tương tự với hình ảnh này. Bạn có thể thử với hình ảnh khác hoặc mô tả sản phẩm bạn đang tìm kiếm.',
+            content:
+              'Xin lỗi, tôi không tìm thấy sản phẩm nào tương tự với hình ảnh này. Bạn có thể thử với hình ảnh khác hoặc mô tả sản phẩm bạn đang tìm kiếm.',
           },
         ]);
       }
@@ -137,7 +146,8 @@ export function ChatBot() {
         ...prev,
         {
           role: 'assistant',
-          content: 'Xin lỗi, đã có lỗi khi tìm kiếm bằng hình ảnh. Vui lòng thử lại sau.',
+          content:
+            'Xin lỗi, đã có lỗi khi tìm kiếm bằng hình ảnh. Vui lòng thử lại sau.',
         },
       ]);
     } finally {
@@ -168,7 +178,7 @@ export function ChatBot() {
                 <Bot className="w-5 h-5 text-violet-600" />
               </div>
               <div>
-                <h3 className="text-white font-semibold text-sm">Q-Shop</h3>
+                <h3 className="text-white font-semibold text-sm">SilkShop</h3>
                 <span className="text-violet-200 text-xs flex items-center gap-1">
                   <span className="w-1.5 h-1.5 bg-green-400 rounded-full"></span>
                   Online Now
@@ -195,10 +205,14 @@ export function ChatBot() {
             {messages.map((msg, idx) => (
               <div key={idx}>
                 {msg.role === 'assistant' && (
-                  <p className="text-[10px] text-gray-400 mb-1 ml-9">Q-Shop</p>
+                  <p className="text-[10px] text-gray-400 mb-1 ml-9">
+                    SilkShop
+                  </p>
                 )}
                 <div
-                  className={`flex items-start gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
+                  className={`flex items-start gap-2 ${
+                    msg.role === 'user' ? 'flex-row-reverse' : ''
+                  }`}
                 >
                   {msg.role === 'assistant' && (
                     <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 bg-white border-2 border-violet-400">
@@ -228,7 +242,11 @@ export function ChatBot() {
                       <div className="chat-markdown [&_img]:max-w-[100px] [&_img]:h-auto [&_img]:rounded-lg [&_img]:my-1 [&_p]:text-xs [&_li]:text-xs">
                         <MDEditor.Markdown
                           source={msg.content}
-                          style={{ background: 'transparent', color: 'inherit', fontSize: '12px' }}
+                          style={{
+                            background: 'transparent',
+                            color: 'inherit',
+                            fontSize: '12px',
+                          }}
                         />
                       </div>
                     )}
@@ -285,7 +303,7 @@ export function ChatBot() {
             {/* Loading indicator */}
             {isLoading && (
               <div>
-                <p className="text-[10px] text-gray-400 mb-1 ml-9">Q-Shop</p>
+                <p className="text-[10px] text-gray-400 mb-1 ml-9">SilkShop</p>
                 <div className="flex items-start gap-2">
                   <div className="w-7 h-7 rounded-full bg-white border-2 border-violet-400 flex items-center justify-center">
                     <Bot className="w-3.5 h-3.5 text-violet-600" />
@@ -315,21 +333,19 @@ export function ChatBot() {
           {/* Quick Actions */}
           <div className="px-3 py-2 bg-white flex-shrink-0">
             <div className="flex gap-2 flex-wrap justify-center">
-              {[
-                'Tìm áo thun',
-                'Sản phẩm mới',
-                'Giá rẻ nhất',
-              ].map((suggestion, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => {
-                    setInput(suggestion);
-                  }}
-                  className="text-xs px-3 py-1.5 bg-white border-2 border-gray-200 rounded-full hover:border-violet-400 hover:text-violet-600 transition-colors"
-                >
-                  {suggestion}
-                </button>
-              ))}
+              {['Tìm áo thun', 'Sản phẩm mới', 'Giá rẻ nhất'].map(
+                (suggestion, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      setInput(suggestion);
+                    }}
+                    className="text-xs px-3 py-1.5 bg-white border-2 border-gray-200 rounded-full hover:border-violet-400 hover:text-violet-600 transition-colors"
+                  >
+                    {suggestion}
+                  </button>
+                )
+              )}
             </div>
           </div>
 
@@ -358,7 +374,7 @@ export function ChatBot() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                placeholder="Reply to Q-Shop..."
+                placeholder="Reply to SilkShop..."
                 disabled={isLoading}
                 className="flex-1 rounded-full border-gray-200 bg-white focus:border-violet-400 focus:ring-violet-400 text-xs h-9"
               />
@@ -382,10 +398,12 @@ export function ChatBot() {
         {isOpen ? (
           <X className="w-[28px] h-[28px] text-white" />
         ) : (
-          <MessageCircle className="w-[28px] h-[28px] text-white" fill="white" />
+          <MessageCircle
+            className="w-[28px] h-[28px] text-white"
+            fill="white"
+          />
         )}
       </Button>
     </>
   );
 }
-

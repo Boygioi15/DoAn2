@@ -11,7 +11,7 @@ import {
   SystemMessage,
 } from '@langchain/core/messages';
 
-const SYSTEM_PROMPT = `Bạn là trợ lý mua sắm thông minh của Q-Shop - một cửa hàng thời trang trực tuyến.
+const SYSTEM_PROMPT = `Bạn là trợ lý mua sắm thông minh của SilkShop - một cửa hàng thời trang trực tuyến.
 
 Nhiệm vụ của bạn:
 - Giúp khách hàng tìm kiếm và tư vấn sản phẩm phù hợp

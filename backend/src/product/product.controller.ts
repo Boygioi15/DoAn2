@@ -33,7 +33,7 @@ export class ProductController {
     @UploadedFiles() files: Array<Express.Multer.File>,
     @Body() createProductDto: CreateProductDto,
   ) {
-    console.log('CPD: ', createProductDto);
+    // console.log('CPD: ', createProductDto);
     // console.log('F: ', files);
     return await this.productService.publishNewProduct(createProductDto, files);
   }

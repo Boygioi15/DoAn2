@@ -3,7 +3,7 @@ import './RootLayout.css';
 import ModalContextProvider, {
   ModalContext,
 } from '../../contexts/ModalContext';
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useRef } from 'react';
 import UltilityContextProvider_1 from '../../contexts/UltilityContext_1';
 import { UltilityContext_1 } from '../../contexts/UltilityContext_1';
 import topBannerSample from '../../assets/topBannerSample.webp';
@@ -73,6 +73,10 @@ export function TopLayout() {
   const [search, setSearch] = useState('');
   const [isSpeechToTextOpen, setIsSpeechToTextOpen] = useState(false);
   const [isImageSearchOpen, setIsImageSearchOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const collapsibleRef = useRef(null);
+  const [collapsibleHeight, setCollapsibleHeight] = useState(0);
+  const lastScrollY = useRef(0);
 
   const getLayoutSetting = async () => {
     try {
@@ -100,12 +104,60 @@ export function TopLayout() {
       },
     });
   };
-  console.log('HI');
+
+  // Track scroll direction for collapse/expand behavior
+  useEffect(() => {
+    const SCROLL_THRESHOLD = 10; // Minimum scroll delta to trigger state change
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const scrollDelta = currentScrollY - lastScrollY.current;
+
+      // console.log('Y: ', currentScrollY);
+      // console.log('LCY: ', lastScrollY);
+
+      if (Math.abs(scrollDelta) < 10) return;
+      if (scrollDelta > 0 && currentScrollY > 100) {
+        // Scrolling down & past threshold - collapse
+        console.log('Collapsing');
+        setIsCollapsed(true);
+      } else if (scrollDelta < 0) {
+        // Scrolling up - expand
+        console.log('Opening');
+        setIsCollapsed(false);
+      }
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   useEffect(() => {
     getLayoutSetting();
   }, []);
+
+  // Measure collapsible content height
+  useEffect(() => {
+    if (collapsibleRef.current) {
+      const updateHeight = () => {
+        setCollapsibleHeight(collapsibleRef.current.offsetHeight);
+      };
+      updateHeight();
+      window.addEventListener('resize', updateHeight);
+      return () => window.removeEventListener('resize', updateHeight);
+    }
+  }, [layoutSetting]);
+
   return (
-    <div className="TopLayout">
+    <div
+      className="TopLayout sticky top-0 z-49 bg-white transition-transform duration-300 ease-in-out"
+      style={{
+        transform: isCollapsed
+          ? `translateY(-${collapsibleHeight}px)`
+          : 'translateY(0)',
+      }}
+    >
       <SpeechToTextDialog
         open={isSpeechToTextOpen}
         onOpenChange={setIsSpeechToTextOpen}
@@ -116,86 +168,91 @@ export function TopLayout() {
         onOpenChange={setIsImageSearchOpen}
         onSearchResults={handleImageSearchResults}
       />
-      {layoutSetting && layoutSetting.announcementBar && (
-        <AnnouncementBar announcementBar={layoutSetting.announcementBar} />
-      )}
-      {layoutSetting?.announcementCarousel && (
-        <AnnouncementCarousel
-          announcementCarousel={layoutSetting.announcementCarousel}
-        />
-      )}
-      <div className="TopLayout_Toolbar">
-        <div className="title cursor-pointer" onClick={() => navigate('/')}>
-          Q-Shop
-        </div>
-        <div className="TopLayout_Toolbar_Right">
-          <div className="input-with-icon-before">
-            <FiSearch style={{ fontSize: '24px' }} />
-            <input
-              placeholder="Tìm kiếm"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  navigate(`/search?query=${encodeURIComponent(search)}`);
+      <div ref={collapsibleRef}>
+        {layoutSetting && layoutSetting.announcementBar && (
+          <AnnouncementBar announcementBar={layoutSetting.announcementBar} />
+        )}
+        {layoutSetting?.announcementCarousel && (
+          <AnnouncementCarousel
+            announcementCarousel={layoutSetting.announcementCarousel}
+          />
+        )}
+        <div className="TopLayout_Toolbar">
+          <div
+            className="bg-(--color-preset-red) flex justify-center items-center cursor-pointer text-white text-[24px] font-bold px-3"
+            onClick={() => navigate('/')}
+          >
+            SilkShop
+          </div>
+          <div className="TopLayout_Toolbar_Right">
+            <div className="input-with-icon-before">
+              <FiSearch style={{ fontSize: '24px' }} />
+              <input
+                placeholder="Tìm kiếm"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    navigate(`/search?query=${encodeURIComponent(search)}`);
+                  }
+                }}
+              />
+              <Button
+                variant={'ghost'}
+                size={'icon'}
+                className="ml-2"
+                onClick={() => setIsSpeechToTextOpen(true)}
+                title="Tìm kiếm bằng giọng nói"
+              >
+                <Mic style={{ width: '20px', height: '20px' }} />
+              </Button>
+              <Button
+                variant={'ghost'}
+                size={'icon'}
+                onClick={() => setIsImageSearchOpen(true)}
+                title="Tìm kiếm bằng hình ảnh"
+              >
+                <Image style={{ width: '20px', height: '20px' }} />
+              </Button>
+            </div>
+            {!loggedIn ? (
+              <Button
+                variant={'ghost'}
+                className={
+                  'flex flex-col gap-1 h-full p-1! items-center justify-center'
                 }
-              }}
-            />
+                onClick={() => {
+                  navigate('/auth/sign-in');
+                }}
+              >
+                <CircleUserRound style={{ width: '24px', height: '24px' }} />
+                <span className="text-[14px] font-medium">Đăng nhập</span>
+              </Button>
+            ) : (
+              <Button
+                variant={'ghost'}
+                className={
+                  'flex flex-col gap-1 h-full p-1! items-center justify-center'
+                }
+                onClick={() => {
+                  navigate('/profile/account-info');
+                }}
+              >
+                <User style={{ width: '24px', height: '24px' }} />
+                <span className="text-[14px] font-medium">Tài khoản</span>
+              </Button>
+            )}
+            <CartWrapper />
             <Button
               variant={'ghost'}
-              size={'icon'}
-              className="ml-2"
-              onClick={() => setIsSpeechToTextOpen(true)}
-              title="Tìm kiếm bằng giọng nói"
+              className={
+                'flex flex-col gap-1 h-full p-1! items-center justify-center'
+              }
             >
-              <Mic style={{ width: '20px', height: '20px' }} />
-            </Button>
-            <Button
-              variant={'ghost'}
-              size={'icon'}
-              onClick={() => setIsImageSearchOpen(true)}
-              title="Tìm kiếm bằng hình ảnh"
-            >
-              <Image style={{ width: '20px', height: '20px' }} />
+              <Headset style={{ width: '24px', height: '24px' }} />
+              <span className="text-[14px] font-medium">Liên hệ</span>
             </Button>
           </div>
-          {!loggedIn ? (
-            <Button
-              variant={'ghost'}
-              className={
-                'flex flex-col gap-1 h-full p-1! items-center justify-center'
-              }
-              onClick={() => {
-                navigate('/auth/sign-in');
-              }}
-            >
-              <CircleUserRound style={{ width: '24px', height: '24px' }} />
-              <span className="text-[14px] font-medium">Đăng nhập</span>
-            </Button>
-          ) : (
-            <Button
-              variant={'ghost'}
-              className={
-                'flex flex-col gap-1 h-full p-1! items-center justify-center'
-              }
-              onClick={() => {
-                navigate('/profile/account-info');
-              }}
-            >
-              <User style={{ width: '24px', height: '24px' }} />
-              <span className="text-[14px] font-medium">Tài khoản</span>
-            </Button>
-          )}
-          <CartWrapper />
-          <Button
-            variant={'ghost'}
-            className={
-              'flex flex-col gap-1 h-full p-1! items-center justify-center'
-            }
-          >
-            <Headset style={{ width: '24px', height: '24px' }} />
-            <span className="text-[14px] font-medium">Liên hệ</span>
-          </Button>
         </div>
       </div>
       {layoutSetting && layoutSetting.categoryData && (
