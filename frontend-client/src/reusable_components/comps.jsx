@@ -11,7 +11,7 @@ import {
 export function Title() {
   return (
     <Link to="/" className="title">
-      Q-Shop
+      SilkShop
     </Link>
   );
 }

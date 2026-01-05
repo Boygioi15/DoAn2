@@ -76,7 +76,7 @@ export default function AccountInfoPage() {
       <div className="ProfilePage_Title_Block">
         <div className="ProfilePage_Title">THÔNG TIN CÁ NHÂN</div>
         <div className="ProfilePage_Description">
-          Cập nhật thông tin tài khoản để nhận các ưu đãi từ Q-Shop
+          Cập nhật thông tin tài khoản để nhận các ưu đãi từ SilkShop
         </div>
       </div>
       {boxState ? (

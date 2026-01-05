@@ -8,10 +8,13 @@ export const chatApi = {
    * @returns {Promise} Response with reply and updated conversation history
    */
   sendMessage: async (message, conversationHistory = []) => {
-    return await axiosClient_Backend.post('/chat', {
-      message,
-      conversationHistory,
-    });
+    return await axiosClient_Backend.post(
+      '/chat',
+      {
+        message,
+        conversationHistory,
+      },
+      { timeout: 60000 }
+    );
   },
 };
-

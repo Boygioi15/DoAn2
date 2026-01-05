@@ -1,5 +1,16 @@
 // run-migrate-denormalize.js
 import { MongoClient } from 'mongodb';
+import { htmlToText } from 'html-to-text';
+
+function extractSearchableText(description: string): string {
+  return htmlToText(description, {
+    wordwrap: false,
+    selectors: [
+      { selector: 'img', format: 'skip' },
+      { selector: 'a', options: { ignoreHref: true } },
+    ],
+  });
+}
 
 const MONGO_URI =
   process.env.MONGO_URI ||
@@ -19,6 +30,8 @@ async function run() {
     const variantOptionColl = db.collection('variant_option');
     const variantColl = db.collection('product_variant');
     const categoryColl = db.collection('category');
+    const propertyColl = db.collection('product_property');
+    const descriptionColl = db.collection('product_description');
 
     // // Optional: ensure helpful indexes exist for speed
     // await productOptionColl.createIndex({ productId: 1 });
@@ -114,7 +127,32 @@ async function run() {
 
       // Run aggregation
       const variantDocs = await variantColl.aggregate(pipeline).toArray();
-      // If no variants matched, set defaults
+
+      // Get category name (product level)
+      let categoryName = 'corrupted';
+      const cat = await categoryColl.findOne({
+        categoryId: product.categoryId,
+      });
+      if (cat) {
+        categoryName = cat.categoryName;
+      }
+
+      // Get properties and build propertyString (product level, not variant)
+      const propertyList = await propertyColl.find({ productId }).toArray();
+      let propertyString = '';
+      for (const property of propertyList) {
+        propertyString = propertyString.concat(
+          (property.value?.toString() || '') + ' ',
+        );
+      }
+
+      // Get description and build descriptionString (product level, not variant)
+      const description = await descriptionColl.findOne({ productId });
+      const descriptionString = extractSearchableText(
+        description?.description || '',
+      );
+
+      // If no variants matched, set defaults for variant-related fields
       if (!variantDocs || variantDocs.length === 0) {
         await productsColl.updateOne(
           { productId },
@@ -124,10 +162,15 @@ async function run() {
               totalStock: 0,
               allColors: [],
               allSizes: [],
+              categoryName,
+              propertyString,
+              descriptionString,
             },
           },
         );
-        console.log(`Product ${productId} → no variants. Defaulted.`);
+        console.log(
+          `Product ${productId} → no variants. Defaulted. props=${propertyString.length}chars, desc=${descriptionString.length}chars`,
+        );
         continue;
       }
       // Compute denormalized values
@@ -153,12 +196,7 @@ async function run() {
       const allColors = [...colorSet];
       const allSizes = [...sizeSet];
 
-      // Update the product doc
-      let categoryName = 'corrupted';
-      let cat = await categoryColl.findOne({ categoryId: product.categoryId });
-      if (cat) {
-        categoryName = cat.categoryName;
-      }
+      // Update the product doc with all denormalized fields
       await productsColl.updateOne(
         { productId },
         {
@@ -168,12 +206,14 @@ async function run() {
             allColors,
             allSizes,
             categoryName,
+            propertyString,
+            descriptionString,
           },
         },
       );
 
       console.log(
-        `Updated productId=${productId}: minPrice=${minPrice}, totalStock=${totalStock}, colors=${allColors.length}, sizes=${allSizes.length}`,
+        `Updated productId=${productId}: minPrice=${minPrice}, totalStock=${totalStock}, colors=${allColors.length}, sizes=${allSizes.length}, props=${propertyString.length}chars, desc=${descriptionString.length}chars`,
       );
     }
 

@@ -364,9 +364,9 @@ export default function useEditProduct() {
       newErrorList.push("Không được để trống tên biến thể!");
     }
     const valueList = variant1.valueList;
-    if (valueList.length === 1) {
-      newErrorList.push("Phải có ít nhất một giá trị cho biến thể!");
-    }
+    // if (valueList.length === 1) {
+    //   newErrorList.push("Phải có ít nhất một giá trị cho biến thể!");
+    // }
     for (let i = 0; i < valueList.length - 1; i++) {
       if (valueList[i].name.trim() === "") {
         newErrorList.push("Không được để trống giá trị của biến thể");
@@ -576,6 +576,7 @@ export default function useEditProduct() {
       initialImage: value.img,
       tempId: value.optionId,
     }));
+    console.log("V1: ", v1);
     if (productDetail.isDrafted) {
       v1.valueList.push({ name: "", tempId: v4(), img: [] });
     }
@@ -607,15 +608,27 @@ export default function useEditProduct() {
       setUseSize5(!!initialSizeGuidance[0].fit.hip);
     }
     generateNewSizeGuidanceDataFromVariant(v2, initialSizeGuidance);
-    const _temp = productDetail.variantDetailList.map((detail) => ({
-      ...detail,
-      v1_name: detail.optionValue1,
-      v2_name: detail.optionValue2,
-      v1_tempId: detail.optionId1,
-      v2_tempId: detail.optionId2,
-      stock: detail.stock ? detail.stock.toString() : "",
-      price: detail.price ? detail.price.toString() : "",
-    }));
+    const _temp = productDetail.variantDetailList.map((detail) => {
+      // console.log("DS: ", detail.stock);
+      let stock;
+      if (detail.stock === 0) {
+        stock = "0";
+      } else if (!detail.stock) {
+        stock = "";
+      } else {
+        stock = detail.stock.toString();
+      }
+      return {
+        ...detail,
+        v1_name: detail.optionValue1,
+        v2_name: detail.optionValue2,
+        v1_tempId: detail.optionId1,
+        v2_tempId: detail.optionId2,
+        stock,
+        price:
+          detail.price ?? detail.price === 0 ? detail.price.toString() : "",
+      };
+    });
     // console.log(_temp);
     setVariantDetailList(_temp);
     // setSizeGuidance(productDetail.sizeGuidance);

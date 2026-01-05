@@ -17,37 +17,52 @@ export class FrontendSettingController {
   constructor(
     private readonly frontendSettingService: FrontendSettingService,
   ) {}
-  @Post('init-frontend-setting')
+  @Post('reset-frontend-setting')
   async initFrontendSetting() {
-    const result = await this.frontendSettingService.initFrontendSetting();
+    const result = await this.frontendSettingService.resetFrontendSetting();
+    return { stt: 200 };
   }
-  @Get('toplayout-category-data')
-  async getTopCategoryData() {
-    const result = await this.frontendSettingService.getTopCategoryTree();
-    return result;
+  @Get('setting/layout')
+  async getLayoutSetting() {
+    return await this.frontendSettingService.getLayoutSetting();
   }
-  @Get('homepage-banner')
-  async getHomepageBanner() {
-    return await this.frontendSettingService.getHomepageBanner();
+  @Get('setting/homepage')
+  async getHomepageSetting() {
+    return await this.frontendSettingService.getHomepageSetting();
   }
-  @Get('toplayout-rotator-message')
-  async getToplayoutRotatorMessage() {
-    return await this.frontendSettingService.getToplayoutRotatorMessage();
+  @Get('setting/category/:categoryId')
+  async getCategoryPageSetting(@Param('categoryId') categoryId: string) {
+    return await this.frontendSettingService.getCategoryPageSetting(categoryId);
   }
-  @UseInterceptors(FilesInterceptor('homepage-banner'))
-  @Post('homepage-banner')
-  async updateHomepageBanner(
-    @UploadedFiles() bannerFile: Express.Multer.File[],
+  @Get('setting/:setting')
+  async getFrontendSetting(@Param('setting') setting: string) {
+    return await this.frontendSettingService.getFrontendSetting(setting);
+  }
+  @Get('setting')
+  async getAllFrontendSetting() {
+    return await this.frontendSettingService.getAllSetting();
+  }
+  @Patch('setting/:setting')
+  async updateFrontendSetting(
+    @Param('setting') setting: string,
+    @Body('content') content: any,
   ) {
-    console.log('Banner file: ', bannerFile);
-    return await this.frontendSettingService.updateHomepageBanner(bannerFile);
-  }
-  @Post('toplayout-rotator-message')
-  async updateToplayoutRotatorMessage(
-    @Body('rotator-message') messages: string[],
-  ) {
-    return await this.frontendSettingService.updateToplayoutRotatorMessage(
-      messages,
+    console.log('S: ', setting);
+    console.log('C: ', content);
+    return await this.frontendSettingService.updateFrontendSetting(
+      setting,
+      content,
     );
+  }
+  @Get('page/:page')
+  async getFrontendPage(@Param('page') page: string) {
+    return await this.frontendSettingService.getFrontendPage(page);
+  }
+  @Patch('page/:page')
+  async updateFrontendPage(
+    @Param('page') page: string,
+    @Body('content') content: string,
+  ) {
+    return await this.frontendSettingService.updateFrontendPage(page, content);
   }
 }

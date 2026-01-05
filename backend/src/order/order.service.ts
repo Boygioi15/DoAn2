@@ -75,11 +75,19 @@ export class OrderService {
     }
 
     if (userName) {
-      matchStage.address_name = { $include: userName };
+      matchStage.address_name = {
+        $regex: userName,
+        $options: 'i', // case-insensitive
+      };
     }
+
     if (userPhone) {
-      matchStage.address_phone = { $include: userPhone };
+      matchStage.address_phone = {
+        $regex: userPhone,
+        $options: 'i',
+      };
     }
+
     if (userAuthorized) {
       if (userAuthorized === 'authorized') {
         matchStage.reference_user = { $ne: null };
@@ -99,7 +107,7 @@ export class OrderService {
     if (paymentState) {
       for (const state of payment_state_enum) {
         if (paymentState === state) {
-          matchStage.delivery_state = state;
+          matchStage.payment_state = state;
         }
       }
     }

@@ -17,10 +17,10 @@ export default function BriefProductCard({ briefProduct }) {
       disableBackdropClose: true,
     });
   };
-  console.log('BD', briefProduct);
+  // console.log('BD', briefProduct);
   if (!briefProduct.optionData || briefProduct.optionData.length === 0) return;
   return (
-    <div className="flex flex-col gap-3 w-full h-auto">
+    <div className="flex flex-col gap-3 w-full h-auto group cursor-pointer transition-transform duration-300 hover:scale-105">
       <div className="w-full h-auto relative">
         <img
           className="w-full h-auto cursor-pointer"
@@ -56,7 +56,10 @@ export default function BriefProductCard({ briefProduct }) {
         {briefProduct.name}
       </span>
       <span className="text-[14px] font-bold pl-2">
-        {formatMoney(briefProduct.displayedPrice)} VNĐ
+        {briefProduct.displayedPrice
+          ? formatMoney(briefProduct.displayedPrice)
+          : 'Không xác định'}{' '}
+        VNĐ
       </span>
     </div>
   );

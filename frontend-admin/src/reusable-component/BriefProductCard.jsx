@@ -18,7 +18,7 @@ export default function BriefProductCard({ briefProduct }) {
           className="bottom-[10px] right-[10px] bg-white rounded-full absolute p-2 text-black"
           variant={"ghost"}
           onClick={() => {
-            navigate(`/edit-product/${briefProduct.productId}`);
+            navigate(`/edit-product/${briefProduct.productId}?edit=true`);
           }}
         >
           <Edit />

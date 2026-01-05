@@ -125,7 +125,7 @@ export const DateSelectWithStartAddOn = ({
 }) => {
   const [open, setOpen] = useState(false);
   return (
-    <div class="w-full max-w-full min-w-0 space-y-2">
+    <div className="w-full max-w-full min-w-0 space-y-2">
       <div className="flex rounded-md shadow-xs">
         <span className="border-input bg-gray-100 inline-flex items-center rounded-l-none border px-3 text-sm min-w-fit">
           {addOnLabel}
@@ -175,13 +175,15 @@ export const SelectWithStartAddOn = ({
         </span>
         <Select value={selectValue} onValueChange={onSelectValueChange}>
           <SelectTrigger
-            className={"-ms-px rounded-l-none rounded-r-[4px] grow shadow-none"}
+            className={"-ms-px rounded-l-none rounded-r-lg grow shadow-none"}
           >
             <SelectValue placeholder={placeholder} />
           </SelectTrigger>
           <SelectContent>
             {selectValueList.map((select) => (
-              <SelectItem value={select.value}>{select.display}</SelectItem>
+              <SelectItem value={select.value} key={select.value}>
+                {select.display}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>

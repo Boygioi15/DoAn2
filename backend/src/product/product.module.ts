@@ -7,6 +7,7 @@ import { CategoryModule } from 'src/category/category.module';
 import { ProductQueryService } from './services/product-query.service';
 import { ProductDeleteService } from './services/product-delete.service';
 import { ProductInventoryService } from './services/product-inventory.service';
+import { ProductEmbeddingService } from './services/product-embedding.service';
 
 @Module({
   controllers: [ProductController],
@@ -15,8 +16,14 @@ import { ProductInventoryService } from './services/product-inventory.service';
     ProductQueryService,
     ProductDeleteService,
     ProductInventoryService,
+    ProductEmbeddingService,
   ],
   imports: [DatabaseModule, CloudinaryModule, CategoryModule],
-  exports: [ProductService, ProductQueryService, ProductInventoryService],
+  exports: [
+    ProductService,
+    ProductQueryService,
+    ProductInventoryService,
+    ProductEmbeddingService,
+  ],
 })
 export class ProductModule {}

@@ -1,12 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { SpeechToTextDto, SpeechToTextResponseDto } from './speech.dto';
-import * as fs from 'fs';
-import * as path from 'path';
-import { promisify } from 'util';
-import OpenAI from 'openai';
-
-const writeFile = promisify(fs.writeFile);
-const unlink = promisify(fs.unlink);
+import OpenAI, { toFile } from 'openai';
 
 @Injectable()
 export class SpeechService {
@@ -22,9 +16,7 @@ export class SpeechService {
   /**
    * Convert speech audio to text using OpenAI Whisper API
    */
-  async speechToText(dto: SpeechToTextDto): Promise<SpeechToTextResponseDto> {
-    let tempFilePath: string | null = null;
-
+  async speechToText(dto: SpeechToTextDto) {
     try {
       const { audioData, language = 'vi-VN', mimeType = 'audio/webm' } = dto;
 
@@ -40,15 +32,9 @@ export class SpeechService {
         );
       }
 
-      // Extract base64 data
+      // Extract base64 data and convert to Buffer
       const base64Data = audioData.split('base64,')[1];
       const buffer = Buffer.from(base64Data, 'base64');
-
-      // Ensure temp directory exists
-      const tempDir = path.join(process.cwd(), 'temp');
-      if (!fs.existsSync(tempDir)) {
-        fs.mkdirSync(tempDir, { recursive: true });
-      }
 
       // Determine file extension based on mime type
       let extension = 'webm';
@@ -57,46 +43,30 @@ export class SpeechService {
       else if (mimeType.includes('m4a')) extension = 'm4a';
       else if (mimeType.includes('ogg')) extension = 'ogg';
 
-      // Save audio to temporary file
-      tempFilePath = path.join(tempDir, `speech-${Date.now()}.${extension}`);
-      await writeFile(tempFilePath, buffer);
+      // Convert buffer to File object for OpenAI
+      const file = await toFile(buffer, `audio.${extension}`, {
+        type: mimeType,
+      });
 
       // Extract language code for OpenAI (e.g., 'vi' from 'vi-VN')
       const languageCode = language.split('-')[0];
 
       // Call OpenAI Whisper API
       const transcription = await this.openai.audio.transcriptions.create({
-        file: fs.createReadStream(tempFilePath),
+        file,
         model: 'gpt-4o-transcribe',
-        language: languageCode, // 'vi' for Vietnamese
-        response_format: 'json', // Get more details including confidence
+        language: languageCode,
+        response_format: 'json',
       });
 
-      // Clean up temp file
-      if (tempFilePath && fs.existsSync(tempFilePath)) {
-        await unlink(tempFilePath);
-        tempFilePath = null;
-      }
-
       // Return transcription result
-      const response: SpeechToTextResponseDto = {
+      return {
         transcript: transcription.text,
-        confidence: 1.0, // OpenAI doesn't provide confidence scores
+        confidence: 1.0,
         language: language,
       };
-
-      return response;
     } catch (error) {
       console.error('Speech to text error:', error);
-
-      // Clean up temp file in case of error
-      if (tempFilePath && fs.existsSync(tempFilePath)) {
-        try {
-          await unlink(tempFilePath);
-        } catch (unlinkError) {
-          console.error('Error deleting temp file:', unlinkError);
-        }
-      }
 
       // Handle OpenAI specific errors
       if (error.response?.status === 401) {

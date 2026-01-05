@@ -10,12 +10,21 @@ import CategoryManagementPage from "./pages/CategoryManagementPage/CategoryManag
 import EditProductPage from "./pages/AddNewProductPage/EditProductPage";
 import UserManagementPage from "./pages/UserManagementPage/UserManagementPage";
 import OrderManagementPage from "./pages/OrderManagementPage/OrderManagementPage";
+import TermAndConditionPage from "./pages/FrontendSettingPage/TermAndConditionPage";
+import FrontendSettingPage from "./pages/FrontendSettingPage/FrontendSettingPage";
+import NotFoundPage from "./pages/NotFoundPage";
+import StatisticPage from "./pages/StatisticPage/StatisticPage";
+import StatisticPageSimple from "./pages/StatisticPage/StatisticPageSimple";
 
 const router = createBrowserRouter([
   {
     element: <RootLayout />,
     path: "/",
     children: [
+      { element: <StatisticPageSimple />, index: true },
+      { element: <StatisticPageSimple />, path: "statistic-overview" },
+      { element: <StatisticPage />, path: "/statistic-2" },
+
       {
         element: <UserManagementPage />,
         path: "user",
@@ -41,8 +50,20 @@ const router = createBrowserRouter([
         path: "order-management",
       },
       {
+        element: <FrontendSettingPage />,
+        path: "frontend-setting",
+      },
+      {
+        element: <TermAndConditionPage />,
+        path: "term-and-condition",
+      },
+      {
         element: <TestUploadPage />,
         path: "test-upload",
+      },
+      {
+        path: "*",
+        element: <NotFoundPage />,
       },
     ],
   },

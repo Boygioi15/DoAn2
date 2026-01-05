@@ -23,6 +23,11 @@ export class CategoryController {
       await this.categoryService.getAllCategories(filterUndefined);
     return allCategories;
   }
+  @Get('/:categoryId/landing')
+  async getCategoryLandingPage(@Param('categoryId') categoryId: string) {
+    const landingData = await this.categoryService.getLandingPage(categoryId);
+    return landingData;
+  }
   @Get('by-name')
   async getCategoryByName(@Query('categoryName') categoryName: string) {
     const matchingCategory =
@@ -36,6 +41,10 @@ export class CategoryController {
     return this.categoryService.getAllDirectChildrenOfCategory(categoryId);
   }
   //cat2
+  @Get('direct-children-img')
+  async getAllDirectChildrenOfCategoryWithImageOfRoot() {
+    return this.categoryService.getAllDirectChildrenOfCategoryWithImage();
+  }
   @Get('direct-children-img/:categoryId')
   async getAllDirectChildrenOfCategoryWithImage(
     @Param('categoryId') categoryId: string,

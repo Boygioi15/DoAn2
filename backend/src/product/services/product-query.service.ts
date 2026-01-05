@@ -23,10 +23,15 @@ import {
   VariantOption,
   VariantOptionDocument,
 } from 'src/database/schemas/product.schema';
+import {
+  ProductEmbedding,
+  ProductEmbeddingDocument,
+} from 'src/database/schemas/product_embedding.schema';
 import { Model } from 'mongoose';
 import { slugifyOption } from 'src/constants';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { CategoryService } from 'src/category/category.service';
+import { ProductEmbeddingService } from './product-embedding.service';
 import { filter } from 'rxjs';
 
 type FilterObject = {
@@ -41,6 +46,7 @@ export class ProductQueryService {
   constructor(
     private readonly cloudinaryService: CloudinaryService,
     private readonly categoryService: CategoryService,
+    private readonly productEmbeddingService: ProductEmbeddingService,
     @InjectModel(Product.name)
     private readonly productModel: Model<ProductDocument>,
     @InjectModel(ProductVariant.name)
@@ -56,6 +62,8 @@ export class ProductQueryService {
     private readonly productSizeGuidanceModel: Model<ProductSizeGuidanceDocument>,
     @InjectModel(ProductDescription.name)
     private readonly productDescriptionModel: Model<ProductDescriptionDocument>,
+    @InjectModel(ProductEmbedding.name)
+    private readonly productEmbeddingModel: Model<ProductEmbeddingDocument>,
   ) {}
 
   //filter
@@ -201,7 +209,12 @@ export class ProductQueryService {
           index: 'search_index',
           text: {
             query: search,
-            path: ['name', 'categoryName'],
+            path: [
+              'name',
+              'categoryName',
+              'descriptionString',
+              'propertyString',
+            ],
           },
         },
       });
@@ -462,7 +475,7 @@ export class ProductQueryService {
   }
   async getAllProduct({ role, filters, sortBy, pagination }) {
     //filter => sort => pagination
-
+    console.log('Filters: ', filters);
     let queryPipeline: any;
     if (role === 'CLIENT') {
       queryPipeline = await this.buildClientQueryPipeline(
@@ -529,7 +542,7 @@ export class ProductQueryService {
         //price
         const { minPrice } = await this.getProductSellingPrice(product);
         let allProductVariants = await this.getAllVariantsOfProduct(product);
-        console.log('APV: ', allProductVariants);
+        // console.log('APV: ', allProductVariants);
         allProductVariants = allProductVariants.filter(
           (variant) => variant.isOpenToSale,
         );
@@ -876,5 +889,213 @@ export class ProductQueryService {
 
     // return as an array
     return Object.values(map);
+  }
+
+  /**
+   * Search products by image using MongoDB Atlas Vector Search
+   * Uses pre-computed embeddings from product_embedding collection
+   */
+  async searchByImage(
+    file: Express.Multer.File,
+    size: number,
+    threshold: string,
+  ): Promise<any[]> {
+    const thresholdMap = {
+      low: 0.4,
+      medium: 0.6,
+      high: 0.8,
+    };
+    try {
+      // Step 1: Generate embedding from the uploaded image
+      const imageEmbedding =
+        await this.productEmbeddingService.generateEmbeddingFromImage(file);
+
+      if (!imageEmbedding || imageEmbedding.length === 0) {
+        console.log('Failed to generate embedding from image');
+        return [];
+      }
+
+      // Step 2: Use MongoDB Atlas Vector Search to find similar products
+      const vectorSearchResults = await this.productEmbeddingModel.aggregate([
+        {
+          $vectorSearch: {
+            index: 'default', // Name of your vector search index
+            path: 'embedding',
+            queryVector: imageEmbedding,
+            numCandidates: 1000, // Number of candidates to consider
+            limit: 1000,
+          },
+        },
+        {
+          $project: {
+            productId: 1,
+            score: { $meta: 'vectorSearchScore' },
+          },
+        },
+        { $sort: { score: -1 } },
+        {
+          // Step 2: apply threshold
+          $match: {
+            score: { $gte: thresholdMap[threshold] },
+          },
+        },
+        {
+          $limit: 10,
+        },
+        {
+          $match: {},
+        },
+      ]);
+
+      if (!vectorSearchResults || vectorSearchResults.length === 0) {
+        console.log('No similar products found via vector search');
+        return [];
+      }
+      console.log('search result list: ', vectorSearchResults);
+
+      // Step 3: Get product details for matched products
+      const productIds = vectorSearchResults.map((r) => r.productId);
+
+      const products = await this.productModel.find({
+        productId: { $in: productIds },
+        isDeleted: false,
+        isPublished: true,
+        isDrafted: false,
+      });
+
+      const productListPromises = products.map(async (product) => {
+        //price
+        const { minPrice } = await this.getProductSellingPrice(product);
+        let allProductVariants = await this.getAllVariantsOfProduct(product);
+        // console.log('APV: ', allProductVariants);
+        allProductVariants = allProductVariants.filter(
+          (variant) => variant.isOpenToSale,
+        );
+        //option data
+        let optionData: any = [];
+        for (const variant of allProductVariants) {
+          const exists = optionData.find(
+            (o) => o.optionId === variant.optionId1,
+          );
+          if (!exists) {
+            optionData.push({
+              optionId: variant.optionId1,
+              optionName: variant.optionName1,
+              optionValue: variant.optionValue1,
+              optionImage: variant.optionImage1[0],
+            });
+          }
+        }
+        return {
+          productId: product.productId,
+          thumbnailURL: product.display_thumbnail_image,
+          name: product.name,
+          categoryName:
+            (await this.getProductCategoryName(product)) || 'Không có dữ liệu',
+          displayedPrice: minPrice,
+          optionData,
+        };
+      });
+      let _productList = await Promise.all(productListPromises);
+      return _productList;
+    } catch (error) {
+      console.error('Error searching by image:', error);
+      // Fallback to in-memory cosine similarity if vector search fails
+      return this.searchByImageFallback(file, size);
+    }
+  }
+
+  /**
+   * Fallback search using in-memory cosine similarity
+   * Used when MongoDB Atlas Vector Search is not available
+   */
+  private async searchByImageFallback(
+    file: Express.Multer.File,
+    limit: number = 10,
+  ): Promise<any[]> {
+    try {
+      const imageEmbedding =
+        await this.productEmbeddingService.generateEmbeddingFromImage(file);
+
+      if (!imageEmbedding || imageEmbedding.length === 0) {
+        return [];
+      }
+
+      const productEmbeddings = await this.productEmbeddingModel
+        .find({
+          isEmbedded: true,
+          embedding: { $exists: true, $ne: [] },
+        })
+        .select('productId embedding')
+        .lean();
+
+      if (!productEmbeddings || productEmbeddings.length === 0) {
+        return [];
+      }
+
+      const similarities = productEmbeddings
+        .map((pe) => ({
+          productId: pe.productId,
+          similarity: this.cosineSimilarity(imageEmbedding, pe.embedding),
+        }))
+        .sort((a, b) => b.similarity - a.similarity)
+        .slice(0, limit);
+
+      const topProductIds = similarities.map((s) => s.productId);
+      const products = await this.productModel
+        .find({
+          productId: { $in: topProductIds },
+          isDeleted: false,
+          isPublished: true,
+          isDrafted: false,
+        })
+        .select(
+          'productId name slug display_thumbnail_image minPrice totalStock allColors allSizes',
+        )
+        .lean();
+
+      const productMap = new Map(products.map((p) => [p.productId, p]));
+      return similarities
+        .map((s) => {
+          const product = productMap.get(s.productId);
+          if (!product) return null;
+          return {
+            ...product,
+            similarity: s.similarity,
+          };
+        })
+        .filter((r): r is NonNullable<typeof r> => r !== null);
+    } catch (error) {
+      console.error('Error in fallback search:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Calculate cosine similarity between two vectors
+   */
+  private cosineSimilarity(vecA: number[], vecB: number[]): number {
+    if (vecA.length !== vecB.length || vecA.length === 0) {
+      return 0;
+    }
+
+    let dotProduct = 0;
+    let magnitudeA = 0;
+    let magnitudeB = 0;
+
+    for (let i = 0; i < vecA.length; i++) {
+      dotProduct += vecA[i] * vecB[i];
+      magnitudeA += vecA[i] * vecA[i];
+      magnitudeB += vecB[i] * vecB[i];
+    }
+
+    magnitudeA = Math.sqrt(magnitudeA);
+    magnitudeB = Math.sqrt(magnitudeB);
+
+    if (magnitudeA === 0 || magnitudeB === 0) {
+      return 0;
+    }
+
+    return dotProduct / (magnitudeA * magnitudeB);
   }
 }

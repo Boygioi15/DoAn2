@@ -22,4 +22,11 @@ export class CloudinaryController {
     console.log(response);
     return;
   }
+  @Delete('reset-storage')
+  async resetStorage() {
+    for (let i = 0; i < 5; i++) {
+      const response = await this.cloudinaryService.resetStorage();
+    }
+    return true;
+  }
 }

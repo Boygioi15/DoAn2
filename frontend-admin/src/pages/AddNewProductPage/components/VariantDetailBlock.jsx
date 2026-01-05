@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 import { EditProductPageContext } from "../EditProductPage";
 import {
   Table,
@@ -18,12 +18,30 @@ export default function VariantDetailBlock() {
   const addProductContext = useContext(EditProductPageContext);
   //how many variant?
   let total = 0;
-  const v1Exist =
-    addProductContext.variant1 &&
-    addProductContext.variant1.valueList.length > 1;
-  const v2Exist =
-    addProductContext.variant2 &&
-    addProductContext.variant2.valueList.length > 1;
+  let v1Exist = false;
+  if (addProductContext.variant1) {
+    let v1Length = 0;
+    for (const value of addProductContext.variant1.valueList) {
+      if (value.name.trim().length > 0) {
+        v1Length++;
+      }
+    }
+    if (v1Length > 0) {
+      v1Exist = true;
+    }
+  }
+  let v2Exist = false;
+  if (addProductContext.variant2) {
+    let v2Length = 0;
+    for (const value of addProductContext.variant2.valueList) {
+      if (value.name.trim().length > 0) {
+        v2Length++;
+      }
+    }
+    if (v2Length > 0) {
+      v2Exist = true;
+    }
+  }
   if (v1Exist) total++;
   if (v2Exist) total++;
   // console.log("V1: ", addProductContext.variant1, v1Exist);
@@ -35,6 +53,9 @@ export default function VariantDetailBlock() {
     addProductContext.setVariantDetailList(newList);
   };
 
+  // useEffect(() => {
+  //   console.log("VL: ", addProductContext.variantDetailList);
+  // }, [addProductContext.variantDetailList]);
   return (
     <div className={`${reusableStyle.inputBlock}`}>
       <div className="flex flex-row justify-between items-center ">

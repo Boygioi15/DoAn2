@@ -312,8 +312,11 @@ function TopLayout() {
   const navigate = useNavigate();
   return (
     <div className="flex fixed top-0 left-0 right-0 justify-between bg-white shadow-xl p-2 pl-20 pr-20 z-10">
-      <div className="title cursor-pointer" onClick={() => navigate('/')}>
-        Q-Shop
+      <div
+        className="bg-(--color-preset-red) flex justify-center items-center cursor-pointer text-white text-[24px] font-bold px-3"
+        onClick={() => navigate('/')}
+      >
+        SilkShop
       </div>
       <TransactionProgress state={3} />
       <Button

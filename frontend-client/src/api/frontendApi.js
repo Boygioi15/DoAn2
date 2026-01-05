@@ -1,17 +1,13 @@
 import { axiosClient_Backend } from './apiClient';
 
 export const frontendApi = {
-  getCategoryData: async () => {
-    return await axiosClient_Backend.get(
-      '/frontend-setting/toplayout-category-data'
-    );
+  getLayoutSetting: async () => {
+    return await axiosClient_Backend.get('/frontend-setting/setting/layout');
   },
-  getHomepageBanner: async () => {
-    return await axiosClient_Backend.get('/frontend-setting/homepage-banner');
+  getHomepageSetting: async () => {
+    return await axiosClient_Backend.get('/frontend-setting/setting/homepage');
   },
-  getTopLayoutRotatorMessage: async () => {
-    return await axiosClient_Backend.get(
-      '/frontend-setting/toplayout-rotator-message'
-    );
+  getFrontendPage: async (url) => {
+    return await axiosClient_Backend.get(`/frontend-setting/page${url}`);
   },
 };

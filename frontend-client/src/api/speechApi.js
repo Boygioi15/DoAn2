@@ -12,23 +12,4 @@ export const speechApi = {
   speechToText: async (data) => {
     return await axiosClient_Backend.post('/speech/to-text', data);
   },
-
-  /**
-   * Upload audio file for transcription
-   * @param {File} audioFile - Audio file to upload
-   * @param {string} language - Language code
-   * @returns {Promise} Response with transcript
-   */
-  uploadAudio: async (audioFile, language = 'vi-VN') => {
-    const formData = new FormData();
-    formData.append('audio', audioFile);
-    formData.append('language', language);
-
-    return await axiosClient_Backend.post('/speech/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-  },
 };
-

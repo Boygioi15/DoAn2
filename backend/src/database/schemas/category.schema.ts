@@ -21,6 +21,9 @@ export class Category {
 
   @Prop({ default: 1 })
   categoryLevel: number;
+
+  @Prop({ default: 0 })
+  totalAssociatedProduct: number;
   @Prop({ default: false })
   isDefault: boolean;
 }

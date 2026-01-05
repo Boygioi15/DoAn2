@@ -20,42 +20,24 @@ export class Product {
   })
   productId: string;
 
-  @Prop()
-  name: string;
-
-  @Prop()
-  slug: string;
-
-  @Prop()
-  sku: string;
-
-  @Prop()
-  display_thumbnail_image: string;
-
-  @Prop()
-  categoryId: string;
-
-  @Prop({ default: true })
-  isPublished: boolean;
-
-  @Prop({ default: false })
-  isDrafted: boolean;
-
-  @Prop({ default: false })
-  isDeleted: boolean;
-
+  @Prop() name: string;
+  @Prop() slug: string;
+  @Prop() sku: string;
+  @Prop() display_thumbnail_image: string;
+  @Prop() categoryId: string;
+  @Prop({ default: true }) isPublished: boolean;
+  @Prop({ default: false }) isDrafted: boolean;
+  @Prop({ default: false }) isDeleted: boolean;
   //denormalized fields
-  @Prop()
-  minPrice: number;
+  @Prop() minPrice: number;
+  @Prop() totalStock: number;
+  @Prop() allColors: string[];
+  @Prop() allSizes: string[];
+  @Prop() propertyString: string;
+  @Prop() descriptionString: string;
 
-  @Prop()
-  totalStock: number;
-
-  @Prop()
-  allColors: string[];
-
-  @Prop()
-  allSizes: string[];
+  //for crawling
+  @Prop() uploadCode: string;
 }
 
 @Schema({ timestamps: true, collection: 'product_variant' })

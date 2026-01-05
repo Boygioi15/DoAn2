@@ -8,14 +8,16 @@ import {
   Delete,
   UseInterceptors,
   UploadedFiles,
+  UploadedFile,
   Query,
   Request,
 } from '@nestjs/common';
 import { ProductService } from './services/product.service';
 import { CreateProductDto } from './dto/product.dto';
-import { AnyFilesInterceptor } from '@nestjs/platform-express';
+import { AnyFilesInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { ProductQueryService } from './services/product-query.service';
 import { ProductDeleteService } from './services/product-delete.service';
+import { ProductEmbeddingService } from './services/product-embedding.service';
 
 @Controller('product')
 export class ProductController {
@@ -23,6 +25,7 @@ export class ProductController {
     private readonly productService: ProductService,
     private readonly productQueryService: ProductQueryService,
     private readonly productDeleteService: ProductDeleteService,
+    private readonly productEmbeddingService: ProductEmbeddingService,
   ) {}
   @Post('publish-new-product')
   @UseInterceptors(AnyFilesInterceptor())
@@ -30,13 +33,9 @@ export class ProductController {
     @UploadedFiles() files: Array<Express.Multer.File>,
     @Body() createProductDto: CreateProductDto,
   ) {
-    console.log('CPD: ', createProductDto);
+    // console.log('CPD: ', createProductDto);
     // console.log('F: ', files);
-    return await this.productService.createNewProduct(
-      createProductDto,
-      files,
-      false,
-    );
+    return await this.productService.publishNewProduct(createProductDto, files);
   }
   @Post('create-new-draft')
   @UseInterceptors(AnyFilesInterceptor())
@@ -46,11 +45,7 @@ export class ProductController {
   ) {
     console.log('CPD: ', createProductDto);
     // console.log('F: ', files);
-    return await this.productService.createNewProduct(
-      createProductDto,
-      files,
-      true,
-    );
+    return await this.productService.createNewDraft(createProductDto, files);
   }
   @Patch('update-draft/:productId')
   @UseInterceptors(AnyFilesInterceptor())
@@ -181,5 +176,20 @@ export class ProductController {
   async restoreProduct(@Param('id') id: string) {
     const newProductList = await this.productDeleteService.restoreProduct(id);
     return newProductList;
+  }
+
+  @Post('search-by-image')
+  @UseInterceptors(FileInterceptor('image'))
+  async searchByImage(@UploadedFile() file: Express.Multer.File, @Query() q) {
+    if (!file) {
+      return { error: 'No image file provided' };
+    }
+
+    const results = await this.productQueryService.searchByImage(
+      file,
+      q.size ? q.size : 10,
+      q.threshold ? q.threshold : 'low',
+    );
+    return results;
   }
 }

@@ -21,6 +21,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { SpeechModule } from './speech/speech.module';
 import { ChatModule } from './chat/chat.module';
 import { OrderModule } from './order/order.module';
+import { StatisticModule } from './statistic/statistic.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { OrderModule } from './order/order.module';
     SpeechModule,
     ChatModule,
     OrderModule,
+    StatisticModule,
   ],
   controllers: [AppController],
   providers: [

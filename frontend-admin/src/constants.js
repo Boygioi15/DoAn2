@@ -15,11 +15,16 @@ export const passwordRules = [
 ];
 
 export const routeNameMap = {
+  "statistic-overview": "Thống kê chung",
+  "statistic-search": "Phân tích tìm kiếm",
   user: "Quản lý người dùng",
   "product-management": "Quản lý sản phẩm",
   "category-management": "Quản lý ngành hàng",
-  "edit-product": "Thêm sản phẩm",
-  "edit-product": "Chỉnh sửa sản phẩm",
+  "edit-product": "Thao tác sản phẩm",
+  "term-and-condition": "Chính sách & Điều khoản",
+  "order-management": "Quản lý đơn hàng",
+  "direct-order-create": "Tạo đơn trực tiếp",
+  "frontend-setting": "Cài đặt giao diện",
 };
 export const slugifyOption = {
   replacement: "-", // replace spaces with replacement character, defaults to `-`

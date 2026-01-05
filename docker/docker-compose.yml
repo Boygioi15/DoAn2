@@ -11,6 +11,61 @@ services:
     volumes:
       - data:/data/db
       - config:/data/configdb
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: backend-container
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - MONGODB_URI=mongodb://user:pass@mongodb:27017/database?authSource=admin
+    ports:
+      - 3000:3000
+    depends_on:
+      - mongodb
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  frontend-admin:
+    build:
+      context: ../frontend-admin
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=http://localhost:3000
+    container_name: frontend-admin-container
+    ports:
+      - 5173:80
+    depends_on:
+      - backend
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  frontend-client:
+    build:
+      context: ../frontend-client
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=http://localhost:3000
+    container_name: frontend-client-container
+    ports:
+      - 5174:80
+    depends_on:
+      - backend
+    networks:
+      - app-network
+    restart: unless-stopped
+
 volumes:
   data:
   config:
+
+networks:
+  app-network:
+    driver: bridge

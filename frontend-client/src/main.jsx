@@ -1,11 +1,6 @@
-import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './main.css';
-import {
-  createBrowserRouter,
-  redirect,
-  RouterProvider,
-} from 'react-router-dom';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import RootLayout from './layouts/RootLayout/RootLayout.jsx';
 import HomePage from './pages/HomePage.jsx';
 import ProfileLayout from './layouts/ProfileLayout/ProfileLayout.jsx';
@@ -15,7 +10,6 @@ import './others/local_copy_of_google_font.css';
 
 import AuthLayout from './layouts/AuthLayout/AuthLayout.jsx';
 import { SignInPage, SignUpPage } from './pages/AuthPage/SignInUpPage.jsx';
-import ModalContextProvider from './contexts/ModalContext.jsx';
 import {
   SignUpDetailPage1,
   SignUpDetailPage2,
@@ -34,6 +28,9 @@ import CheckoutPageWrapper from './pages/CheckoutPage/CheckoutPage';
 import OrderPageWrapper from './pages/OrderResultPage';
 import SuggestionPage from './pages/ProfilePages/AccountInfoPage/SuggestionPage.jsx';
 
+import SearchByImagePage from './pages/SearchByImagePage';
+import TermAndConditionPage from './pages/TermAndConditionPage';
+import CategoryLandingPage from './pages/CategoryLandingPage';
 const router = createBrowserRouter([
   {
     path: '/',
@@ -75,12 +72,49 @@ const router = createBrowserRouter([
         element: <SearchPage />,
       },
       {
+        path: '/search-by-image',
+        element: <SearchByImagePage />,
+      },
+      {
+        path: '/category/:categoryId',
+        element: <CategoryLandingPage />,
+      },
+      {
         path: '/category/:category1Id/:category2Id',
         element: <DetailedCategoryPage />,
       },
       {
         path: '/category/:category1Id/:category2Id/:category3Id',
         element: <DetailedCategoryPage />,
+      },
+      ////// ĐIỀU KHOẢN VÀ CHÍNH SÁCH//////
+      {
+        path: 'loyal-customer-condition',
+        element: <TermAndConditionPage />,
+      },
+      {
+        path: 'loyal-customer-policy',
+        element: <TermAndConditionPage />,
+      },
+      {
+        path: 'customer-security-policy',
+        element: <TermAndConditionPage />,
+      },
+      {
+        path: 'delivery-policy',
+        element: <TermAndConditionPage />,
+      },
+      {
+        path: 'general-size-guidance',
+        element: <TermAndConditionPage />,
+      },
+      {
+        path: 'contact',
+        element: <TermAndConditionPage />,
+      },
+      {
+        path: 'about',
+        element: <TermAndConditionPage />,
       },
       {
         path: 'error',

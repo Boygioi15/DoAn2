@@ -47,16 +47,16 @@ export default function OrderFilterTab() {
             addOnlabel={"Tên người đặt"}
             placeholder={"Tên người đặt"}
             inputValue={filterUser.userName}
-            onInputValueChange={(value) =>
-              setFilterUser((prev) => ({ ...prev, userName: value }))
-            }
+            onInputValueChange={(e) => {
+              setFilterUser((prev) => ({ ...prev, userName: e.target.value }));
+            }}
           />
           <InputWithStartAddOn
             addOnlabel={"SĐT người đặt"}
             placeholder={"SĐT người đặt"}
             inputValue={filterUser.userPhone}
-            onInputValueChange={(value) =>
-              setFilterUser((prev) => ({ ...prev, userPhone: value }))
+            onInputValueChange={(e) =>
+              setFilterUser((prev) => ({ ...prev, userPhone: e.target.value }))
             }
           />
           <SelectWithStartAddOn

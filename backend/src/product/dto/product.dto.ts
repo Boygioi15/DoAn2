@@ -12,6 +12,8 @@ export class CreateProductDto {
   variantTableData: string;
   //after pushing file
   display_thumbnail_image: string;
+
+  uploadCode: string;
 }
 export class ProductSizeGuidanceDto {
   productId?: string;
