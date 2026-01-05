@@ -68,7 +68,7 @@ export default function SuggestionPage() {
   };
 
   useEffect(() => {
-    setSelectedTab(2); // Set appropriate tab index for suggestion page
+    setSelectedTab(4); // Set appropriate tab index for suggestion page
   }, []);
 
   return (

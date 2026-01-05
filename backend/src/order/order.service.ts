@@ -169,4 +169,54 @@ export class OrderService {
     );
     const orderDetailList = await this.orderDetailModel.find({ orderId });
   }
+
+  async updateOrderPaymentState(orderId: string, paymentState: string) {
+    // Validate payment state
+    if (!payment_state_enum.includes(paymentState)) {
+      throw new Error(
+        `Invalid payment state: ${paymentState}. Must be one of: ${payment_state_enum.join(', ')}`,
+      );
+    }
+
+    const updatedOrder = await this.orderModel.findByIdAndUpdate(
+      new mongoose.Types.ObjectId(orderId),
+      { payment_state: paymentState },
+      { new: true },
+    );
+
+    if (!updatedOrder) {
+      throw new Error(`Order with id ${orderId} not found`);
+    }
+
+    return {
+      success: true,
+      message: 'Payment state updated successfully',
+      order: updatedOrder,
+    };
+  }
+
+  async updateOrderDeliveryState(orderId: string, deliveryState: string) {
+    // Validate delivery state
+    if (!delivery_state_enum.includes(deliveryState)) {
+      throw new Error(
+        `Invalid delivery state: ${deliveryState}. Must be one of: ${delivery_state_enum.join(', ')}`,
+      );
+    }
+
+    const updatedOrder = await this.orderModel.findByIdAndUpdate(
+      new mongoose.Types.ObjectId(orderId),
+      { delivery_state: deliveryState },
+      { new: true },
+    );
+
+    if (!updatedOrder) {
+      throw new Error(`Order with id ${orderId} not found`);
+    }
+
+    return {
+      success: true,
+      message: 'Delivery state updated successfully',
+      order: updatedOrder,
+    };
+  }
 }

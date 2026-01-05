@@ -203,18 +203,27 @@ export class ProductQueryService {
     // console.log('F: ', filters);
     // console.log('P: ', pagination);
     const queryPipeline: any = [];
+    // if (search) {
+    //   queryPipeline.push({
+    //     $search: {
+    //       index: 'search_index',
+    //       text: {
+    //         query: search,
+    //         path: [
+    //           'name',
+    //           'categoryName',
+    //           'descriptionString',
+    //           'propertyString',
+    //         ],
+    //       },
+    //     },
+    //   });
+    // }
     if (search) {
       queryPipeline.push({
-        $search: {
-          index: 'search_index',
-          text: {
-            query: search,
-            path: [
-              'name',
-              'categoryName',
-              'descriptionString',
-              'propertyString',
-            ],
+        $match: {
+          $text: {
+            $search: search,
           },
         },
       });

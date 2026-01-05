@@ -3,6 +3,7 @@
 /build
 node_modules/
 node_modules
+
 /results
 crawledURL.txt
 url.txt
@@ -10,6 +11,17 @@ url.txt
 /results
 crawledURL.txt
 url.txt
+
+#secret
+deploy
+deploy/
+
+#db
+dump
+dump.zip
+dump/
+
+database-diagram.dbml 
 
 # Logs
 logs

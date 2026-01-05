@@ -1,1 +1,0 @@
-{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"},{"v":{"$numberInt":"2"},"key":{"addressId":{"$numberInt":"1"}},"name":"addressId_1","background":true,"unique":true}],"uuid":"da9b85c214d24e5a9cae3ad4e3a1eab4","collectionName":"address_detail_province","type":"collection"}

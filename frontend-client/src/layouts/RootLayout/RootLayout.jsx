@@ -116,15 +116,22 @@ export function TopLayout() {
       // console.log('Y: ', currentScrollY);
       // console.log('LCY: ', lastScrollY);
 
-      if (Math.abs(scrollDelta) < 10) return;
-      if (scrollDelta > 0 && currentScrollY > 100) {
+      console.log('SD: ', scrollDelta);
+      if (currentScrollY <= 20) {
+        setIsCollapsed(false);
+      }
+      if (scrollDelta > 0 && currentScrollY > 20) {
         // Scrolling down & past threshold - collapse
-        console.log('Collapsing');
-        setIsCollapsed(true);
+        // console.log('Collapsing');
+        if (scrollDelta > 10) {
+          setIsCollapsed(true);
+        }
       } else if (scrollDelta < 0) {
         // Scrolling up - expand
-        console.log('Opening');
-        setIsCollapsed(false);
+        // console.log('Opening');
+        if (scrollDelta < -20) {
+          setIsCollapsed(false);
+        }
       }
       lastScrollY.current = currentScrollY;
     };
@@ -151,7 +158,7 @@ export function TopLayout() {
 
   return (
     <div
-      className="TopLayout sticky top-0 z-49 bg-white transition-transform duration-300 ease-in-out"
+      className="TopLayout sticky top-0 z-10 bg-white transition-transform duration-300 ease-in-out"
       style={{
         transform: isCollapsed
           ? `translateY(-${collapsibleHeight}px)`

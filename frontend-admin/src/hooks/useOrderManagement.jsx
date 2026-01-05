@@ -40,7 +40,10 @@ export default function useOrderManagement() {
   //selected order
   const [selectedOrderId, setSelectedOrderId] = useState("");
   const selectedOrder = useMemo(() => {
-    return orderList.find((order) => order._id === selectedOrderId) || null;
+    const order =
+      orderList.find((order) => order._id === selectedOrderId) || null;
+    // console.log("OID: ", selectedOrderId, order);
+    return order;
   }, [selectedOrderId]);
   const getOrderList = async () => {
     try {
@@ -94,6 +97,72 @@ export default function useOrderManagement() {
     sortBy,
   ]);
 
+  const [isUpdatePaymentDialogOpen, setIsUpdatePaymentDialogOpen] =
+    useState(false);
+  const [isUpdateDeliveryDialogOpen, setIsUpdateDeliveryDialogOpen] =
+    useState(false);
+  const [newPaymentState, setNewPaymentState] = useState("");
+  const [isUpdatingPaymentState, setIsUpdatingPaymentState] = useState(false);
+  const [newDeliveryState, setNewDeliveryState] = useState("");
+  const [isUpdatingDeliveryState, setIsUpdatingDeliveryState] = useState(false);
+
+  // Set default payment state when dialog opens or selected order changes
+  useEffect(() => {
+    // console.log("SO: ", selectedOrder);
+    if (isUpdatePaymentDialogOpen && selectedOrder) {
+      setNewPaymentState(selectedOrder.payment_state || "");
+    }
+  }, [isUpdatePaymentDialogOpen, selectedOrder]);
+
+  // Set default delivery state when dialog opens or selected order changes
+  useEffect(() => {
+    if (isUpdateDeliveryDialogOpen && selectedOrder) {
+      setNewDeliveryState(selectedOrder.delivery_state || "");
+    }
+  }, [isUpdateDeliveryDialogOpen, selectedOrder]);
+
+  const handleOnUpdatePaymentStateDialogClick = (newSelectedOrderId) => {
+    setSelectedOrderId(newSelectedOrderId);
+    setIsUpdatePaymentDialogOpen(true);
+  };
+
+  const handleUpdatePaymentState = async () => {
+    try {
+      setIsUpdatingPaymentState(true);
+      await orderApi.updateOrderPaymentState(selectedOrderId, newPaymentState);
+      toast.success("Cập nhật trạng thái thanh toán thành công");
+      setIsUpdatePaymentDialogOpen(false);
+      await getOrderList();
+    } catch (error) {
+      console.log(error);
+      toast.error("Có lỗi khi cập nhật trạng thái thanh toán");
+    } finally {
+      setIsUpdatingPaymentState(false);
+    }
+  };
+
+  const handleOnUpdateDeliveryStateDialogClick = (newSelectedOrderId) => {
+    setSelectedOrderId(newSelectedOrderId);
+    setIsUpdateDeliveryDialogOpen(true);
+  };
+
+  const handleUpdateDeliveryState = async () => {
+    try {
+      setIsUpdatingDeliveryState(true);
+      await orderApi.updateOrderDeliveryState(
+        selectedOrderId,
+        newDeliveryState
+      );
+      toast.success("Cập nhật trạng thái giao hàng thành công");
+      setIsUpdateDeliveryDialogOpen(false);
+      await getOrderList();
+    } catch (error) {
+      console.log(error);
+      toast.error("Có lỗi khi cập nhật trạng thái giao hàng");
+    } finally {
+      setIsUpdatingDeliveryState(false);
+    }
+  };
   return {
     orderDeliveryStatusTab,
     setOrderDeliveryStatusTab,
@@ -125,5 +194,22 @@ export default function useOrderManagement() {
 
     updateOrderDialogOpen,
     setUpdateOrderDialogOpen,
+
+    isUpdateDeliveryDialogOpen,
+    isUpdatePaymentDialogOpen,
+    setIsUpdateDeliveryDialogOpen,
+    setIsUpdatePaymentDialogOpen,
+    handleOnUpdatePaymentStateDialogClick,
+    handleOnUpdateDeliveryStateDialogClick,
+
+    newPaymentState,
+    setNewPaymentState,
+    isUpdatingPaymentState,
+    handleUpdatePaymentState,
+
+    newDeliveryState,
+    setNewDeliveryState,
+    isUpdatingDeliveryState,
+    handleUpdateDeliveryState,
   };
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { OrderService } from './order.service';
 
 @Controller('order')
@@ -29,7 +29,29 @@ export class OrderController {
     return productList;
   }
   @Get(':orderId')
-  async getOrderDetail(orderId: string) {
+  async getOrderDetail(@Param('orderId') orderId: string) {
     return await this.orderService.getOrderDetail(orderId);
+  }
+
+  @Post(':orderId/payment ')
+  async updateOrderPaymentState(
+    @Param('orderId') orderId: string,
+    @Body() body: { paymentState: string },
+  ) {
+    return await this.orderService.updateOrderPaymentState(
+      orderId,
+      body.paymentState,
+    );
+  }
+
+  @Post(':orderId/delivery')
+  async updateOrderDeliveryState(
+    @Param('orderId') orderId: string,
+    @Body() body: { deliveryState: string },
+  ) {
+    return await this.orderService.updateOrderDeliveryState(
+      orderId,
+      body.deliveryState,
+    );
   }
 }

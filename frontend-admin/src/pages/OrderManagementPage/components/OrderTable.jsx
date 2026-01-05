@@ -14,7 +14,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 // Import icons from lucide-react
-import { CreditCard, MoreHorizontal, Pencil, Wallet } from "lucide-react"; // Only need CreditCard for online and Wallet for COD
+import {
+  CreditCard,
+  MoreHorizontal,
+  MoreVertical,
+  Pencil,
+  Wallet,
+} from "lucide-react"; // Only need CreditCard for online and Wallet for COD
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -107,8 +113,13 @@ const PAYMENT_METHOD_CONFIG = {
 };
 
 export default function OrderTable() {
-  const { orderList, setUpdateOrderDialogOpen, setSelectedOrderId } =
-    useContext(OrderManagementPageContext);
+  const {
+    orderList,
+    setUpdateOrderDialogOpen,
+    setSelectedOrderId,
+    handleOnUpdatePaymentStateDialogClick,
+    handleOnUpdateDeliveryStateDialogClick,
+  } = useContext(OrderManagementPageContext);
   return (
     <div className="rounded-md border">
       <Table>
@@ -215,18 +226,40 @@ export default function OrderTable() {
                   </Badge>
                 </TableCell>
                 <TableCell className="text-center">
-                  <Button
-                    variant="ghost"
-                    className="h-8 w-8 p-0"
-                    onClick={() => {
-                      console.log("HI");
-                      setSelectedOrderId(order._id);
-                      setUpdateOrderDialogOpen(true);
-                    }}
-                  >
-                    <span className="sr-only">Thao tác với đơn hàng</span>
-                    <Pencil className="h-4 w-4" />
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        className="h-8 w-8 p-0"
+                        onClick={() => {
+                          console.log("HI");
+                          setSelectedOrderId(order._id);
+                          setUpdateOrderDialogOpen(true);
+                        }}
+                      >
+                        <span className="sr-only">Thao tác với đơn hàng</span>
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem
+                        onClick={() =>
+                          handleOnUpdatePaymentStateDialogClick(order._id)
+                        }
+                      >
+                        <Pencil />
+                        Cập nhật trạng thái thanh toán
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() =>
+                          handleOnUpdateDeliveryStateDialogClick(order._id)
+                        }
+                      >
+                        <Pencil />
+                        Cập nhật trạng thái vận chuyển
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </TableCell>
               </TableRow>
             );

@@ -52,6 +52,15 @@ function Sidebar({ selectedTab }) {
         isSelected={selectedTab === 3}
       />
       <SidebarTab
+        icon={<BotIcon />}
+        name={'Trung tâm gợi ý'}
+        description={'Gợi ý các sản phẩm phù hợp với bạn'}
+        handleOnClick={() => {
+          navigate('/profile/suggestion');
+        }}
+        isSelected={selectedTab === 4}
+      />
+      <SidebarTab
         icon={<LuLogOut />}
         name={'Đăng xuất'}
         description={''}
@@ -70,6 +79,7 @@ import { useEffect, useState } from 'react';
 import useAuthStore from '../../contexts/zustands/AuthStore';
 import { toast } from 'sonner';
 import useCartStore from '@/contexts/zustands/CartStore';
+import { BotIcon } from 'lucide-react';
 
 function SidebarTab({ icon, name, description, isSelected, handleOnClick }) {
   return (
