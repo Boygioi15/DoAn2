@@ -130,7 +130,7 @@ export class CategoryService {
         })
         .lean();
     }
-    console.log('ADC1: ', allDirectChilren);
+    // console.log('ADC1: ', allDirectChilren);
     allDirectChilren = await Promise.all(
       allDirectChilren.map(async (children: any) => {
         const img = await this.getImageOfCategory(children.categoryId);
@@ -140,7 +140,7 @@ export class CategoryService {
         };
       }),
     );
-    console.log('ADC: ', allDirectChilren);
+    // console.log('ADC: ', allDirectChilren);
     return allDirectChilren;
   }
   async getCategoryDetail(categoryId: string) {

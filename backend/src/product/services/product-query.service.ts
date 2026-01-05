@@ -515,7 +515,7 @@ export class ProductQueryService {
       totalItemAdmin = result[0].total[0].count;
     }
     // console.log('T: ', totalItem);
-    // console.log('PL: ', productList);
+    console.log('PL: ', productList.slice(0, 5));
     const metadata1 = result[0].stage1ComputedResults;
     const metadata2 = result[0].stage2ComputedResults;
     // const metadata1 = result[0].stage1ComputedResults;
