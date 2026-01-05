@@ -22,7 +22,7 @@ WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
-
+COPY .env ./
 # Install only production dependencies
 RUN npm ci --only=production
 
@@ -30,7 +30,7 @@ RUN npm ci --only=production
 COPY --from=builder /app/dist ./dist
 
 # Expose port
-EXPOSE 3000
+EXPOSE 1210
 
 # Start the application
 CMD ["npm", "run", "start:prod"]
