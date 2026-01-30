@@ -19,20 +19,20 @@ export class PaymentGatewayService {
     private readonly cartService: CartService,
     private readonly transactionService: TransactionService,
   ) {
-    const clientID = process.env.PAYOS_CLIENTID,
-      apiKey = process.env.PAYOS_API_KEY,
-      checksumKey = process.env.PAYOS_CHECKSUM_KEY;
-    this.payOSInstance = new PayOS({
-      clientId: clientID,
-      apiKey: apiKey,
-      checksumKey: checksumKey,
-    });
-    try {
-      this.payOSInstance.webhooks.confirm(payos_notifyURL);
-    } catch (error) {
-      console.log('Web hook payos không hoạt động');
-      console.log(error);
-    }
+    // const clientID = process.env.PAYOS_CLIENTID,
+    //   apiKey = process.env.PAYOS_API_KEY,
+    //   checksumKey = process.env.PAYOS_CHECKSUM_KEY;
+    // this.payOSInstance = new PayOS({
+    //   clientId: clientID,
+    //   apiKey: apiKey,
+    //   checksumKey: checksumKey,
+    // });
+    // try {
+    //   this.payOSInstance.webhooks.confirm(payos_notifyURL);
+    // } catch (error) {
+    //   console.log('Web hook payos không hoạt động');
+    //   console.log(error);
+    // }
   }
   async createPaymentLink_MOMO(
     orderCode: string,
