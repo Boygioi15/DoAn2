@@ -89,6 +89,7 @@ export class ChatService {
 
     const getProductDetailTool = tool(
       async (input) => {
+        console.log('Chatbot output: ', input.productId);
         const result = await this.getProductDetail(input.productId);
         return JSON.stringify(result);
       },

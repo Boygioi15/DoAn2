@@ -104,7 +104,15 @@ export default function ProductModal({ productId }) {
       (option) => option.optionId === selectedOption1
     );
     if (!option1) console.log('Error while select option 1, A');
-    setOption2List(option1.subOption);
+    const sorted = option1.subOption.sort((a, b) => {
+      // For string values (like "S", "M", "L")
+      return a.optionValue.localeCompare(b.optionValue, undefined, {
+        numeric: true,
+        sensitivity: 'base',
+      });
+    });
+    console.log('Sorted: ', sorted);
+    setOption2List(sorted);
   }, [selectedOption1]);
   useEffect(() => {
     if (!selectedOption1) return;

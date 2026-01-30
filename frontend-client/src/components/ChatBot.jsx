@@ -170,16 +170,16 @@ export function ChatBot() {
     <>
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-28 right-7 w-[420px] h-[600px] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border-4 border-violet-500 z-[100]">
+        <div className="fixed bottom-28 right-7 w-[400px] h-[500px] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border-4 border-(--color-preset-gray) z-[100]">
           {/* Header */}
-          <div className="bg-violet-600 p-3 flex items-center justify-between flex-shrink-0">
+          <div className="bg-(--color-preset-gray) p-3 flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center border-2 border-violet-300">
-                <Bot className="w-5 h-5 text-violet-600" />
+                <Bot className="w-5 h-5 text-black" />
               </div>
               <div>
-                <h3 className="text-white font-semibold text-sm">SilkShop</h3>
-                <span className="text-violet-200 text-xs flex items-center gap-1">
+                <h3 className="text-white! font-semibold text-sm">SilkShop</h3>
+                <span className="text-white text-xs flex items-center gap-1">
                   <span className="w-1.5 h-1.5 bg-green-400 rounded-full"></span>
                   Online Now
                 </span>
@@ -365,23 +365,23 @@ export function ChatBot() {
                 size="icon"
                 onClick={() => imageInputRef.current?.click()}
                 disabled={isLoading}
-                className="rounded-full w-9 h-9 p-0 hover:bg-violet-100"
+                className="rounded-full w-9 h-9 p-0 hover:bg-(--color-preset-gray) hover:text-white!"
                 title="Tìm kiếm bằng hình ảnh"
               >
-                <ImageIcon className="w-4 h-4 text-violet-500" />
+                <ImageIcon className="w-4 h-4" />
               </Button>
               <Input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                placeholder="Reply to SilkShop..."
+                placeholder="Nhắn tin với chatbot"
                 disabled={isLoading}
                 className="flex-1 rounded-full border-gray-200 bg-white focus:border-violet-400 focus:ring-violet-400 text-xs h-9"
               />
               <Button
                 onClick={handleSend}
                 disabled={!input.trim() || isLoading}
-                className="bg-violet-500 hover:bg-violet-600 rounded-full w-9 h-9 p-0"
+                className="bg-(--color-preset-gray) hover:text-white rounded-full w-9 h-9 p-0"
               >
                 <Send className="w-3.5 h-3.5" />
               </Button>
@@ -392,14 +392,14 @@ export function ChatBot() {
 
       {/* Toggle Button */}
       <Button
-        className="rounded-full w-[60px] h-[60px] bg-violet-500 hover:bg-violet-600 cursor-pointer shadow-lg transition-all duration-300 hover:scale-105"
+        className="rounded-full w-[60px] h-[60px] bg-white hover:bg-white/90 cursor-pointer shadow-xl transition-all duration-300 hover:scale-105 "
         onClick={() => setIsOpen(!isOpen)}
       >
         {isOpen ? (
           <X className="w-[28px] h-[28px] text-white" />
         ) : (
           <MessageCircle
-            className="w-[28px] h-[28px] text-white"
+            className="w-[28px]! h-[28px]! text-black"
             fill="white"
           />
         )}

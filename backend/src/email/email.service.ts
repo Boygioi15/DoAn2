@@ -34,7 +34,7 @@ export class EmailService {
       return result;
     } catch (error) {
       console.error('Error sending email:', error);
-      throw new InternalServerErrorException('Failed to send email');
+      //   throw new InternalServerErrorException('Failed to send email');
     }
   }
 

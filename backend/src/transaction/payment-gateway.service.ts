@@ -8,7 +8,7 @@ import { CreatePaymentLinkRequest, PaymentLinkItem, PayOS } from '@payos/node';
 import mongoose from 'mongoose';
 import { TransactionService } from './transaction.service';
 const momo_endpoint = 'https://test-payment.momo.vn/v2/gateway/api/create';
-const ngrok_url = 'https://cfcbe1b6612c.ngrok-free.app';
+const ngrok_url = 'https://df29079992b1.ngrok-free.app';
 const momo_notifyURL = `${ngrok_url}/transaction/callback/momo`;
 const payos_notifyURL = `${ngrok_url}/transaction/callback/payos`;
 
@@ -27,12 +27,12 @@ export class PaymentGatewayService {
       apiKey: apiKey,
       checksumKey: checksumKey,
     });
-    // try {
-    //   this.payOSInstance.webhooks.confirm(payos_notifyURL);
-    // } catch (error) {
-    //   console.log('Web hook payos không hoạt động');
-    //   console.log(error);
-    // }
+    try {
+      this.payOSInstance.webhooks.confirm(payos_notifyURL);
+    } catch (error) {
+      console.log('Web hook payos không hoạt động');
+      console.log(error);
+    }
   }
   async createPaymentLink_MOMO(
     orderCode: string,

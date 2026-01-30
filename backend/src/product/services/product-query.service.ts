@@ -940,7 +940,7 @@ export class ProductQueryService {
           },
         },
         {
-          $limit: 10,
+          $limit: Number(size),
         },
         {
           $match: {},

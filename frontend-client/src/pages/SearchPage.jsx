@@ -38,6 +38,9 @@ export const colorMap = {
   Xám: '#9E9E9E',
   Đen: '#1A1A1A',
   Đỏ: '#D62C2C',
+  Tím: '#8E44AD', // purple – balanced, not too neon
+  Vàng: '#F4C430', // yellow – warm, readable on white
+  Cam: '#F57C00', // orange – strong but not harsh
 };
 
 // Define the standard order for string sizes

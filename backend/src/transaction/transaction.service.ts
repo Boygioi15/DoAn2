@@ -61,6 +61,15 @@ export class TransactionService {
     for (const cartItem of cartItemList) {
       defaultAmount += cartItem.quantity * cartItem.unitPrice;
     }
+    //update updated;
+    for (const cartItem of cartItemList) {
+      if (cartItem.invalidState === 'updated') {
+        await this.cartItemModel.findOneAndUpdate(
+          { cartItemId: cartItem.cartItemId },
+          { invalidState: 'normal' },
+        );
+      }
+    }
     cashoutAmount = defaultAmount;
     return {
       defaultAmount,

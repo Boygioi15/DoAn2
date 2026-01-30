@@ -66,7 +66,7 @@ export class ProductEmbeddingService {
             content: [
               {
                 type: 'text',
-                text: 'Chú trọng mô tả trang phục có trong hình bằng tiếng Việt. Bao gồm: loại sản phẩm, màu sắc, kiểu dáng, chất liệu (nếu có thể nhận biết). Không nói thêm về ngữ cảnh xung quanh. Viết ngắn gọn trong 1-2 câu.',
+                text: 'Chú trọng mô tả quần áo có trong hình bằng tiếng Việt. Bao gồm: loại sản phẩm, màu sắc, kiểu dáng, chất liệu (nếu có thể nhận biết). Không nói thêm về ngữ cảnh xung quanh. Viết ngắn gọn trong 1-2 câu.',
               },
               {
                 type: 'image_url',

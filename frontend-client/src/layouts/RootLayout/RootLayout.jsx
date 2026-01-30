@@ -76,7 +76,6 @@ export function TopLayout() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const collapsibleRef = useRef(null);
   const [collapsibleHeight, setCollapsibleHeight] = useState(0);
-  const lastScrollY = useRef(0);
 
   const getLayoutSetting = async () => {
     try {
@@ -105,28 +104,19 @@ export function TopLayout() {
     });
   };
 
-  // Track scroll direction for collapse/expand behavior
+  // Collapse upper section when scrolling past a certain point
   useEffect(() => {
-    const SCROLL_THRESHOLD = 10; // Minimum scroll delta to trigger state change
+    const COLLAPSE_POINT = 150; // Scroll position threshold in pixels
 
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-      const scrollDelta = currentScrollY - lastScrollY.current;
 
-      // console.log('Y: ', currentScrollY);
-      // console.log('LCY: ', lastScrollY);
-
-      if (Math.abs(scrollDelta) < 10) return;
-      if (scrollDelta > 0 && currentScrollY > 100) {
-        // Scrolling down & past threshold - collapse
-        console.log('Collapsing');
+      // Collapse when past the threshold, expand when above it
+      if (currentScrollY > COLLAPSE_POINT) {
         setIsCollapsed(true);
-      } else if (scrollDelta < 0) {
-        // Scrolling up - expand
-        console.log('Opening');
+      } else {
         setIsCollapsed(false);
       }
-      lastScrollY.current = currentScrollY;
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -151,7 +141,7 @@ export function TopLayout() {
 
   return (
     <div
-      className="TopLayout sticky top-0 z-49 bg-white transition-transform duration-300 ease-in-out"
+      className="TopLayout sticky top-0 z-10 bg-white transition-transform duration-300 ease-in-out"
       style={{
         transform: isCollapsed
           ? `translateY(-${collapsibleHeight}px)`
